@@ -248,6 +248,10 @@ class SecretSettingsFragment : PreferenceFragmentCompat() {
             isChecked = context.settings().crashPullNeverShowAgain
             onPreferenceChangeListener = SharedPreferenceUpdater()
         }
+
+        requirePreference<Preference>(R.string.pref_key_sample_feature).apply {
+            onPreferenceClickListener = findNavController().navigate()
+        }
     }
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {

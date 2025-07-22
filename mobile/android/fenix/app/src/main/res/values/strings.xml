@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<resources xmlns:tools="http://schemas.android.com/tools"  xmlns:moz="http://mozac.org/tools">
+<resources xmlns:moz="http://mozac.org/tools" xmlns:tools="http://schemas.android.com/tools">
     <!-- App name for private browsing mode. %s is the name of the app (for example "Firefox"). -->
     <string name="app_name_private_5">Private %s</string>
     <!-- App name for private browsing mode. %s is the name of the app (for example "Firefox"). -->
@@ -298,7 +298,7 @@
          %1$s is the name of the app (for example "Firefox"). -->
     <string name="browser_menu_new_in_firefox" moz:removedIn="141" tools:ignore="UnusedResources">New in %1$s</string>
     <!-- Browser menu label that toggles the request for the desktop site of the currently visited page -->
-    <string name="browser_menu_switch_to_desktop_site"  moz:removedIn="141" tools:ignore="UnusedResources">Switch to desktop site</string>
+    <string name="browser_menu_switch_to_desktop_site" moz:removedIn="141" tools:ignore="UnusedResources">Switch to desktop site</string>
     <!-- Browser menu label that toggles the request for the mobile site of the currently visited page -->
     <string name="browser_menu_switch_to_mobile_site" moz:removedIn="142" tools:ignore="UnusedResources">Switch to mobile site</string>
     <!-- Browser menu label that navigates to the page tools sub-menu -->
@@ -807,7 +807,7 @@
     <!-- Preference for translations -->
     <string name="preferences_translations">Translations</string>
     <!-- Preference for data choices -->
-    <string name="preferences_data_choices" tools:ignore="UnusedResources" moz:removedIn="141">Data choices</string>
+    <string name="preferences_data_choices" moz:removedIn="141" tools:ignore="UnusedResources">Data choices</string>
     <!-- Preference for data collection -->
     <string name="preferences_data_collection">Data collection</string>
     <!-- Preference for developers -->
@@ -865,7 +865,7 @@
     <!-- Preference for open links in third party apps never open in apps option -->
     <string name="preferences_open_links_in_apps_never">Never</string>
     <!-- Preference for open download with an external download manager app -->
-    <string name="preferences_external_download_manager" tools:ignore="UnusedResources" moz:removedIn="141">External download manager</string>
+    <string name="preferences_external_download_manager" moz:removedIn="141" tools:ignore="UnusedResources">External download manager</string>
     <!-- Preference title for choosing an app to handle downloads -->
     <string name="preferences_choose_app_for_downloads">Manage downloads with another app</string>
     <!-- Title for the setting to automatically clean up downloaded files. %s is the name of the app (for example "Firefox"). -->
@@ -892,9 +892,9 @@
 
     <!-- Add-on Permissions -->
     <!-- The title of the required permissions section from addon's permissions screen -->
-    <string name="addons_permissions_heading_required" tools:ignore="UnusedResources" moz:removedIn="141">Required</string>
+    <string name="addons_permissions_heading_required" moz:removedIn="141" tools:ignore="UnusedResources">Required</string>
     <!-- The title of the optional permissions section from addon's permissions screen -->
-    <string name="addons_permissions_heading_optional" tools:ignore="UnusedResources" moz:removedIn="141">Optional</string>
+    <string name="addons_permissions_heading_optional" moz:removedIn="141" tools:ignore="UnusedResources">Optional</string>
     <!-- The title of the origin permission option allowing a user to enable the extension to run on all sites -->
     <string name="addons_permissions_allow_for_all_sites">Allow for all sites</string>
     <!-- The subtitle for the allow for all sites preference toggle -->
@@ -939,11 +939,11 @@
     a section where users see a list of tabs that they have visited in the past few days -->
     <string name="customize_toggle_recently_visited">Recently visited</string>
     <!-- Title for the customize home screen section with Pocket. -->
-    <string name="customize_toggle_pocket_2" tools:ignore="UnusedResources" moz:removedIn="140">Thought-provoking stories</string>
+    <string name="customize_toggle_pocket_2" moz:removedIn="140" tools:ignore="UnusedResources">Thought-provoking stories</string>
     <!-- Title for the customize home screen section with Pocket. -->
     <string name="customize_toggle_pocket_3">Stories</string>
     <!-- Summary for the customize home screen section with Pocket. %s is "Pocket". -->
-    <string name="customize_toggle_pocket_summary" tools:ignore="UnusedResources" moz:removedIn="140">Articles powered by %s</string>
+    <string name="customize_toggle_pocket_summary" moz:removedIn="140" tools:ignore="UnusedResources">Articles powered by %s</string>
     <!-- Title for the customize home screen section with sponsored Pocket stories. -->
     <string name="customize_toggle_pocket_sponsored">Sponsored stories</string>
     <!-- Title for the opening wallpaper settings screen -->
@@ -1129,7 +1129,7 @@
     <!-- Preference switch for usage and technical learn more link in new compose -->
     <string name="preference_usage_data_learn_more_2">Learn more about technical data</string>
     <!-- Preference switch for usage and technical learn more link -->
-    <string name="preference_usage_data_learn_more" tools:ignore="UnusedResources" moz:removedIn="141">Learn more</string>
+    <string name="preference_usage_data_learn_more" moz:removedIn="141" tools:ignore="UnusedResources">Learn more</string>
     <!-- Preference description for marketing data collection. Note: The words "Firefox" should NOT be translated -->
     <string name="preferences_usage_data_description_1" tools:ignore="BrandUsage">Data about your device, hardware configuration, and usage helps us improve Firefox features, performance, and stability.</string>
     <!-- Preference switch for daily usage ping data collection -->
@@ -1137,10 +1137,10 @@
     <string name="preferences_daily_usage_ping_description">This helps Mozilla to estimate active users.</string>
     <string name="preferences_daily_usage_ping_learn_more">Learn more about daily usage ping</string>
     <!-- Preference switch title for automatically submitting crash reports -->
-    <string name="preferences_automatically_send_crashes_title" tools:ignore="UnusedResources" moz:removedIn="142">Automatically send crash reports</string>
+    <string name="preferences_automatically_send_crashes_title" moz:removedIn="142" tools:ignore="UnusedResources">Automatically send crash reports</string>
 
     <!-- Preference switch description for automatically submitting crash reports -->
-    <string name="preferences_automatically_send_crashes_description" tools:ignore="UnusedResources" moz:removedIn="142">This helps us diagnose and fix issues with the browser. Reports may include personal or sensitive data.</string>
+    <string name="preferences_automatically_send_crashes_description" moz:removedIn="142" tools:ignore="UnusedResources">This helps us diagnose and fix issues with the browser. Reports may include personal or sensitive data.</string>
     <!-- Text for sumo link to learn more about crash reports in data collection screen -->
     <string name="preferences_crashes_learn_more">Learn more about crash reports</string>
 
@@ -1164,7 +1164,7 @@
     <string name="preferences_marketing_data_learn_more">Learn more about marketing data</string>
 
     <!-- Learn more link for crash reporting preference -->
-    <string name="onboarding_preferences_dialog_crash_reporting_learn_more" tools:ignore="UnusedResources" moz:removedIn="142">Learn more about crash reports</string>
+    <string name="onboarding_preferences_dialog_crash_reporting_learn_more" moz:removedIn="142" tools:ignore="UnusedResources">Learn more about crash reports</string>
 
     <!-- Title for studies preferences -->
     <string name="preference_experiments_2">Studies</string>
@@ -1898,7 +1898,7 @@
     %d is a placeholder for the number of tabs selected. -->
     <string name="create_collection_save_to_collection_tab_selected">%d tab selected</string>
     <!-- Text shown in snackbar when multiple tabs have been saved in a collection -->
-    <string name="create_collection_tabs_saved" tools:ignore="UnusedResources" moz:removedIn="142">Tabs saved!</string>
+    <string name="create_collection_tabs_saved" moz:removedIn="142" tools:ignore="UnusedResources">Tabs saved!</string>
     <!-- Text shown in snackbar when one or multiple tabs have been saved in a new collection -->
     <string name="create_collection_tabs_saved_new_collection">Collection saved!</string>
     <!-- Text shown in snackbar when one tab has been saved in a collection -->
@@ -2055,7 +2055,7 @@
     <!-- Tab collection deletion prompt dialog option to delete the collection -->
     <string name="tab_collection_dialog_positive">Delete</string>
     <!-- Message for copying the URL via long press on the toolbar -->
-    <string name="url_copied" tools:ignore="UnusedResources" moz:removedIn="142">URL copied</string>
+    <string name="url_copied" moz:removedIn="142" tools:ignore="UnusedResources">URL copied</string>
     <!-- Sample text for accessibility font size -->
     <string name="accessibility_text_size_sample_text_1">This is sample text. It is here to show how text will appear when you increase or decrease the size with this setting.</string>
     <!-- Summary for Accessibility Text Size Scaling Preference -->
@@ -2689,9 +2689,9 @@
     <!-- Text shown when we aren't able to validate the custom search query. %s is the url of the custom search engine. -->
     <string name="search_add_custom_engine_error_cannot_reach" moz:removedIn="140" tools:ignore="UnusedResources">Error connecting to “%s”</string>
     <!-- Text shown when a user creates a new search engine. %s is the url of the custom search engine. -->
-    <string name="search_add_custom_engine_success_message" tools:ignore="UnusedResources" moz:removedIn="142">Created %s</string>
+    <string name="search_add_custom_engine_success_message" moz:removedIn="142" tools:ignore="UnusedResources">Created %s</string>
     <!-- Text shown when a user successfully edits a custom search engine. %s is the url of the custom search engine. -->
-    <string name="search_edit_custom_engine_success_message" tools:ignore="UnusedResources" moz:removedIn="142">Saved %s</string>
+    <string name="search_edit_custom_engine_success_message" moz:removedIn="142" tools:ignore="UnusedResources">Saved %s</string>
     <!-- Text shown when a user successfully deletes a custom search engine. %s is the url of the custom search engine. -->
     <string name="search_delete_search_engine_success_message">Deleted %s</string>
 
@@ -2885,7 +2885,7 @@
 
     <!-- Pocket recommended stories -->
     <!-- Header text for a section on the home screen. -->
-    <string name="pocket_stories_header_1" tools:ignore="UnusedResources" moz:removedIn="140">Thought-provoking stories</string>
+    <string name="pocket_stories_header_1" moz:removedIn="140" tools:ignore="UnusedResources">Thought-provoking stories</string>
     <!-- Header text for a section on the home screen. -->
     <string name="pocket_stories_header_2">Stories</string>
     <!-- Header text for a section on the home screen. -->
@@ -3527,4 +3527,6 @@
     <string name="review_prompt_feedback_header">We’re sorry you’re having issues. Let us know how we can improve %1$s.</string>
     <!-- Label for a button opening a feedback forum -->
     <string name="review_prompt_feedback_button">Leave feedback</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

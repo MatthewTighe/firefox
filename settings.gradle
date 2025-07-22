@@ -56,8 +56,10 @@ project(':android-components').projectDir = new File("${gradle.mozconfig.topsrcd
 if (!gradle.mozconfig.substs.MOZ_ANDROID_SUBPROJECT || gradle.mozconfig.substs.MOZ_ANDROID_SUBPROJECT == "fenix") {
     include ':fenix'
     include ':fenix:sample-feature'
+    include ':fenix:tabs-tray'
     project(':fenix').projectDir = new File("${gradle.mozconfig.topsrcdir}/mobile/android/fenix/app")
     project(':fenix:sample-feature').projectDir = new File("${gradle.mozconfig.topsrcdir}/mobile/android/fenix/app/sample-feature")
+    project(':fenix:tabs-tray').projectDir = new File("${gradle.mozconfig.topsrcdir}/mobile/android/fenix/app/tabs-tray")
 }
 if (!gradle.mozconfig.substs.MOZ_ANDROID_SUBPROJECT || gradle.mozconfig.substs.MOZ_ANDROID_SUBPROJECT == "focus") {
     include ':focus-android'

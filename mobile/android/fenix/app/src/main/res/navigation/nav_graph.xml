@@ -10,6 +10,10 @@
     app:startDestination="@id/startupFragment">
 
     <action
+        android:id="@+id/action_to_sample_feature_host_fragment"
+        app:destination="@id/fragment_sample_feature_host" />
+
+    <action
         android:id="@+id/action_startup_home"
         app:destination="@id/homeFragment"
         app:popUpTo="@id/startupFragment"
@@ -230,6 +234,10 @@
             android:defaultValue="None"
             app:argType="org.mozilla.fenix.tabstray.TabsTrayAccessPoint" />
     </dialog>
+
+    <fragment
+        android:id="@+id/fragment_sample_feature_host"
+        android:name="org.mozilla.fenix.settings.SampleFeatureHostFragment" />
 
     <fragment
         android:id="@+id/startupFragment"

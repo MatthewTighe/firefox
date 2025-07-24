@@ -29,14 +29,28 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.navigation.NavController
+import mozilla.components.compose.base.theme.AcornColors
 import mozilla.components.compose.base.theme.AcornTheme
+import mozilla.components.lib.state.Action
+import mozilla.components.lib.state.State
+import mozilla.components.lib.state.Store
+import mozilla.components.lib.state.ext.observeAsComposableState
 import kotlin.collections.listOf
+
+data class Tab(
+    val id: String,
+    val url: String,
+    val title: String,
+    val bitmap: Bitmap,
+    val mode: TabsTrayMode
+)
 
 sealed class TabsTrayMode {
     object Normal : TabsTrayMode()
@@ -47,18 +61,63 @@ sealed class TabsTrayMode {
 data class TabsTrayState(
     val tabs: List<Tab> = emptyList(),
     val mode: TabsTrayMode = TabsTrayMode.Normal,
-)
+    val threeDotMenuOpen: Boolean = false
+) : State {
+    val displayedTabs: List<Tab>
+        get() = tabs.filter { it.mode == mode }
+}
 
-data class Tab(
-    val id: String,
-    val url: String,
-    val title: String,
-    val bitmap: Bitmap,
-    val mode: TabsTrayMode = TabsTrayMode.Normal
-)
+sealed class TabsTrayAction : Action {
+    data object NormalModeClicked : TabsTrayAction()
+    data object PrivateModeClicked : TabsTrayAction()
+    data object SyncedModeClicked : TabsTrayAction()
+    sealed class ThreeDotMenuAction : TabsTrayAction() {
+        data object MenuClicked : TabsTrayAction()
+        data object MenuDismissed : TabsTrayAction()
+        // TODO can these last actions handle their navigation through the Store?
+        data object SettingsItemClicked : ThreeDotMenuAction()
+        data object AiSummariesItemClicked : ThreeDotMenuAction()
+    }
+    // TODO how can we open a tab?
+    data class TabClicked(val tab: Tab) : TabsTrayAction()
+}
+
+fun tabsTrayReducer(state: TabsTrayState, action: TabsTrayAction): TabsTrayState =
+    when (action) {
+        TabsTrayAction.NormalModeClicked -> state.copy(mode = TabsTrayMode.Normal)
+        TabsTrayAction.PrivateModeClicked -> state.copy(mode = TabsTrayMode.Private)
+        TabsTrayAction.SyncedModeClicked -> state.copy(mode = TabsTrayMode.Synced)
+        TabsTrayAction.ThreeDotMenuAction.AiSummariesItemClicked -> state.copy(threeDotMenuOpen = false)
+        TabsTrayAction.ThreeDotMenuAction.SettingsItemClicked -> state.copy(threeDotMenuOpen = false)
+        TabsTrayAction.ThreeDotMenuAction.MenuClicked -> state.copy(threeDotMenuOpen = true)
+        TabsTrayAction.ThreeDotMenuAction.MenuDismissed -> state.copy(threeDotMenuOpen = false)
+        is TabsTrayAction.TabClicked -> state // No state change for now, will be handled by navigation.
+    }
+
+private enum class Destinations(val route: String) {
+    Tabs("tabs"),
+    AiSummaries("aiSummaries")
+}
 
 @Composable
-fun TabsTrayUi(tabs: List<Tab> = emptyList()) {
+fun TabsTrayHost(store: Store<TabsTrayState, TabsTrayAction>) {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "tabs") {
+        composable(Destinations.Tabs.route) {
+            TabsTrayUi(store = store, navController)
+        }
+        composable(Destinations.AiSummaries.route) {
+
+        }
+    }
+}
+
+@Composable
+fun TabsTrayUi(
+    store: Store<TabsTrayState, TabsTrayAction>,
+    navController: NavController,
+) {
+    val state by store.observeAsComposableState { it }
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -66,34 +125,46 @@ fun TabsTrayUi(tabs: List<Tab> = emptyList()) {
                 .padding(8.dp),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            Button(onClick = { /*TODO*/ }) {
+            Button(onClick = { store.dispatch(TabsTrayAction.NormalModeClicked) }) {
                 Text("Normal")
             }
-            Button(onClick = { /*TODO*/ }) {
+            Button(onClick = { store.dispatch(TabsTrayAction.PrivateModeClicked) }) {
                 Text("Private")
             }
-            Button(onClick = { /*TODO*/ }) {
+            Button(onClick = { store.dispatch(TabsTrayAction.SyncedModeClicked) }) {
                 Text("Synced")
             }
-            var showMenu by remember { mutableStateOf(false) }
             Box(modifier = Modifier) {
-                Button(onClick = { showMenu = !showMenu }) {
+                Button(onClick = { store.dispatch(TabsTrayAction.ThreeDotMenuAction.MenuClicked) }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = "More options"
                     )
                 }
                 DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
+                    expanded = state.threeDotMenuOpen,
+                    onDismissRequest = { store.dispatch(TabsTrayAction.ThreeDotMenuAction.MenuDismissed) }
                 ) {
-                    DropdownMenuItem(text = { Text("Settings") }, onClick = { /* Handle settings click */ showMenu = false })
+                    DropdownMenuItem(
+                        text = { Text("Settings") },
+                        onClick = {
+                            store.dispatch(TabsTrayAction.ThreeDotMenuAction.SettingsItemClicked)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("AI mode tab summaries") },
+                        onClick = {
+                            // TODO is there a way we can handle this without calling the navController from the view layer?
+                            navController.navigate(Destinations.AiSummaries.route)
+                            store.dispatch(TabsTrayAction.ThreeDotMenuAction.AiSummariesItemClicked)
+                        }
+                    )
                 }
             }
         }
 
         LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.padding(8.dp)) {
-            items(tabs) { tab ->
+            items(state.displayedTabs) { tab ->
                 TabItem(tab = tab, modifier = Modifier.padding(4.dp))
             }
         }
@@ -120,59 +191,91 @@ fun TabItem(tab: Tab, modifier: Modifier) {
     }
 }
 
+@Composable
+fun AiSummariesUi() {
+    // TODO: replace this with anything interesting. Meant to showcase local nav.
+    Text("Hello AI Summaries!", color = AcornTheme.colors.textPrimary, fontSize = 24.sp)
+}
+
+// Helper function to create a bitmap with a specific color
+fun createColoredBitmap(width: Int, height: Int, color: Int): Bitmap {
+    val bitmap = createBitmap(width, height)
+    val canvas = Canvas(bitmap)
+    canvas.drawColor(color)
+    return bitmap
+}
+
+val normalTabs = listOf(
+    Tab(
+        "1",
+        "https://www.mozilla.org",
+        "Mozilla",
+        createColoredBitmap(200, 150, Color.RED),
+        mode = TabsTrayMode.Normal
+    ),
+    Tab(
+        "2",
+        "https://www.google.com",
+        "Google",
+        createColoredBitmap(200, 150, Color.BLUE),
+        mode = TabsTrayMode.Normal
+    ),
+    Tab(
+        "3",
+        "https://www.github.com",
+        "GitHub",
+        createColoredBitmap(200, 150, Color.GREEN),
+        mode = TabsTrayMode.Normal
+    ),
+    Tab(
+        "4",
+        "https://www.bugzilla.org",
+        "Bugzilla",
+        createColoredBitmap(200, 150, Color.RED),
+        mode = TabsTrayMode.Normal
+    ),
+    Tab(
+        "5",
+        "https://www.phabricator.com",
+        "Phab",
+        createColoredBitmap(200, 150, Color.BLUE),
+        mode = TabsTrayMode.Normal
+    ),
+    Tab(
+        "6",
+        "https://www.slack.com",
+        "Slack",
+        createColoredBitmap(200, 150, Color.GREEN),
+        mode = TabsTrayMode.Normal
+    )
+)
+
+val privateTabs = normalTabs.map {
+    it.copy(title = "Private: ${it.title}", mode = TabsTrayMode.Private)
+}
+
+val syncedTabs = normalTabs.map {
+    it.copy(title = "Synced: ${it.title}", mode = TabsTrayMode.Synced)
+}
+
+val tabs = normalTabs + privateTabs + syncedTabs
+
 @Preview
 @Composable
 fun TabsTrayPreview() {
-    // Helper function to create a bitmap with a specific color
-    fun createColoredBitmap(width: Int, height: Int, color: Int): Bitmap {
-        val bitmap = createBitmap(width, height)
-        val canvas = Canvas(bitmap)
-        canvas.drawColor(color)
-        return bitmap
-    }
-
-    val tabs = listOf(
-        Tab(
-            "1",
-            "https://www.mozilla.org",
-            "Mozilla",
-            createColoredBitmap(200, 150, Color.RED)
-        ),
-        Tab(
-            "2",
-            "https://www.google.com",
-            "Google",
-            createColoredBitmap(200, 150, Color.BLUE)
-        ),
-        Tab(
-            "3",
-            "https://www.github.com",
-            "GitHub",
-            createColoredBitmap(200, 150, Color.GREEN)
-        ),
-        Tab(
-            "4",
-            "https://www.bugzilla.org",
-            "Bugzilla",
-            createColoredBitmap(200, 150, Color.RED)
-        ),
-        Tab(
-            "5",
-            "https://www.phabricator.com",
-            "Phab",
-            createColoredBitmap(200, 150, Color.BLUE)
-        ),
-        Tab(
-            "6",
-            "https://www.slack.com",
-            "Slack",
-            createColoredBitmap(200, 150, Color.GREEN)
-        )
-    )
-
     AcornTheme {
-        Box(Modifier.background(ComposeColor(Color.LTGRAY))) {
-            TabsTrayUi(tabs)
+        Box(Modifier.background(AcornTheme.colors.layer1)) {
+            TabsTrayHost(Store(TabsTrayState(tabs = tabs), ::tabsTrayReducer))
+        }
+    }
+}
+
+@Preview
+@Composable
+fun AiSummariesPreview() {
+    AcornTheme {
+        Box(Modifier.background(AcornTheme.colors.layer1)) {
+            AiSummariesUi()
         }
     }
 }

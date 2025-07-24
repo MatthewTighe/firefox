@@ -249,9 +249,7 @@ class SecretSettingsFragment : PreferenceFragmentCompat() {
             onPreferenceChangeListener = SharedPreferenceUpdater()
         }
 
-        requirePreference<Preference>(R.string.pref_key_sample_feature).apply {
-            onPreferenceClickListener = findNavController().navigate()
-        }
+        requirePreference<Preference>(R.string.pref_key_sample_feature)
     }
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
@@ -261,6 +259,7 @@ class SecretSettingsFragment : PreferenceFragmentCompat() {
                     R.id.secretSettingsPreference,
                     SecretSettingsFragmentDirections.actionSecretSettingsFragmentToSponsoredStoriesSettings(),
                 )
+            getString(R.string.pref_key_sample_feature) -> findNavController().navigate(R.id.fragment_sample_feature_host)
         }
         return super.onPreferenceTreeClick(preference)
     }

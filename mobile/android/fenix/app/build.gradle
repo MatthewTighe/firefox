@@ -561,7 +561,7 @@ dependencies {
 
     implementation ComponentsDependencies.mozilla_appservices_syncmanager
 
-    implementation project(':fenix:tabs-tray')
+    implementation project(':app:tabs-tray')
     implementation project(':components:compose-awesomebar')
     implementation project(':components:compose-base')
     implementation project(':components:compose-browser-toolbar')

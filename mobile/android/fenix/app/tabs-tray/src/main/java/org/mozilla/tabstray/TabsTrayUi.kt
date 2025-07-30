@@ -3,6 +3,7 @@ package org.mozilla.tabstray
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Canvas
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +54,13 @@ interface BasicStore<S, A> {
     fun dispatch(action: A)
 }
 
+typealias Middleware<S, A> = (
+    getState: () -> S,
+    dispatch: (A) -> Unit,
+    action: A,
+    next: (A) -> Unit
+) -> Unit
+
 data class Tab(
     val id: String,
     val url: String,
@@ -91,6 +99,7 @@ sealed class TabsTrayAction {
     }
     // TODO how can we open a tab?
     data class TabClicked(val tab: Tab) : TabsTrayAction()
+    data object MiddlewareTestDispatch : TabsTrayAction()
 }
 
 fun tabsTrayReducer(state: TabsTrayState, action: TabsTrayAction): TabsTrayState =
@@ -103,6 +112,7 @@ fun tabsTrayReducer(state: TabsTrayState, action: TabsTrayAction): TabsTrayState
         TabsTrayAction.ThreeDotMenuAction.MenuClicked -> state.copy(threeDotMenuOpen = true)
         TabsTrayAction.ThreeDotMenuAction.MenuDismissed -> state.copy(threeDotMenuOpen = false)
         is TabsTrayAction.TabClicked -> state // No state change for now, will be handled by navigation.
+        TabsTrayAction.MiddlewareTestDispatch -> state.copy(tabs = state.tabs + Tab("test", "test", "test", createColoredBitmap(200, 150, Color.RED), TabsTrayMode.Normal))
     }
 
 private enum class Destinations(val route: String) {
@@ -271,7 +281,7 @@ val syncedTabs = normalTabs.map {
 
 val tabs = normalTabs + privateTabs + syncedTabs
 
-fun buildStore(): BasicStore<TabsTrayState, TabsTrayAction> = object : BasicStore<TabsTrayState, TabsTrayAction> {
+fun buildStore(middlewares: List<Middleware<TabsTrayState, TabsTrayAction>> = listOf()): BasicStore<TabsTrayState, TabsTrayAction> = object : BasicStore<TabsTrayState, TabsTrayAction> {
     private var _state = TabsTrayState(tabs = tabs)
         set(value) {
             field = value
@@ -284,8 +294,27 @@ fun buildStore(): BasicStore<TabsTrayState, TabsTrayAction> = object : BasicStor
     override val stateFlow: StateFlow<TabsTrayState> = _stateFlow
 
     override fun dispatch(action: TabsTrayAction) {
-        _state = tabsTrayReducer(_state, action)
+        // This creates a base case of invoking the reducer, and establishes a chain of invoking middleware
+        // using recursive lambdas.
+        middlewares.fold({ action: TabsTrayAction -> _state = tabsTrayReducer(state, action)} ) { next, middleware ->
+            { middleware({ state }, { dispatch(it) }, action, next) }
+        }.invoke(action)
+    }
+}
 
+class TestMiddleware : Middleware<TabsTrayState, TabsTrayAction> {
+    override fun invoke(
+        getState: () -> TabsTrayState,
+        dispatch: (TabsTrayAction) -> Unit,
+        action: TabsTrayAction,
+        next: (TabsTrayAction) -> Unit,
+    ) {
+        if (action is TabsTrayAction.ThreeDotMenuAction.MenuClicked) {
+            // this is to test that the dispatch function can be invoked without causing cyclic overflow
+            dispatch(TabsTrayAction.MiddlewareTestDispatch)
+        }
+        next(action)
+        Log.i("sample feature", "TestMiddleware: $action")
     }
 }
 

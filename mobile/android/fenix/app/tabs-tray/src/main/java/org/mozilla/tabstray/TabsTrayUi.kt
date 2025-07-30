@@ -65,7 +65,7 @@ data class Tab(
     val id: String,
     val url: String,
     val title: String,
-    val bitmap: Bitmap,
+    val bitmap: Bitmap?,
     val mode: TabsTrayMode
 )
 
@@ -205,7 +205,7 @@ fun TabItem(tab: Tab, modifier: Modifier) {
             Text(text = tab.title, fontSize = 16.sp, modifier = Modifier.padding(horizontal = 4.dp))
         }
         Image(
-            bitmap = tab.bitmap.asImageBitmap(),
+            bitmap = tab.bitmap?.asImageBitmap() ?: createColoredBitmap(200, 150, Color.GRAY).asImageBitmap(),
             contentDescription = "Thumbnail for ${tab.title}",
             modifier = Modifier.fillMaxWidth()
         )

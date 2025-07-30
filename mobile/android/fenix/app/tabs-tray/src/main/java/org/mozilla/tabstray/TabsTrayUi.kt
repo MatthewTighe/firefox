@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import mozilla.components.compose.base.theme.AcornTheme
@@ -50,7 +51,7 @@ import kotlin.collections.listOf
  */
 interface BasicStore<S, A> {
     val state: S
-    val stateFlow: StateFlow<S>
+    val stateFlow: Flow<S>
     fun dispatch(action: A)
 }
 
@@ -138,7 +139,7 @@ fun TabsTrayUi(
     store: BasicStore<TabsTrayState, TabsTrayAction>,
     navController: NavController,
 ) {
-    val state by store.stateFlow.collectAsState()
+    val state by store.stateFlow.collectAsState(store.state)
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier

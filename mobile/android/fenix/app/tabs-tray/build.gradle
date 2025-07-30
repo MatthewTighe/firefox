@@ -38,7 +38,6 @@ dependencies {
     implementation libs.androidx.compose.foundation
     implementation libs.androidx.compose.ui
     implementation project(':components:compose-base')
-    implementation project(':components:lib-state')
 
     debugImplementation libs.androidx.compose.ui.tooling
     testImplementation libs.junit4

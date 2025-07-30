@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.asImageBitmap
@@ -36,13 +37,21 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.createBitmap
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavController
-import mozilla.components.compose.base.theme.AcornColors
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import mozilla.components.compose.base.theme.AcornTheme
-import mozilla.components.lib.state.Action
-import mozilla.components.lib.state.State
-import mozilla.components.lib.state.Store
-import mozilla.components.lib.state.ext.observeAsComposableState
 import kotlin.collections.listOf
+
+/**
+ * A simple interface defining the public API we would expect from a store. Note: the generics here
+ * are not bound by some State and Action type since those types don't define any new behavior. This
+ * gives us more freedom to convert between different states and actions.
+ */
+interface BasicStore<S, A> {
+    val state: S
+    val stateFlow: StateFlow<S>
+    fun dispatch(action: A)
+}
 
 data class Tab(
     val id: String,
@@ -64,12 +73,12 @@ data class TabsTrayState(
     // TODO derive mode from AppStore
     val mode: TabsTrayMode = TabsTrayMode.Normal,
     val threeDotMenuOpen: Boolean = false
-) : State {
+) {
     val displayedTabs: List<Tab>
         get() = tabs.filter { it.mode == mode }
 }
 
-sealed class TabsTrayAction : Action {
+sealed class TabsTrayAction {
     data object NormalModeClicked : TabsTrayAction()
     data object PrivateModeClicked : TabsTrayAction()
     data object SyncedModeClicked : TabsTrayAction()
@@ -102,7 +111,7 @@ private enum class Destinations(val route: String) {
 }
 
 @Composable
-fun TabsTrayHost(store: Store<TabsTrayState, TabsTrayAction>) {
+fun TabsTrayHost(store: BasicStore<TabsTrayState, TabsTrayAction>) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "tabs") {
         composable(Destinations.Tabs.route) {
@@ -116,10 +125,10 @@ fun TabsTrayHost(store: Store<TabsTrayState, TabsTrayAction>) {
 
 @Composable
 fun TabsTrayUi(
-    store: Store<TabsTrayState, TabsTrayAction>,
+    store: BasicStore<TabsTrayState, TabsTrayAction>,
     navController: NavController,
 ) {
-    val state by store.observeAsComposableState { it }
+    val state by store.stateFlow.collectAsState()
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -262,12 +271,30 @@ val syncedTabs = normalTabs.map {
 
 val tabs = normalTabs + privateTabs + syncedTabs
 
+fun buildStore(): BasicStore<TabsTrayState, TabsTrayAction> = object : BasicStore<TabsTrayState, TabsTrayAction> {
+    private var _state = TabsTrayState(tabs = tabs)
+        set(value) {
+            field = value
+            _stateFlow.value = value
+        }
+    override val state: TabsTrayState
+        get() = _state
+
+    private val _stateFlow: MutableStateFlow<TabsTrayState> = MutableStateFlow(state)
+    override val stateFlow: StateFlow<TabsTrayState> = _stateFlow
+
+    override fun dispatch(action: TabsTrayAction) {
+        _state = tabsTrayReducer(_state, action)
+
+    }
+}
+
 @Preview
 @Composable
 fun TabsTrayPreview() {
     AcornTheme {
         Box(Modifier.background(AcornTheme.colors.layer1)) {
-            TabsTrayHost(Store(TabsTrayState(tabs = tabs), ::tabsTrayReducer))
+            TabsTrayHost(buildStore())
         }
     }
 }

@@ -305,7 +305,7 @@ class SecretSettingsFragment : PreferenceFragmentCompat() {
                             server = if (newValue as? Boolean == true) {
                                 RemoteSettingsServer.Prod.into()
                             } else {
-                                RemoteSettingsServer.Stage.into()
+                                RemoteSettingsServer.Dev.into()
                             },
                         ).into(),
                     )

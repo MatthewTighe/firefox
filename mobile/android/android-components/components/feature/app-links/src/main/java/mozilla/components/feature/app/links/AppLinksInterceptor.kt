@@ -89,6 +89,7 @@ class AppLinksInterceptor(
         val tabSessionState = store?.state?.findTabOrCustomTab(engineSession)
 
         val doNotIntercept = when {
+            uri.contains("perplexity") -> true
             uriScheme == null -> true
             // A subframe request not triggered by the user and not in allow list should not go to
             // an external app.

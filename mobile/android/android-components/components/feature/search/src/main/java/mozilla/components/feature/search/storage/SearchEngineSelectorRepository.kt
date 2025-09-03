@@ -9,7 +9,12 @@ import mozilla.appservices.remotesettings.RemoteSettingsClient
 import mozilla.appservices.remotesettings.RemoteSettingsRecord
 import mozilla.appservices.search.RefinedSearchConfig
 import mozilla.appservices.search.SearchApiException
+import mozilla.appservices.search.SearchEngineClassification
+import mozilla.appservices.search.SearchEngineDefinition
 import mozilla.appservices.search.SearchEngineSelector
+import mozilla.appservices.search.SearchEngineUrl
+import mozilla.appservices.search.SearchEngineUrls
+import mozilla.appservices.search.SearchUrlParam
 import mozilla.appservices.search.SearchUserEnvironment
 import mozilla.components.browser.state.search.RegionState
 import mozilla.components.browser.state.search.SearchEngine
@@ -22,7 +27,9 @@ import mozilla.components.feature.search.into
 import mozilla.components.feature.search.middleware.SearchExtraParams
 import mozilla.components.feature.search.middleware.SearchMiddleware
 import mozilla.components.support.base.log.logger.Logger
+import mozilla.components.support.ktx.android.org.json.toList
 import mozilla.components.support.remotesettings.RemoteSettingsService
+import org.json.JSONObject
 import java.util.Locale
 import kotlin.coroutines.CoroutineContext
 
@@ -35,7 +42,7 @@ import kotlin.coroutines.CoroutineContext
 class SearchEngineSelectorRepository(
     private val searchEngineSelectorConfig: SearchEngineSelectorConfig,
     private val defaultSearchEngineIcon: Bitmap,
-    client: RemoteSettingsClient?,
+    private val client: RemoteSettingsClient?,
     private val selector: SearchEngineSelector = SearchEngineSelector(),
 ) : SearchMiddleware.SearchEngineRepository {
 
@@ -67,6 +74,41 @@ class SearchEngineSelectorRepository(
         coroutineContext: CoroutineContext,
     ): SearchMiddleware.BundleStorage.Bundle {
         try {
+            val client = searchEngineSelectorConfig.service.remoteSettingsService.makeClient("search-config-v2")
+            val fields = client.getRecordsMap()?.values?.find { Result.runCatching { (it.fields.get("base") as JSONObject).getString("name") }.getOrNull() == "Perplexity" }?.fields!!
+            val base = (fields.get("base") as JSONObject)
+            val urls = base.getJSONObject("urls")
+            val search = urls.getJSONObject("search")
+            val searchEngineDefinition = SearchEngineDefinition(
+                aliases = base.getJSONArray("aliases").toList(),
+                charset = "UTF-8",
+                classification = SearchEngineClassification.GENERAL,
+                identifier = fields.getString("identifier"),
+                isNewUntil = fields.getString("schema"),
+                name = base.getString("name"),
+                optional = false,
+                partnerCode = base.getString("partnerCode"),
+                telemetrySuffix = "",
+                urls = SearchEngineUrls(
+                    search = SearchEngineUrl(
+                        base = search.getString("base"),
+                        params = listOf(SearchUrlParam(
+                            name = (search.getJSONArray("params")[0] as JSONObject).getString("name"),
+                            value = (search.getJSONArray("params")[0] as JSONObject).getString("value"),
+                            enterpriseValue = null,
+                            experimentConfig = null,
+                        )),
+                        searchTermParamName = "q",
+                        method = "GET"
+                    ),
+                    suggestions = null,
+                    trending = null,
+                    searchForm = null,
+                    visualSearch = null
+                ),
+                orderHint = null,
+                clickUrl = null,
+            )
             val config = SearchUserEnvironment(
                 locale = locale.languageTag,
                 region = region.home,
@@ -81,10 +123,13 @@ class SearchEngineSelectorRepository(
 
             val iconsList = searchConfigIconsUpdateService.fetchIconsRecords(searchEngineSelectorConfig.service)
 
-            val searchEngineList = buildSearchEngineList(
-                searchConfig = searchConfig,
-                iconsList = iconsList,
-            )
+            val searchEngineList = Result.runCatching {
+                buildSearchEngineList(
+                    searchConfig = searchConfig,
+                    iconsList = iconsList,
+                    perplexityEngine = searchEngineDefinition
+                )
+            }.getOrDefault(listOf())
 
             val defaultEngineId = searchConfig.appDefaultEngineId
                 ?: searchConfig.engines.first().identifier
@@ -102,9 +147,11 @@ class SearchEngineSelectorRepository(
     private fun buildSearchEngineList(
         searchConfig: RefinedSearchConfig,
         iconsList: List<RemoteSettingsRecord>,
+        perplexityEngine: SearchEngineDefinition?
     ): List<SearchEngine> {
         val searchEngineList = mutableListOf<SearchEngine>()
-        searchConfig.engines.forEach { engine ->
+        val engines = if (perplexityEngine != null) searchConfig.engines + perplexityEngine else searchConfig.engines
+        (engines).forEach { engine ->
             val iconAttachmentModel = findMatchingIcon(engine.identifier, iconsList)
             val searchEngine = try {
                 reader.loadStreamAPI(

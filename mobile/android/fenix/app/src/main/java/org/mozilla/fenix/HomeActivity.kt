@@ -44,12 +44,18 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import mozilla.appservices.places.BookmarkRoot
 import mozilla.components.browser.state.action.MediaSessionAction
 import mozilla.components.browser.state.action.SearchAction
@@ -346,6 +352,26 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity {
     }
 
     final override fun onCreate(savedInstanceState: Bundle?) {
+
+        val flow = flowOf(1, 2, 3, 4, 5)
+
+        println("tighe runblocking ${Thread.currentThread()}")
+        CoroutineScope(Dispatchers.Main).launch {
+            println("tighe launch ${Thread.currentThread()}")
+            flow
+                .map {
+                    println("tighe map ${Thread.currentThread()}")
+                    it * 2
+                }
+                .flowOn(Dispatchers.Main)
+                .collect {
+                    println("tighe collect ${Thread.currentThread()}")
+                    withContext(Dispatchers.Default) {
+                        println("tighe withContext ${Thread.currentThread()} - $it")
+                    }
+                }
+        }
+
         if (StartupCrashCanary.build(applicationContext).startupCrashDetected) {
             super.onCreate(savedInstanceState)
             val startupCrashIntent =

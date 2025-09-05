@@ -9,8 +9,16 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import mozilla.appservices.places.BookmarkRoot
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.storage.BookmarkInfo
@@ -93,6 +101,26 @@ class BookmarksMiddlewareTest {
         getBrowsingMode = { BrowsingMode.Normal }
         lastSavedFolderCache = mock()
         saveSortOrder = { }
+    }
+
+    @Test
+    fun `with context works`() = runBlocking {
+        val flow = flowOf(1, 2, 3, 4, 5)
+
+        CoroutineScope(Dispatchers.Main).launch {
+            flow
+                .map {
+                    println("map ${Thread.currentThread()}")
+                    it * 2
+                }
+                .flowOn(Dispatchers.Main)
+                .collect {
+                    println("collect ${Thread.currentThread()}")
+                    withContext(Dispatchers.Default) {
+                        println("withContext ${Thread.currentThread()} - $it")
+                    }
+                }
+        }.join()
     }
 
     @Test

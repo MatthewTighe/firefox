@@ -441,7 +441,7 @@ internal class BookmarksMiddleware(
         }
     }
 
-    private fun BookmarkNode.childItems(): List<BookmarkItem> = this.children
+    private suspend fun BookmarkNode.childItems(): List<BookmarkItem> = this.children
         ?.mapNotNull { node ->
             Result.runCatching {
                 when (node.type) {
@@ -459,6 +459,7 @@ internal class BookmarksMiddleware(
                         dateAdded = node.dateAdded,
                         guid = node.guid,
                         position = node.position,
+                        nestedItemCount = bookmarksStorage.countBookmarksInTrees(listOf(node.guid)),
                     )
 
                     BookmarkNodeType.SEPARATOR -> null
@@ -505,7 +506,7 @@ internal class BookmarksMiddleware(
         return urls
     }
 
-    private fun collectFolders(
+    private suspend fun collectFolders(
         node: BookmarkNode,
         comparator: Comparator<BookmarkItem>,
         indentation: Int = 0,

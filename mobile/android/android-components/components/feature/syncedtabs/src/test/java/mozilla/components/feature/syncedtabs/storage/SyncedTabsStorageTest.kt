@@ -24,13 +24,13 @@ import mozilla.components.service.fxa.SyncEngine
 import mozilla.components.service.fxa.manager.FxaAccountManager
 import mozilla.components.service.fxa.sync.SyncReason
 import mozilla.components.support.test.any
+import mozilla.components.support.test.argumentCaptor
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
 import mozilla.components.support.test.whenever
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito.doReturn
@@ -248,7 +248,6 @@ class SyncedTabsStorageTest {
     }
 
     @Test
-    @Ignore("non-deterministic")
     fun `tabs are stored when loaded`() = runTestOnMain {
         val store = BrowserStore(
             BrowserState(
@@ -259,24 +258,36 @@ class SyncedTabsStorageTest {
                 selectedTabId = "tab1",
             ),
         )
-        val feature = spy(
-            SyncedTabsStorage(
-                accountManager,
-                store,
-                tabsStorage,
-                0,
-                debounceMillis = 0,
-            ),
+        val feature = SyncedTabsStorage(
+            accountManager,
+            store,
+            tabsStorage,
+            0,
+            debounceMillis = 0,
         )
         feature.start()
 
         // Tabs are only stored when initial state is collected, since they are already loaded
-        verify(tabsStorage, times(1)).store(
-            listOf(
-                Tab(history = listOf(TabEntry(title = "", url = "https://www.mozilla.org", iconUrl = null)), active = 0, lastUsed = 123L, true),
-                Tab(history = listOf(TabEntry(title = "", url = "https://www.foo.bar", iconUrl = null)), active = 0, lastUsed = 124L, true),
+        val expectedTabs = listOf(
+            Tab(
+                history = listOf(TabEntry(title = "", url = "https://www.mozilla.org", iconUrl = null)),
+                active = 0,
+                lastUsed = 123L,
+                inactive = false,
+            ),
+            Tab(
+                history = listOf(TabEntry(title = "", url = "https://www.foo.bar", iconUrl = null)),
+                active = 0,
+                lastUsed = 124L,
+                inactive = false,
             ),
         )
+        val actualTabsCaptor = argumentCaptor<List<Tab>>()
+        verify(tabsStorage, times(1)).store(actualTabsCaptor.capture())
+        val actualTabs = actualTabsCaptor.value
+        assertEquals(expectedTabs.size, actualTabs.size)
+        assertTabSame(expectedTabs[0], actualTabs[0])
+        assertTabSame(expectedTabs[1], actualTabs[1])
 
         // Change a tab besides loading it
         store.dispatch(ContentAction.UpdateProgressAction("tab1", 50))
@@ -297,14 +308,12 @@ class SyncedTabsStorageTest {
                 selectedTabId = "tab1",
             ),
         )
-        val feature = spy(
-            SyncedTabsStorage(
-                accountManager,
-                store,
-                tabsStorage,
-                0,
-                debounceMillis = 0,
-            ),
+        val feature = SyncedTabsStorage(
+            accountManager,
+            store,
+            tabsStorage,
+            0,
+            debounceMillis = 0,
         )
         feature.start()
 
@@ -328,14 +337,12 @@ class SyncedTabsStorageTest {
                 selectedTabId = "tab1",
             ),
         )
-        val feature = spy(
-            SyncedTabsStorage(
-                accountManager,
-                store,
-                tabsStorage,
-                System.currentTimeMillis() * 2,
-                debounceMillis = 0,
-            ),
+        val feature = SyncedTabsStorage(
+            accountManager,
+            store,
+            tabsStorage,
+            System.currentTimeMillis() * 2,
+            debounceMillis = 0,
         )
         feature.start()
 
@@ -350,7 +357,6 @@ class SyncedTabsStorageTest {
     }
 
     @Test
-    @Ignore("non-deterministic")
     fun `tabs are stored when lastAccessed is changed for any tab`() = runTestOnMain {
         val store = BrowserStore(
             BrowserState(
@@ -361,34 +367,73 @@ class SyncedTabsStorageTest {
                 selectedTabId = "tab1",
             ),
         )
-        val feature = spy(
-            SyncedTabsStorage(
-                accountManager,
-                store,
-                tabsStorage,
-                0,
-                debounceMillis = 0,
-            ),
+        val feature = SyncedTabsStorage(
+            accountManager,
+            store,
+            tabsStorage,
+            0,
+            debounceMillis = 0,
         )
         feature.start()
 
+        val expectedTabs = listOf(
+            Tab(
+                history = listOf(TabEntry(title = "", url = "https://www.mozilla.org", iconUrl = null)),
+                active = 0,
+                lastUsed = 123L,
+                inactive = false,
+            ),
+            Tab(
+                history = listOf(TabEntry(title = "", url = "https://www.foo.bar", iconUrl = null)),
+                active = 0,
+                lastUsed = 124L,
+                inactive = false,
+            ),
+        )
+        val actualTabsCaptor = argumentCaptor<List<Tab>>()
+
         store.dispatch(LastAccessAction.UpdateLastAccessAction("tab1", 300L))
 
-        verify(tabsStorage, times(1)).store(
-            listOf(
-                Tab(history = listOf(TabEntry(title = "", url = "https://www.mozilla.org", iconUrl = null)), active = 0, lastUsed = 123L, true),
-                Tab(history = listOf(TabEntry(title = "", url = "https://www.foo.bar", iconUrl = null)), active = 0, lastUsed = 124L, true),
+        verify(tabsStorage, times(2)).store(actualTabsCaptor.capture())
+
+        val actualTabs = actualTabsCaptor.allValues[0]
+        assertEquals(expectedTabs.size, actualTabs.size)
+        assertTabSame(expectedTabs[0], actualTabs[0])
+        assertTabSame(expectedTabs[1], actualTabs[1])
+
+        val expectedTabs2 = listOf(
+            Tab(
+                history = listOf(TabEntry(title = "", url = "https://www.mozilla.org", iconUrl = null)),
+                active = 0,
+                lastUsed = 300L,
+                inactive = false,
+            ),
+            Tab(
+                history = listOf(TabEntry(title = "", url = "https://www.foo.bar", iconUrl = null)),
+                active = 0,
+                lastUsed = 124L,
+                inactive = false,
             ),
         )
-        verify(tabsStorage, times(1)).store(
-            listOf(
-                Tab(history = listOf(TabEntry(title = "", url = "https://www.mozilla.org", iconUrl = null)), active = 0, lastUsed = 300L, true),
-                Tab(history = listOf(TabEntry(title = "", url = "https://www.foo.bar", iconUrl = null)), active = 0, lastUsed = 124L, true),
-            ),
-        )
+        val actualTabs2 = actualTabsCaptor.allValues[1]
+        assertEquals(expectedTabs2.size, actualTabs2.size)
+        assertTabSame(expectedTabs2[0], actualTabs2[0])
+        assertTabSame(expectedTabs2[1], actualTabs2[1])
     }
 
     private fun createUnloadedTab(id: String, url: String, lastAccess: Long) = createTab(id = id, url = url, lastAccess = lastAccess).run {
         copy(content = this.content.copy(loading = true))
+    }
+
+    /**
+     * This compares everything about the tab except the transient "inactive" state.
+     */
+    private fun assertTabSame(
+        expectedTab: Tab,
+        actualTab: Tab,
+    ) {
+        assertEquals(expectedTab.history, actualTab.history)
+        assertEquals(expectedTab.active, actualTab.active)
+        assertEquals(expectedTab.lastUsed, actualTab.lastUsed)
     }
 }

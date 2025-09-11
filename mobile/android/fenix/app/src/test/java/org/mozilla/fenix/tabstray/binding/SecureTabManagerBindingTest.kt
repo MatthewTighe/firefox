@@ -10,7 +10,6 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Before
 import org.junit.Rule
@@ -48,7 +47,6 @@ class SecureTabManagerBindingTest {
 
         secureTabManagerBinding.start()
         tabsTrayStore.dispatch(TabsTrayAction.PageSelected(Page.PrivateTabs))
-        tabsTrayStore.waitUntilIdle()
 
         verify { fragment.secure() }
     }
@@ -65,7 +63,6 @@ class SecureTabManagerBindingTest {
 
         secureTabManagerBinding.start()
         tabsTrayStore.dispatch(TabsTrayAction.PageSelected(Page.NormalTabs))
-        tabsTrayStore.waitUntilIdle()
 
         verify { fragment.removeSecure() }
     }
@@ -82,7 +79,6 @@ class SecureTabManagerBindingTest {
 
         secureTabManagerBinding.start()
         tabsTrayStore.dispatch(TabsTrayAction.PageSelected(Page.NormalTabs))
-        tabsTrayStore.waitUntilIdle()
 
         verify(exactly = 0) { fragment.removeSecure() }
     }
@@ -99,7 +95,6 @@ class SecureTabManagerBindingTest {
 
         secureTabManagerBinding.start()
         tabsTrayStore.dispatch(TabsTrayAction.PageSelected(Page.NormalTabs))
-        tabsTrayStore.waitUntilIdle()
         secureTabManagerBinding.stop()
 
         verify { fragment.removeSecure() }

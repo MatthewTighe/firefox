@@ -20,7 +20,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.sync.DeviceType
 import mozilla.components.feature.tabs.TabsUseCases
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertEquals
@@ -104,7 +103,6 @@ class DefaultRecentSyncedTabControllerTest {
 
         controller.handleRecentSyncedTabClick(tab)
 
-        store.waitUntilIdle()
         assertNotEquals(nonSyncId, store.state.selectedTabId)
         assertEquals(2, store.state.tabs.size)
         verify { navController.navigate(R.id.browserFragment) }
@@ -170,7 +168,6 @@ class DefaultRecentSyncedTabControllerTest {
 
         controller.handleRecentSyncedTabClick(tab)
 
-        store.waitUntilIdle()
         assertEquals(syncId, store.state.selectedTabId)
         assertEquals(2, store.state.tabs.size)
         verify { navController.navigate(R.id.browserFragment) }

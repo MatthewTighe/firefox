@@ -13,7 +13,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.support.test.any
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.whenever
@@ -61,7 +60,6 @@ class CustomTabsUseCasesTest {
         assertEquals(1, store.state.customTabs.size)
 
         tabsUseCases.migrate(customTab.id, select = false)
-        store.waitUntilIdle()
 
         assertEquals(1, store.state.tabs.size)
         assertEquals(0, store.state.customTabs.size)
@@ -73,7 +71,6 @@ class CustomTabsUseCasesTest {
         assertEquals(1, store.state.customTabs.size)
 
         tabsUseCases.migrate(otherCustomTab.id, select = true)
-        store.waitUntilIdle()
 
         assertEquals(2, store.state.tabs.size)
         assertEquals(0, store.state.customTabs.size)

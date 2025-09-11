@@ -26,7 +26,6 @@ import mozilla.components.concept.engine.EngineSessionState
 import mozilla.components.concept.storage.HistoryMetadataKey
 import mozilla.components.support.test.any
 import mozilla.components.support.test.argumentCaptor
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.whenever
@@ -85,7 +84,6 @@ class TabsUseCasesTest {
         assertEquals(otherTab, store.state.selectedTab)
 
         tabsUseCases.selectTab(tab.id)
-        store.waitUntilIdle()
         assertEquals(tab.id, store.state.selectedTabId)
         assertEquals(tab, store.state.selectedTab)
     }
@@ -97,7 +95,6 @@ class TabsUseCasesTest {
         assertEquals(1, store.state.tabs.size)
 
         tabsUseCases.removeTab(tab.id)
-        store.waitUntilIdle()
         assertEquals(0, store.state.tabs.size)
     }
 
@@ -112,7 +109,6 @@ class TabsUseCasesTest {
         assertEquals(tab.id, store.state.selectedTabId)
 
         tabsUseCases.removeTab(tab.id, selectParentIfExists = true)
-        store.waitUntilIdle()
         assertEquals(1, store.state.tabs.size)
         assertEquals(parentTab.id, store.state.selectedTabId)
     }
@@ -128,7 +124,6 @@ class TabsUseCasesTest {
         assertEquals(otherTab, store.state.selectedTab)
 
         tabsUseCases.removeTabs(listOf(tab.id, otherTab.id))
-        store.waitUntilIdle()
         assertEquals(0, store.state.tabs.size)
     }
 
@@ -136,7 +131,6 @@ class TabsUseCasesTest {
     fun `AddNewTabUseCase - session will be added to store`() {
         tabsUseCases.addTab("https://www.mozilla.org")
 
-        store.waitUntilIdle()
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
         assertFalse(store.state.tabs[0].content.private)
@@ -146,7 +140,6 @@ class TabsUseCasesTest {
     fun `AddNewTabUseCase - private session will be added to store`() {
         tabsUseCases.addTab("https://www.mozilla.org", private = true)
 
-        store.waitUntilIdle()
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
         assertTrue(store.state.tabs[0].content.private)
@@ -156,7 +149,6 @@ class TabsUseCasesTest {
     fun `AddNewTabUseCase will not load URL if flag is set to false`() {
         tabsUseCases.addTab("https://www.mozilla.org", startLoading = false)
 
-        store.waitUntilIdle()
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
         verify(engineSession, never()).loadUrl(anyString(), any(), any(), any(), any(), anyBoolean())
@@ -167,11 +159,9 @@ class TabsUseCasesTest {
         tabsUseCases.addTab("https://www.mozilla.org", startLoading = true)
 
         // Wait for CreateEngineSessionAction and middleware
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         // Wait for LinkEngineSessionAction and middleware
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, store.state.tabs.size)
@@ -189,11 +179,9 @@ class TabsUseCasesTest {
         )
 
         // Wait for CreateEngineSessionAction and middleware
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         // Wait for LinkEngineSessionAction and middleware
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, store.state.tabs.size)
@@ -211,8 +199,6 @@ class TabsUseCasesTest {
             engineSession = session,
         )
 
-        store.waitUntilIdle()
-
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
         assertSame(session, store.state.tabs[0].engineState.engineSession)
@@ -228,8 +214,6 @@ class TabsUseCasesTest {
             contextId = contextId,
         )
 
-        store.waitUntilIdle()
-
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
         assertEquals(contextId, store.state.tabs[0].contextId)
@@ -244,8 +228,6 @@ class TabsUseCasesTest {
             startLoading = true,
             title = title,
         )
-
-        store.waitUntilIdle()
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
@@ -267,8 +249,6 @@ class TabsUseCasesTest {
             historyMetadata = historyMetadata,
         )
 
-        store.waitUntilIdle()
-
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
         assertEquals(historyMetadata, store.state.tabs[0].historyMetadata)
@@ -281,8 +261,6 @@ class TabsUseCasesTest {
             flags = LoadUrlFlags.external(),
             isSearch = true,
         )
-
-        store.waitUntilIdle()
 
         assertEquals(1, store.state.tabs.size)
         assertEquals(true, store.state.tabs.single().content.isSearch)
@@ -300,8 +278,6 @@ class TabsUseCasesTest {
             isSearch = true,
             additionalHeaders = additionalHeaders,
         )
-
-        store.waitUntilIdle()
 
         assertEquals(1, store.state.tabs.size)
         assertTrue(store.state.tabs.single().content.isSearch)
@@ -321,7 +297,6 @@ class TabsUseCasesTest {
     @Test
     fun `GIVEN a tab is added with a parent loadURL will include the parent`() {
         val parentTabId = tabsUseCases.addTab(url = "https://www.firefox.com", selectTab = true)
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         verify(engineSession, times(1)).loadUrl(
@@ -335,7 +310,6 @@ class TabsUseCasesTest {
 
         tabsUseCases.addTab(url = "https://www.mozilla.org", parentId = parentTabId)
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(2, store.state.tabs.size)
@@ -358,7 +332,6 @@ class TabsUseCasesTest {
         assertEquals(2, store.state.tabs.size)
 
         tabsUseCases.removeAllTabs()
-        store.waitUntilIdle()
         assertEquals(0, store.state.tabs.size)
     }
 
@@ -373,11 +346,9 @@ class TabsUseCasesTest {
         assertEquals(2, store.state.tabs.size)
 
         tabsUseCases.removeNormalTabs()
-        store.waitUntilIdle()
         assertEquals(1, store.state.tabs.size)
 
         tabsUseCases.removePrivateTabs()
-        store.waitUntilIdle()
         assertEquals(0, store.state.tabs.size)
     }
 
@@ -430,8 +401,6 @@ class TabsUseCasesTest {
             tabTimeoutInMs = DAY_IN_MS,
         )
 
-        store.waitUntilIdle()
-
         assertEquals(restoredTabs.first().id, store.state.tabs.first().id)
         assertEquals(newTab.id, store.state.tabs.last().id)
     }
@@ -449,8 +418,6 @@ class TabsUseCasesTest {
         assertEquals(2, store.state.tabs.size)
 
         val tabID = tabsUseCases.selectOrAddTab(tab.content.url)
-        store.waitUntilIdle()
-
         assertEquals(2, store.state.tabs.size)
         assertEquals(tab.id, store.state.selectedTabId)
         assertEquals(tab, store.state.selectedTab)
@@ -475,8 +442,6 @@ class TabsUseCasesTest {
         assertEquals(2, store.state.tabs.size)
 
         val tabID = tabsUseCases.selectOrAddTab(tab.content.url, historyMetadata = historyMetadata)
-        store.waitUntilIdle()
-
         assertEquals(2, store.state.tabs.size)
         assertEquals(tab.id, store.state.selectedTabId)
         assertEquals(tab, store.state.selectedTab)
@@ -494,7 +459,6 @@ class TabsUseCasesTest {
         assertEquals(1, store.state.tabs.size)
 
         val tabID = tabsUseCases.selectOrAddTab("https://firefox.com")
-        store.waitUntilIdle()
 
         assertEquals(2, store.state.tabs.size)
         assertNotNull(store.state.findNormalOrPrivateTabByUrl("https://firefox.com", false))
@@ -517,7 +481,6 @@ class TabsUseCasesTest {
 
         val tabID =
             tabsUseCases.selectOrAddTab("https://firefox.com", historyMetadata = historyMetadata)
-        store.waitUntilIdle()
 
         assertEquals(2, store.state.tabs.size)
         assertNotNull(store.state.findNormalOrPrivateTabByUrl("https://firefox.com", false))
@@ -536,8 +499,6 @@ class TabsUseCasesTest {
         assertEquals(2, store.state.tabs.size)
 
         val actualTabId = tabsUseCases.selectOrAddTab(url = "https://mozilla.org/#welcome", ignoreFragment = true)
-        store.waitUntilIdle()
-
         assertEquals(2, store.state.tabs.size)
         assertEquals(tab, store.state.selectedTab)
         assertEquals(store.state.selectedTabId, actualTabId)
@@ -554,8 +515,6 @@ class TabsUseCasesTest {
         assertEquals(1, store.state.tabs.size)
 
         val tabID = tabsUseCases.selectOrAddTab(url = "https://firefox.com", ignoreFragment = true)
-        store.waitUntilIdle()
-
         assertEquals(2, store.state.tabs.size)
         assertEquals(store.state.selectedTabId, tabID)
     }
@@ -565,8 +524,6 @@ class TabsUseCasesTest {
         assertEquals(false, store.state.desktopMode)
 
         val tabID = tabsUseCases.selectOrAddTab(url = "https://firefox.com")
-        store.waitUntilIdle()
-
         assertEquals(store.state.selectedTabId, tabID)
         assertEquals(false, store.state.selectedTab?.content?.desktopMode)
     }
@@ -577,8 +534,6 @@ class TabsUseCasesTest {
         assertEquals(true, store.state.desktopMode)
 
         val tabID = tabsUseCases.selectOrAddTab(url = "https://firefox.com")
-        store.waitUntilIdle()
-
         assertEquals(store.state.selectedTabId, tabID)
         assertEquals(true, store.state.selectedTab?.content?.desktopMode)
     }
@@ -608,7 +563,6 @@ class TabsUseCasesTest {
 
         val tab = store.state.findTab("mozilla")!!
         val dupId = tabsUseCases.duplicateTab.invoke(tab)
-        store.waitUntilIdle()
 
         assertEquals(2, store.state.tabs.size)
         assertEquals(dupId, store.state.tabs[1].id)
@@ -625,7 +579,6 @@ class TabsUseCasesTest {
         val tab = createTab(id = "mozilla", url = "https://www.mozilla.org", private = true)
         store.dispatch(TabListAction.AddTabAction(tab))
         tabsUseCases.duplicateTab.invoke(tab)
-        store.waitUntilIdle()
 
         assertEquals(2, store.state.tabs.size)
         assertTrue(store.state.tabs[0].content.private)
@@ -637,7 +590,6 @@ class TabsUseCasesTest {
         val tab = createTab(id = "mozilla", url = "https://www.mozilla.org", contextId = "work")
         store.dispatch(TabListAction.AddTabAction(tab))
         tabsUseCases.duplicateTab.invoke(tab)
-        store.waitUntilIdle()
 
         assertEquals(2, store.state.tabs.size)
         assertEquals("work", store.state.tabs[0].contextId)
@@ -649,7 +601,6 @@ class TabsUseCasesTest {
         var tab = createTab(url = "https://www.mozilla.org")
         store.dispatch(TabListAction.AddTabAction(tab))
         var dupId = tabsUseCases.duplicateTab.invoke(selectNewTab = true)!!
-        store.waitUntilIdle()
 
         assertEquals(2, store.state.tabs.size)
         assertNotNull(dupId)
@@ -659,7 +610,6 @@ class TabsUseCasesTest {
 
         tab = dup
         dupId = tabsUseCases.duplicateTab.invoke(selectNewTab = false)!!
-        store.waitUntilIdle()
 
         assertEquals(3, store.state.tabs.size)
         assertNotNull(dupId)
@@ -681,7 +631,6 @@ class TabsUseCasesTest {
         val tab1Id = store.state.tabs[0].id
         val tab2Id = store.state.tabs[1].id
         tabsUseCases.moveTabs(listOf(tab1Id), tab2Id, true)
-        store.waitUntilIdle()
         assertEquals("https://firefox.com", store.state.tabs[0].content.url)
         assertEquals("https://mozilla.org", store.state.tabs[1].content.url)
     }
@@ -694,7 +643,6 @@ class TabsUseCasesTest {
         assertEquals(true, store.state.tabs[0].content.private)
 
         tabsUseCases.migratePrivateTabUseCase(tab.id)
-        store.waitUntilIdle()
         // Still only 1 tab and that tab still has the same URL...
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://mozilla.org", store.state.tabs[0].content.url)
@@ -710,7 +658,6 @@ class TabsUseCasesTest {
         store.dispatch(TabListAction.AddTabAction(tab))
 
         tabsUseCases.migratePrivateTabUseCase(store.state.tabs[0].id, "https://mozilla.org/not-reader-mode")
-        store.waitUntilIdle()
         // Still only 1 tab with our alternative URL
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://mozilla.org/not-reader-mode", store.state.tabs[0].content.url)

@@ -19,7 +19,6 @@ import mozilla.components.concept.storage.BookmarkNodeType
 import mozilla.components.concept.storage.BookmarksStorage
 import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.test.any
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -130,7 +129,6 @@ class BookmarksMiddlewareTest {
         val store = middleware.makeStore()
         `when`(bookmarksStorage.countBookmarksInTrees(store.state.bookmarkItems.map { it.guid })).thenReturn(35u)
         store.dispatch(BookmarksListMenuAction.SelectAll)
-        store.waitUntilIdle()
         assertEquals(store.state.selectedItems.size, store.state.bookmarkItems.size)
         assertEquals(35, store.state.recursiveSelectedCount)
     }
@@ -220,7 +218,6 @@ class BookmarksMiddlewareTest {
 
         val store = middleware.makeStore()
         store.dispatch(BookmarksListMenuAction.SortMenu.NewestClicked)
-        store.waitUntilIdle()
         assertEquals(BookmarksListSortOrder.Created(true), newSortOrder)
     }
 
@@ -366,10 +363,7 @@ class BookmarksMiddlewareTest {
         val store = BookmarksStore(
             initialState = BookmarksState.default,
             middleware = listOf(middleware, captorMiddleware),
-        ).also {
-            it.waitUntilIdle()
-        }
-
+        )
         store.dispatch(SearchClicked)
 
         assertFalse(navigated)
@@ -464,7 +458,6 @@ class BookmarksMiddlewareTest {
         store.dispatch(AddFolderClicked)
         store.dispatch(AddFolderAction.TitleChanged(newFolderTitle))
         store.dispatch(BackClicked)
-        store.waitUntilIdle()
 
         assertNull(store.state.bookmarksSelectFolderState)
         verify(bookmarksStorage, times(1)).getTree(BookmarkRoot.Mobile.id, recursive = true)
@@ -483,7 +476,6 @@ class BookmarksMiddlewareTest {
         store.dispatch(AddFolderClicked)
         store.dispatch(AddFolderAction.TitleChanged("i'm a new folder"))
         store.dispatch(BackClicked)
-        store.waitUntilIdle()
 
         verify(bookmarksStorage, times(2)).getTree(BookmarkRoot.Mobile.id, recursive = false)
         verify(navController, times(1)).popBackStack()
@@ -745,10 +737,8 @@ class BookmarksMiddlewareTest {
         )
         `when`(bookmarksStorage.countBookmarksInTrees(anyList())).thenReturn(0u)
         store.dispatch(BookmarksListMenuAction.SelectAll)
-        store.waitUntilIdle()
         val bookmarkCount = store.state.selectedItems.size
         store.dispatch(BookmarksListMenuAction.MultiSelect.OpenInNormalTabsClicked)
-        store.waitUntilIdle()
         assertEquals(bookmarkCount, store.state.bookmarksSelectFolderState?.folders?.count())
     }
 
@@ -1612,9 +1602,7 @@ class BookmarksMiddlewareTest {
         initialState = initialState,
         middleware = listOf(this),
         bookmarkToLoad = bookmarkToLoad,
-    ).also {
-        it.waitUntilIdle()
-    }
+    )
 
     private fun generateBookmarkFolders(parentGuid: String) = List(5) {
         generateBookmarkFolder(

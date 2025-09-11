@@ -32,7 +32,6 @@ import mozilla.components.concept.engine.EngineSession.LoadUrlFlags
 import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.lib.state.MiddlewareContext
 import mozilla.components.lib.state.Store
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.telemetry.glean.testing.GleanTestRule
@@ -235,7 +234,6 @@ class FenixSearchMiddlewareTest {
 
         store.dispatch(SearchFragmentAction.UpdateQuery("test"))
         store.dispatch(SearchStarted(null, wasEngineSelectedByUser, isSearchInPrivateMode, false))
-        store.waitUntilIdle()
 
         verify { engine.speculativeCreateSession(isSearchInPrivateMode) }
         assertEquals(expectedSearchSuggestionsProvider, middleware.suggestionsProvidersBuilder)
@@ -557,7 +555,6 @@ class FenixSearchMiddlewareTest {
         every { middleware.buildSearchSuggestionsProvider(any()) } returns mockk(relaxed = true)
 
         val store = buildStore(middleware)
-        store.waitUntilIdle()
 
         return middleware to store
     }

@@ -11,7 +11,6 @@ import mozilla.components.browser.state.state.ContentState
 import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.browser.state.state.content.DownloadState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -62,8 +61,6 @@ class DownloadStatusBindingTest {
         browserStore.dispatch(
             DownloadAction.UpdateDownloadAction(download),
         )
-
-        browserStore.waitUntilIdle()
 
         verify(appStore).dispatch(
             AppAction.MenuNotification.AddMenuNotification(

@@ -7,7 +7,6 @@ package mozilla.components.browser.state.engine
 import android.content.Intent
 import android.view.WindowManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.test.runTest
 import mozilla.components.browser.state.action.BrowserAction
 import mozilla.components.browser.state.action.ContentAction
@@ -43,7 +42,6 @@ import mozilla.components.concept.engine.translate.TranslationOperation
 import mozilla.components.concept.engine.translate.TranslationOptions
 import mozilla.components.concept.engine.window.WindowRequest
 import mozilla.components.concept.fetch.Response
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.whenever
@@ -55,7 +53,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -144,8 +141,6 @@ class EngineObserverTest {
         engineSession.register(EngineObserver("mozilla", store))
         engineSession.loadUrl("http://mozilla.org")
         engineSession.toggleDesktopMode(true)
-
-        store.waitUntilIdle()
 
         assertEquals("http://mozilla.org", store.state.selectedTab?.content?.url)
         assertEquals(100, store.state.selectedTab?.content?.progress)
@@ -237,11 +232,9 @@ class EngineObserverTest {
         engineSession.register(EngineObserver("mozilla", store))
 
         engineSession.loadUrl("http://mozilla.org")
-        store.waitUntilIdle()
         assertEquals(SecurityInfoState(secure = false), store.state.tabs[0].content.securityInfo)
 
         engineSession.loadUrl("https://mozilla.org")
-        store.waitUntilIdle()
         assertEquals(SecurityInfoState(secure = true, "host", "issuer"), store.state.tabs[0].content.securityInfo)
     }
 
@@ -321,12 +314,10 @@ class EngineObserverTest {
         val tracker2 = Tracker("tracker2", emptyList())
 
         observer.onTrackerBlocked(tracker1)
-        store.waitUntilIdle()
 
         assertEquals(listOf(tracker1), store.state.tabs[0].trackingProtection.blockedTrackers)
 
         observer.onTrackerBlocked(tracker2)
-        store.waitUntilIdle()
 
         assertEquals(listOf(tracker1, tracker2), store.state.tabs[0].trackingProtection.blockedTrackers)
     }
@@ -409,7 +400,6 @@ class EngineObserverTest {
         engineSession.register(EngineObserver("mozilla", store))
 
         engineSession.loadUrl("https://mozilla.org")
-        store.waitUntilIdle()
 
         assertEquals(true, store.state.translationsInitialized)
     }
@@ -492,7 +482,6 @@ class EngineObserverTest {
         engineSession.register(EngineObserver("mozilla", store))
 
         engineSession.loadUrl("https://mozilla.org")
-        store.waitUntilIdle()
 
         assertEquals(false, store.state.translationsInitialized)
     }
@@ -631,12 +620,10 @@ class EngineObserverTest {
 
         val observer = EngineObserver("mozilla", store)
         observer.onTitleChange("Mozilla")
-        store.waitUntilIdle()
 
         assertEquals("Mozilla", store.state.tabs[0].content.title)
 
         observer.onLocationChange("https://getpocket.com", false)
-        store.waitUntilIdle()
 
         assertEquals("", store.state.tabs[0].content.title)
     }
@@ -658,12 +645,10 @@ class EngineObserverTest {
         val observer = EngineObserver("mozilla", store)
 
         observer.onTitleChange("Mozilla")
-        store.waitUntilIdle()
 
         assertEquals("Mozilla", store.state.tabs[0].content.title)
 
         observer.onLocationChange("https://www.mozilla.org", false)
-        store.waitUntilIdle()
 
         assertEquals("Mozilla", store.state.tabs[0].content.title)
     }
@@ -685,12 +670,10 @@ class EngineObserverTest {
         val observer = EngineObserver("mozilla", store)
 
         observer.onTitleChange("Mozilla")
-        store.waitUntilIdle()
 
         assertEquals("Mozilla", store.state.tabs[0].content.title)
 
         observer.onLocationChange("https://www.mozilla.org/#something", false)
-        store.waitUntilIdle()
 
         assertEquals("Mozilla", store.state.tabs[0].content.title)
     }
@@ -712,12 +695,10 @@ class EngineObserverTest {
 
         val observer = EngineObserver("mozilla", store)
         observer.onPreviewImageChange(previewImageUrl)
-        store.waitUntilIdle()
 
         assertEquals(previewImageUrl, store.state.tabs[0].content.previewImageUrl)
 
         observer.onLocationChange("https://getpocket.com", false)
-        store.waitUntilIdle()
 
         assertNull(store.state.tabs[0].content.previewImageUrl)
     }
@@ -740,17 +721,14 @@ class EngineObserverTest {
         val observer = EngineObserver("mozilla", store)
 
         observer.onPreviewImageChange(previewImageUrl)
-        store.waitUntilIdle()
 
         assertEquals(previewImageUrl, store.state.tabs[0].content.previewImageUrl)
 
         observer.onLocationChange("https://www.mozilla.org", false)
-        store.waitUntilIdle()
 
         assertEquals(previewImageUrl, store.state.tabs[0].content.previewImageUrl)
 
         observer.onLocationChange("https://www.mozilla.org/#something", false)
-        store.waitUntilIdle()
 
         assertEquals(previewImageUrl, store.state.tabs[0].content.previewImageUrl)
     }
@@ -775,12 +753,10 @@ class EngineObserverTest {
 
         observer.onTrackerBlocked(tracker1)
         observer.onTrackerBlocked(tracker2)
-        store.waitUntilIdle()
 
         assertEquals(listOf(tracker1, tracker2), store.state.tabs[0].trackingProtection.blockedTrackers)
 
         observer.onLoadingStateChange(true)
-        store.waitUntilIdle()
 
         assertEquals(emptyList<String>(), store.state.tabs[0].trackingProtection.blockedTrackers)
     }
@@ -805,12 +781,10 @@ class EngineObserverTest {
 
         observer.onTrackerLoaded(tracker1)
         observer.onTrackerLoaded(tracker2)
-        store.waitUntilIdle()
 
         assertEquals(listOf(tracker1, tracker2), store.state.tabs[0].trackingProtection.loadedTrackers)
 
         observer.onLoadingStateChange(true)
-        store.waitUntilIdle()
 
         assertEquals(emptyList<String>(), store.state.tabs[0].trackingProtection.loadedTrackers)
     }
@@ -833,12 +807,10 @@ class EngineObserverTest {
         val observer = EngineObserver("mozilla", store)
 
         observer.onWebAppManifestLoaded(manifest)
-        store.waitUntilIdle()
 
         assertEquals(manifest, store.state.tabs[0].content.webAppManifest)
 
         observer.onLocationChange("https://getpocket.com", false)
-        store.waitUntilIdle()
 
         assertNull(store.state.tabs[0].content.webAppManifest)
     }
@@ -861,12 +833,10 @@ class EngineObserverTest {
         val request: PermissionRequest = mock()
 
         store.dispatch(ContentAction.UpdatePermissionsRequest("mozilla", request))
-        store.waitUntilIdle()
 
         assertEquals(listOf(request), store.state.tabs[0].content.permissionRequestsList)
 
         observer.onLocationChange("https://getpocket.com", false)
-        store.waitUntilIdle()
 
         assertEquals(emptyList<PermissionRequest>(), store.state.tabs[0].content.permissionRequestsList)
     }
@@ -889,12 +859,10 @@ class EngineObserverTest {
         val request: PermissionRequest = mock()
 
         store.dispatch(ContentAction.UpdatePermissionsRequest("mozilla", request))
-        store.waitUntilIdle()
 
         assertEquals(listOf(request), store.state.tabs[0].content.permissionRequestsList)
 
         observer.onLocationChange("https://www.mozilla.org/hello.html", false)
-        store.waitUntilIdle()
 
         assertEquals(listOf(request), store.state.tabs[0].content.permissionRequestsList)
     }
@@ -917,12 +885,10 @@ class EngineObserverTest {
         val observer = EngineObserver("mozilla", store)
 
         observer.onWebAppManifestLoaded(manifest)
-        store.waitUntilIdle()
 
         assertEquals(manifest, store.state.tabs[0].content.webAppManifest)
 
         observer.onLocationChange("https://www.mozilla.org/hello.html", false)
-        store.waitUntilIdle()
 
         assertEquals(manifest, store.state.tabs[0].content.webAppManifest)
     }
@@ -949,17 +915,14 @@ class EngineObserverTest {
         val observer = EngineObserver("mozilla", store)
 
         observer.onWebAppManifestLoaded(manifest)
-        store.waitUntilIdle()
 
         assertEquals(manifest, store.state.tabs[0].content.webAppManifest)
 
         observer.onLocationChange("https://www.mozilla.org/hello/page2.html", false)
-        store.waitUntilIdle()
 
         assertEquals(manifest, store.state.tabs[0].content.webAppManifest)
 
         observer.onLocationChange("https://www.mozilla.org/hello.html", false)
-        store.waitUntilIdle()
         assertNull(store.state.tabs[0].content.webAppManifest)
     }
 
@@ -981,7 +944,6 @@ class EngineObserverTest {
         val hitResult = HitResult.UNKNOWN("data://foobar")
 
         observer.onLongPress(hitResult)
-        store.waitUntilIdle()
 
         assertEquals(hitResult, store.state.tabs[0].content.hitResult)
     }
@@ -995,14 +957,12 @@ class EngineObserverTest {
         val observer = EngineObserver("tab", store)
 
         observer.onFindResult(0, 1, false)
-        store.waitUntilIdle()
         middleware.assertFirstAction(ContentAction.AddFindResultAction::class) { action ->
             assertEquals("tab", action.sessionId)
             assertEquals(FindResultState(0, 1, false), action.findResult)
         }
 
         observer.onFind("mozilla")
-        store.waitUntilIdle()
         middleware.assertLastAction(ContentAction.ClearFindResultsAction::class) { action ->
             assertEquals("tab", action.sessionId)
         }
@@ -1017,21 +977,18 @@ class EngineObserverTest {
         val observer = EngineObserver("tab-id", store)
 
         observer.onFindResult(0, 1, false)
-        store.waitUntilIdle()
         middleware.assertFirstAction(ContentAction.AddFindResultAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertEquals(FindResultState(0, 1, false), action.findResult)
         }
 
         observer.onFindResult(1, 2, true)
-        store.waitUntilIdle()
         middleware.assertLastAction(ContentAction.AddFindResultAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertEquals(FindResultState(1, 2, true), action.findResult)
         }
 
         observer.onLoadingStateChange(true)
-        store.waitUntilIdle()
         middleware.assertLastAction(ContentAction.ClearFindResultsAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
         }
@@ -1046,14 +1003,12 @@ class EngineObserverTest {
         val observer = EngineObserver("tab-id", store)
 
         observer.onRepostPromptCancelled()
-        store.waitUntilIdle()
         middleware.assertFirstAction(ContentAction.UpdateRefreshCanceledStateAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertTrue(action.refreshCanceled)
         }
 
         observer.onLoadingStateChange(true)
-        store.waitUntilIdle()
         middleware.assertLastAction(ContentAction.UpdateRefreshCanceledStateAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertFalse(action.refreshCanceled)
@@ -1087,14 +1042,12 @@ class EngineObserverTest {
         val observer = EngineObserver("tab-id", store)
 
         observer.onFullScreenChange(true)
-        store.waitUntilIdle()
         middleware.assertFirstAction(ContentAction.FullScreenChangedAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertTrue(action.fullScreenEnabled)
         }
 
         observer.onFullScreenChange(false)
-        store.waitUntilIdle()
         middleware.assertLastAction(ContentAction.FullScreenChangedAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertFalse(action.fullScreenEnabled)
@@ -1110,14 +1063,12 @@ class EngineObserverTest {
         val observer = EngineObserver("tab-id", store)
 
         observer.onDesktopModeChange(true)
-        store.waitUntilIdle()
         middleware.assertFirstAction(ContentAction.UpdateTabDesktopMode::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertTrue(action.enabled)
         }
 
         observer.onDesktopModeChange(false)
-        store.waitUntilIdle()
         middleware.assertLastAction(ContentAction.UpdateTabDesktopMode::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertFalse(action.enabled)
@@ -1133,7 +1084,6 @@ class EngineObserverTest {
         val observer = EngineObserver("tab-id", store)
 
         observer.onMetaViewportFitChanged(WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT)
-        store.waitUntilIdle()
         middleware.assertFirstAction(ContentAction.ViewportFitChangedAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertEquals(
@@ -1143,7 +1093,6 @@ class EngineObserverTest {
         }
 
         observer.onMetaViewportFitChanged(WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES)
-        store.waitUntilIdle()
         middleware.assertLastAction(ContentAction.ViewportFitChangedAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertEquals(
@@ -1153,7 +1102,6 @@ class EngineObserverTest {
         }
 
         observer.onMetaViewportFitChanged(WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER)
-        store.waitUntilIdle()
         middleware.assertLastAction(ContentAction.ViewportFitChangedAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertEquals(
@@ -1163,7 +1111,6 @@ class EngineObserverTest {
         }
 
         observer.onMetaViewportFitChanged(123)
-        store.waitUntilIdle()
         middleware.assertLastAction(ContentAction.ViewportFitChangedAction::class) { action ->
             assertEquals("tab-id", action.sessionId)
             assertEquals(123, action.layoutInDisplayCutoutMode)
@@ -1190,7 +1137,6 @@ class EngineObserverTest {
         )
 
         observer.onWebAppManifestLoaded(manifest)
-        store.waitUntilIdle()
 
         assertEquals(manifest, store.state.tabs[0].content.webAppManifest)
     }
@@ -1329,7 +1275,6 @@ class EngineObserverTest {
         assertNull(store.state.tabs[0].mediaSessionState)
 
         observer.onMediaActivated(mediaSessionController)
-        store.waitUntilIdle()
 
         val observedMediaSessionState = store.state.tabs[0].mediaSessionState
         assertNotNull(observedMediaSessionState)
@@ -1357,7 +1302,6 @@ class EngineObserverTest {
         assertNotNull(store.state.findTab("mozilla")?.mediaSessionState)
 
         observer.onMediaDeactivated()
-        store.waitUntilIdle()
 
         val observedMediaSessionState = store.state.findTab("mozilla")?.mediaSessionState
         assertNull(observedMediaSessionState)
@@ -1384,9 +1328,7 @@ class EngineObserverTest {
         val metaData: MediaSession.Metadata = mock()
 
         observer.onMediaActivated(mediaSessionController)
-        store.waitUntilIdle()
         observer.onMediaMetadataChanged(metaData)
-        store.waitUntilIdle()
 
         val observedMediaSessionState = store.state.findTab("mozilla")?.mediaSessionState
         assertNotNull(observedMediaSessionState)
@@ -1415,9 +1357,7 @@ class EngineObserverTest {
         val playbackState: MediaSession.PlaybackState = mock()
 
         observer.onMediaActivated(mediaSessionController)
-        store.waitUntilIdle()
         observer.onMediaPlaybackStateChanged(playbackState)
-        store.waitUntilIdle()
 
         val observedMediaSessionState = store.state.findTab("mozilla")?.mediaSessionState
         assertNotNull(observedMediaSessionState)
@@ -1446,9 +1386,7 @@ class EngineObserverTest {
         val features: MediaSession.Feature = mock()
 
         observer.onMediaActivated(mediaSessionController)
-        store.waitUntilIdle()
         observer.onMediaFeatureChanged(features)
-        store.waitUntilIdle()
 
         val observedMediaSessionState = store.state.findTab("mozilla")?.mediaSessionState
         assertNotNull(observedMediaSessionState)
@@ -1477,9 +1415,7 @@ class EngineObserverTest {
         val positionState: MediaSession.PositionState = mock()
 
         observer.onMediaActivated(mediaSessionController)
-        store.waitUntilIdle()
         observer.onMediaPositionStateChanged(positionState)
-        store.waitUntilIdle()
 
         val observedMediaSessionState = store.state.findTab("mozilla")?.mediaSessionState
         assertNotNull(observedMediaSessionState)
@@ -1507,9 +1443,7 @@ class EngineObserverTest {
         val mediaSessionController: MediaSession.Controller = mock()
 
         observer.onMediaActivated(mediaSessionController)
-        store.waitUntilIdle()
         observer.onMediaMuteChanged(true)
-        store.waitUntilIdle()
 
         val observedMediaSessionState = store.state.findTab("mozilla")?.mediaSessionState
         assertNotNull(observedMediaSessionState)
@@ -1538,9 +1472,7 @@ class EngineObserverTest {
         val elementMetadata: MediaSession.ElementMetadata = mock()
 
         observer.onMediaActivated(mediaSessionController)
-        store.waitUntilIdle()
         observer.onMediaFullscreenChanged(true, elementMetadata)
-        store.waitUntilIdle()
 
         val observedMediaSessionState = store.state.findTab("mozilla")?.mediaSessionState
         assertNotNull(observedMediaSessionState)
@@ -1566,12 +1498,10 @@ class EngineObserverTest {
         val elementMetadata: MediaSession.ElementMetadata = mock()
 
         observer.onMediaFullscreenChanged(true, elementMetadata)
-        store.waitUntilIdle()
 
         assertNull(store.state.findTab("mozilla")?.mediaSessionState)
 
         observer.onMediaMuteChanged(true)
-        store.waitUntilIdle()
         assertNull(store.state.findTab("mozilla")?.mediaSessionState)
     }
 
@@ -1605,8 +1535,6 @@ class EngineObserverTest {
             response = response,
         )
 
-        store.waitUntilIdle()
-
         val tab = store.state.findTab("mozilla")!!
 
         assertEquals("mozilla.org/file.txt", tab.content.download?.url)
@@ -1638,8 +1566,6 @@ class EngineObserverTest {
 
         observer.onExternalResource(url = "mozilla.org/file.txt", contentLength = -1)
 
-        store.waitUntilIdle()
-
         val tab = store.state.findTab("test-tab")!!
 
         assertNull(tab.content.download?.contentLength)
@@ -1669,8 +1595,6 @@ class EngineObserverTest {
         val observer = EngineObserver("test-id", store)
         observer.onLocationChange("https://www.mozilla.org/en-US/", false)
 
-        store.waitUntilIdle()
-
         middleware.assertNotDispatched(ContentAction.UpdateSearchTermsAction::class)
     }
 
@@ -1685,8 +1609,6 @@ class EngineObserverTest {
 
         val observer = EngineObserver("test-id", store)
         observer.onLoadRequest(url = url, triggeredByRedirect = false, triggeredByWebContent = true)
-
-        store.waitUntilIdle()
 
         middleware.assertFirstAction(ContentAction.UpdateSearchTermsAction::class) { action ->
             assertEquals("", action.searchTerms)
@@ -1724,7 +1646,6 @@ class EngineObserverTest {
         val observer = EngineObserver("test-id", store)
         observer.onLoadRequest(url = url, triggeredByRedirect = false, triggeredByWebContent = false)
 
-        store.waitUntilIdle()
         middleware.assertNotDispatched(ContentAction.UpdateSearchTermsAction::class)
     }
 
@@ -1749,7 +1670,6 @@ class EngineObserverTest {
 
         val observer = EngineObserver("test-id", store)
         observer.onNavigateBack()
-        store.waitUntilIdle()
 
         middleware.assertFirstAction(ContentAction.UpdateSearchTermsAction::class) { action ->
             assertEquals("", action.searchTerms)
@@ -1766,7 +1686,6 @@ class EngineObserverTest {
 
         val observer = EngineObserver("test-id", store)
         observer.onNavigateForward()
-        store.waitUntilIdle()
 
         middleware.assertFirstAction(ContentAction.UpdateSearchTermsAction::class) { action ->
             assertEquals("", action.searchTerms)
@@ -1783,7 +1702,6 @@ class EngineObserverTest {
 
         val observer = EngineObserver("test-id", store)
         observer.onGotoHistoryIndex()
-        store.waitUntilIdle()
 
         middleware.assertFirstAction(ContentAction.UpdateSearchTermsAction::class) { action ->
             assertEquals("", action.searchTerms)
@@ -1800,7 +1718,6 @@ class EngineObserverTest {
 
         val observer = EngineObserver("test-id", store)
         observer.onLoadData()
-        store.waitUntilIdle()
 
         middleware.assertFirstAction(ContentAction.UpdateSearchTermsAction::class) { action ->
             assertEquals("", action.searchTerms)
@@ -1821,11 +1738,9 @@ class EngineObserverTest {
         )
 
         store.dispatch(ContentAction.UpdateIsSearchAction("mozilla", false))
-        store.waitUntilIdle()
 
         val observer = EngineObserver("test-id", store)
         observer.onLoadUrl()
-        store.waitUntilIdle()
 
         middleware.assertLastAction(ContentAction.UpdateSearchTermsAction::class) { action ->
             assertEquals("", action.searchTerms)
@@ -1846,11 +1761,9 @@ class EngineObserverTest {
         )
 
         store.dispatch(ContentAction.UpdateIsSearchAction("test-id", true))
-        store.waitUntilIdle()
 
         val observer = EngineObserver("test-id", store)
         observer.onLoadUrl()
-        store.waitUntilIdle()
 
         middleware.assertLastAction(ContentAction.UpdateIsSearchAction::class) { action ->
             assertEquals(false, action.isSearch)
@@ -1871,11 +1784,9 @@ class EngineObserverTest {
         )
 
         store.dispatch(ContentAction.UpdateIsSearchAction("test-id", true))
-        store.waitUntilIdle()
 
         val observer = EngineObserver("test-id", store)
         observer.onLocationChange("testUrl", false)
-        store.waitUntilIdle()
 
         middleware.assertNotDispatched(ContentAction.UpdateSearchTermsAction::class)
     }

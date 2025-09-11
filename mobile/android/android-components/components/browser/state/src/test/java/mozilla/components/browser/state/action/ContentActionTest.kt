@@ -40,7 +40,6 @@ import mozilla.components.concept.engine.permission.Permission.ContentGeoLocatio
 import mozilla.components.concept.engine.permission.PermissionRequest
 import mozilla.components.concept.engine.prompt.PromptRequest
 import mozilla.components.concept.engine.window.WindowRequest
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.whenever
 import org.junit.Assert.assertEquals
@@ -932,7 +931,6 @@ class ContentActionTest {
 
         store.dispatch(ContentAction.UpdatePermissionsRequest(tab.id, request1))
         store.dispatch(ContentAction.UpdatePermissionsRequest(tab.id, request2))
-        store.waitUntilIdle()
 
         verify(request1).merge(request2)
     }
@@ -948,7 +946,6 @@ class ContentActionTest {
 
         store.dispatch(ContentAction.UpdateAppPermissionsRequest(tab.id, request1))
         store.dispatch(ContentAction.UpdateAppPermissionsRequest(tab.id, request2))
-        store.waitUntilIdle()
 
         verify(request1).merge(request2)
     }

@@ -11,7 +11,6 @@ import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.content.DownloadState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.feature.downloads.DownloadsUseCases
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -641,8 +640,6 @@ class DownloadUIStoreTest {
                 ),
             ),
         )
-        downloadsStore.waitUntilIdle()
-
         val expectedList = DownloadUIState.ItemsState.Items(
             listOf(
                 HeaderItem(TimeCategory.IN_PROGRESS),
@@ -701,8 +698,6 @@ class DownloadUIStoreTest {
                 ),
             ),
         )
-        downloadsStore.waitUntilIdle()
-
         val expectedList = DownloadUIState.ItemsState.Items(
             listOf(
                 HeaderItem(TimeCategory.OLDER),
@@ -761,8 +756,6 @@ class DownloadUIStoreTest {
                 ),
             ),
         )
-        downloadsStore.waitUntilIdle()
-
         val expectedList = DownloadUIState.ItemsState.Items(
             listOf(
                 HeaderItem(TimeCategory.IN_PROGRESS),

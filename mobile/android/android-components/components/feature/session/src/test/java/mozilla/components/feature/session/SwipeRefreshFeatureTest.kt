@@ -17,7 +17,6 @@ import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineView
 import mozilla.components.concept.engine.InputResultDetail
 import mozilla.components.concept.engine.selection.SelectionActionDelegate
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertFalse
@@ -88,7 +87,6 @@ class SwipeRefreshFeatureTest {
         val selectedTab = store.state.findCustomTabOrSelectedTab()!!
 
         store.dispatch(ContentAction.UpdateRefreshCanceledStateAction(selectedTab.id, true))
-        store.waitUntilIdle()
 
         assertFalse(selectedTab.content.refreshCanceled)
     }
@@ -96,7 +94,6 @@ class SwipeRefreshFeatureTest {
     @Test
     fun `feature clears the swipeRefreshLayout#isRefreshing when tab fishes loading or a refreshCanceled`() {
         refreshFeature.start()
-        store.waitUntilIdle()
 
         val selectedTab = store.state.findCustomTabOrSelectedTab()!!
 
@@ -104,7 +101,6 @@ class SwipeRefreshFeatureTest {
         reset(mockLayout)
 
         store.dispatch(ContentAction.UpdateRefreshCanceledStateAction(selectedTab.id, true))
-        store.waitUntilIdle()
 
         verify(mockLayout, times(2)).isRefreshing = false
 

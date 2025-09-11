@@ -15,7 +15,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineSessionState
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertNotNull
@@ -133,7 +132,6 @@ class TrimMemoryMiddlewareTest {
             ),
         )
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         store.state.findTab("theverge")!!.engineState.apply {
@@ -199,7 +197,6 @@ class TrimMemoryMiddlewareTest {
             ),
         )
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         store.state.findTab("theverge")!!.engineState.apply {

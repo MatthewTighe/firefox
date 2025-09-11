@@ -25,7 +25,6 @@ import mozilla.components.concept.engine.content.blocking.TrackingProtectionExce
 import mozilla.components.concept.engine.content.blocking.TrackingProtectionExceptionStorage
 import mozilla.components.support.test.any
 import mozilla.components.support.test.eq
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.whenever
 import org.junit.Assert.assertFalse
@@ -192,7 +191,6 @@ class TrackingProtectionUseCasesTest {
         store.dispatch(TabListAction.AddTabAction(tab2))
         store.dispatch(TabListAction.AddTabAction(tab3))
         store.dispatch(CustomTabListAction.AddCustomTabAction(customTab))
-        store.waitUntilIdle()
 
         assertTrue(store.state.findTab(tab1.id)!!.trackingProtection.ignoredOnTrackingProtection)
         assertTrue(store.state.findTab(tab2.id)!!.trackingProtection.ignoredOnTrackingProtection)
@@ -202,8 +200,6 @@ class TrackingProtectionUseCasesTest {
         useCases.removeException(exception)
 
         verify(exceptionStore).remove(exception)
-
-        store.waitUntilIdle()
 
         assertFalse(store.state.findTab(tab1.id)!!.trackingProtection.ignoredOnTrackingProtection)
 

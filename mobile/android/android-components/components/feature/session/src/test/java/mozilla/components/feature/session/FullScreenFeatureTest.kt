@@ -10,7 +10,6 @@ import mozilla.components.browser.state.action.TabListAction
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertEquals
@@ -45,7 +44,6 @@ class FullScreenFeatureTest {
         )
 
         feature.start()
-        store.waitUntilIdle()
 
         assertNull(viewPort)
         assertNull(fullscreen)
@@ -72,7 +70,6 @@ class FullScreenFeatureTest {
         )
 
         feature.start()
-        store.waitUntilIdle()
 
         assertNull(viewPort)
         assertNull(fullscreen)
@@ -113,7 +110,6 @@ class FullScreenFeatureTest {
         )
 
         feature.start()
-        store.waitUntilIdle()
 
         assertEquals(42, viewPort)
         assertTrue(fullscreen!!)
@@ -490,6 +486,5 @@ class FullScreenFeatureTest {
         )
 
         feature.start()
-        store.waitUntilIdle()
     }
 }

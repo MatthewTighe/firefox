@@ -20,7 +20,6 @@ import mozilla.components.browser.state.selector.privateTabs
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Rule
 import org.junit.Test
@@ -53,12 +52,10 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.isPrivateScreenLocked)
 
         browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -81,12 +78,10 @@ class PrivateBrowsingLockFeatureTest {
         val useCase = PrivateBrowsingLockUseCases.AuthenticatedUseCase(appStore)
 
         useCase.invoke()
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -107,12 +102,10 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -133,12 +126,10 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -160,7 +151,6 @@ class PrivateBrowsingLockFeatureTest {
         ),
         )
         createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.isPrivateScreenLocked)
     }
@@ -181,7 +171,6 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.isPrivateScreenLocked)
     }
@@ -202,7 +191,6 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -223,7 +211,6 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -243,7 +230,6 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -263,7 +249,6 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -338,11 +323,9 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         // imitate user passing auth
         appStore.dispatch(AppAction.PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = false))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == mode)
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -351,7 +334,6 @@ class PrivateBrowsingLockFeatureTest {
         every { activity.isChangingConfigurations } returns false
 
         feature.onStop(activity)
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.isPrivateScreenLocked)
     }
@@ -372,11 +354,9 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         // imitate user passing auth
         appStore.dispatch(AppAction.PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = false))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == mode)
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -385,7 +365,6 @@ class PrivateBrowsingLockFeatureTest {
         every { activity.isChangingConfigurations } returns false
 
         feature.onStop(activity)
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == mode)
         assertTrue(appStore.state.isPrivateScreenLocked)
@@ -406,7 +385,6 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == mode)
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -415,7 +393,6 @@ class PrivateBrowsingLockFeatureTest {
         every { activity.isChangingConfigurations } returns false
 
         feature.onStop(activity)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -435,7 +412,6 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == mode)
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -444,7 +420,6 @@ class PrivateBrowsingLockFeatureTest {
         every { activity.isChangingConfigurations } returns false
 
         feature.onStop(activity)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -465,7 +440,6 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == mode)
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -474,7 +448,6 @@ class PrivateBrowsingLockFeatureTest {
         every { activity.isChangingConfigurations } returns false
 
         feature.onStop(activity)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -495,7 +468,6 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == mode)
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -504,7 +476,6 @@ class PrivateBrowsingLockFeatureTest {
         every { activity.isChangingConfigurations } returns false
 
         feature.onStop(activity)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -530,16 +501,13 @@ class PrivateBrowsingLockFeatureTest {
         )
         val useCase = PrivateBrowsingLockUseCases.AuthenticatedUseCase(appStore)
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         useCase.invoke()
-        appStore.waitUntilIdle()
 
         val activity = mockk<AppCompatActivity>(relaxed = true)
         every { activity.isChangingConfigurations } returns true
 
         feature.onStop(activity)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -559,15 +527,12 @@ class PrivateBrowsingLockFeatureTest {
             ),
         )
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
-        appStore.waitUntilIdle()
 
         appStore.dispatch(AppAction.OpenInFirefoxStarted)
-        appStore.waitUntilIdle()
 
         val activity = mockk<AppCompatActivity>(relaxed = true)
 
         feature.onStop(activity)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
     }
@@ -591,14 +556,12 @@ class PrivateBrowsingLockFeatureTest {
         val storage = createStorage(isFeatureEnabled = isFeatureEnabled)
 
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = storage)
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.isPrivateScreenLocked)
 
         // verify that disabled feature state unlocks private mode
         val sharedPrefUpdate = false
         storage.listener?.invoke(sharedPrefUpdate)
-        appStore.waitUntilIdle()
 
         assertTrue(browserStore.state.privateTabs.isNotEmpty())
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -608,7 +571,6 @@ class PrivateBrowsingLockFeatureTest {
         every { activity.isChangingConfigurations } returns false
 
         feature.onStop(activity)
-        appStore.waitUntilIdle()
 
         assertTrue(browserStore.state.privateTabs.isNotEmpty())
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -638,14 +600,12 @@ class PrivateBrowsingLockFeatureTest {
         val storage = createStorage(isFeatureEnabled = isFeatureEnabled)
 
         createFeature(browserStore = browserStore, appStore = appStore, storage = storage)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         // verify that disabled feature state unlocks private mode
         val sharedPrefUpdate = true
         storage.listener?.invoke(sharedPrefUpdate)
-        appStore.waitUntilIdle()
 
         assertTrue(browserStore.state.privateTabs.isNotEmpty())
         assertTrue(appStore.state.isPrivateScreenLocked)
@@ -669,14 +629,12 @@ class PrivateBrowsingLockFeatureTest {
         val storage = createStorage(isFeatureEnabled = isFeatureEnabled)
 
         createFeature(browserStore = browserStore, appStore = appStore, storage = storage)
-        appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         // verify that disabled feature state unlocks private mode
         val sharedPrefUpdate = true
         storage.listener?.invoke(sharedPrefUpdate)
-        appStore.waitUntilIdle()
 
         assertTrue(browserStore.state.privateTabs.isNotEmpty())
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -701,20 +659,17 @@ class PrivateBrowsingLockFeatureTest {
         val storage = createStorage(isFeatureEnabled = isFeatureEnabled)
 
         createFeature(browserStore = browserStore, appStore = appStore, storage = storage)
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.isPrivateScreenLocked)
 
         // imitate user passing auth
         appStore.dispatch(AppAction.PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = false))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == BrowsingMode.Private)
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         // verify that going to normal mode doesn't lock private mode
         appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal))
-        appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == BrowsingMode.Normal)
         assertFalse(appStore.state.isPrivateScreenLocked)

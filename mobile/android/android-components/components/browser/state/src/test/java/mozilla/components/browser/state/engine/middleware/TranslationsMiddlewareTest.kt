@@ -38,7 +38,6 @@ import mozilla.components.concept.engine.translate.TranslationSupport
 import mozilla.components.lib.state.MiddlewareContext
 import mozilla.components.support.test.any
 import mozilla.components.support.test.argumentCaptor
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.whenever
 import org.junit.Before
@@ -104,7 +103,6 @@ class TranslationsMiddlewareTest {
     private fun waitForIdle() {
         scope.testScheduler.runCurrent()
         scope.testScheduler.advanceUntilIdle()
-        store.waitUntilIdle()
     }
 
     /**

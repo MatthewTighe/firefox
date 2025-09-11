@@ -18,7 +18,6 @@ import mozilla.components.browser.state.state.ContentState
 import mozilla.components.browser.state.state.SearchState
 import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.concept.awesomebar.AwesomeBar.SuggestionProvider
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -1099,8 +1098,6 @@ class SearchFragmentStoreTest {
             ),
         )
 
-        store.waitUntilIdle()
-
         assertNotNull(store.state.defaultEngine)
         assertEquals("Engine B", store.state.defaultEngine!!.name)
 
@@ -1159,8 +1156,6 @@ class SearchFragmentStoreTest {
             ),
         )
 
-        store.waitUntilIdle()
-
         assertNotNull(store.state.defaultEngine)
         assertEquals("Engine B", store.state.defaultEngine!!.name)
 
@@ -1204,8 +1199,6 @@ class SearchFragmentStoreTest {
                 isUnifiedSearchEnabled = true,
             ),
         )
-        store.waitUntilIdle()
-
         assertFalse(store.state.showSearchShortcuts)
     }
 

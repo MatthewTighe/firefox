@@ -27,7 +27,6 @@ import mozilla.components.concept.fetch.Response
 import mozilla.components.support.test.any
 import mozilla.components.support.test.argumentCaptor
 import mozilla.components.support.test.eq
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -345,7 +344,6 @@ class DownloadMiddlewareTest {
             store.dispatch(DownloadAction.RestoreDownloadsStateAction)
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             assertEquals(download, store.state.downloads.values.first())
             verify(downloadStorage, never()).remove(download)
@@ -376,7 +374,6 @@ class DownloadMiddlewareTest {
         store.dispatch(DownloadAction.RestoreDownloadsStateAction)
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         assertTrue(store.state.downloads.isEmpty())
     }
@@ -433,7 +430,6 @@ class DownloadMiddlewareTest {
                 store.dispatch(it)
 
                 dispatcher.scheduler.advanceUntilIdle()
-                store.waitUntilIdle()
 
                 verify(downloadMiddleware, times(1)).removePrivateNotifications(any())
                 reset(downloadMiddleware)
@@ -466,7 +462,6 @@ class DownloadMiddlewareTest {
             store.dispatch(TabListAction.RemoveTabsAction(listOf("test-tab1", "test-tab3")))
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             verify(downloadMiddleware, times(1)).removePrivateNotifications(any())
             reset(downloadMiddleware)
@@ -498,7 +493,6 @@ class DownloadMiddlewareTest {
             store.dispatch(TabListAction.RemoveTabsAction(listOf("test-tab1", "test-tab2")))
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             verify(downloadMiddleware, times(0)).removePrivateNotifications(any())
             reset(downloadMiddleware)
@@ -530,7 +524,6 @@ class DownloadMiddlewareTest {
             store.dispatch(TabListAction.RemoveTabAction("test-tab3"))
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             verify(downloadMiddleware, times(1)).removePrivateNotifications(any())
         }
@@ -561,7 +554,6 @@ class DownloadMiddlewareTest {
             store.dispatch(TabListAction.RemoveTabAction("test-tab3"))
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             verify(downloadMiddleware, times(0)).removePrivateNotifications(any())
         }
@@ -664,7 +656,6 @@ class DownloadMiddlewareTest {
             store.dispatch(ContentAction.CancelDownloadAction(tab.id, download.id))
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             verify(downloadMiddleware, times(1)).closeDownloadResponse(any(), any())
             verify(response).close()
@@ -734,7 +725,6 @@ class DownloadMiddlewareTest {
             store.dispatch(DownloadAction.RestoreDownloadsStateAction)
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             verify(downloadStorage).remove(download)
         }
@@ -770,7 +760,6 @@ class DownloadMiddlewareTest {
             store.dispatch(DownloadAction.RemoveDeletedDownloads)
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             val expected = BrowserState(downloads = mapOf())
             assertEquals(expected, store.state)
@@ -813,7 +802,6 @@ class DownloadMiddlewareTest {
             store.dispatch(DownloadAction.RemoveDeletedDownloads)
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             val expected = BrowserState(downloads = mapOf(download.id to download))
             assertEquals(expected, store.state)
@@ -852,7 +840,6 @@ class DownloadMiddlewareTest {
             store.dispatch(DownloadAction.RemoveDeletedDownloads)
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             val expected = BrowserState(downloads = mapOf(download.id to download))
             assertEquals(expected, store.state)
@@ -889,7 +876,6 @@ class DownloadMiddlewareTest {
             store.dispatch(DownloadAction.RemoveDeletedDownloads)
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             val expected = BrowserState(downloads = mapOf(download.id to download))
             assertEquals(expected, store.state)
@@ -926,7 +912,6 @@ class DownloadMiddlewareTest {
             store.dispatch(DownloadAction.RemoveDeletedDownloads)
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             val expected = BrowserState(downloads = mapOf(download.id to download))
             assertEquals(expected, store.state)
@@ -963,7 +948,6 @@ class DownloadMiddlewareTest {
             store.dispatch(DownloadAction.RemoveDeletedDownloads)
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             val expected = BrowserState(downloads = mapOf(download.id to download))
             assertEquals(expected, store.state)
@@ -1000,7 +984,6 @@ class DownloadMiddlewareTest {
             store.dispatch(DownloadAction.RemoveDeletedDownloads)
 
             dispatcher.scheduler.advanceUntilIdle()
-            store.waitUntilIdle()
 
             val expected = BrowserState(downloads = mapOf())
             assertEquals(expected, store.state)

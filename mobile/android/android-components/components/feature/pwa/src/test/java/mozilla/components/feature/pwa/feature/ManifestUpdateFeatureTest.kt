@@ -14,7 +14,6 @@ import mozilla.components.feature.pwa.ManifestStorage
 import mozilla.components.feature.pwa.WebAppShortcutManager
 import mozilla.components.support.test.any
 import mozilla.components.support.test.ext.joinBlocking
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -69,8 +68,6 @@ class ManifestUpdateFeatureTest {
         )
 
         feature.start()
-
-        store.waitUntilIdle()
 
         feature.stop()
 

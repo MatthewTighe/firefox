@@ -18,7 +18,6 @@ import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.fakes.FakeClock
 import mozilla.components.support.test.fakes.android.FakeContext
 import mozilla.components.support.test.fakes.android.FakeSharedPreferences
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -63,9 +62,7 @@ class RegionMiddlewareTest {
             middleware = listOf(middleware),
         )
 
-        store.waitUntilIdle()
         middleware.updateJob?.joinBlocking()
-        store.waitUntilIdle()
 
         assertNotEquals(RegionState.Default, store.state.search.region)
         assertEquals("FR", store.state.search.region!!.home)
@@ -84,7 +81,6 @@ class RegionMiddlewareTest {
         store.dispatch(InitAction)
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         assertEquals(RegionState.Default, store.state.search.region)
         assertEquals("XX", store.state.search.region!!.home)
@@ -105,7 +101,6 @@ class RegionMiddlewareTest {
 
         store.dispatch(InitAction)
         middleware.updateJob?.joinBlocking()
-        store.waitUntilIdle()
 
         assertEquals("FR", store.state.search.region!!.home)
         assertEquals("FR", store.state.search.region!!.current)
@@ -115,7 +110,6 @@ class RegionMiddlewareTest {
 
         store.dispatch(InitAction)
         middleware.updateJob?.joinBlocking()
-        store.waitUntilIdle()
 
         assertEquals("FR", store.state.search.region!!.home)
         assertEquals("DE", store.state.search.region!!.current)
@@ -124,7 +118,6 @@ class RegionMiddlewareTest {
 
         store.dispatch(InitAction)
         middleware.updateJob?.joinBlocking()
-        store.waitUntilIdle()
 
         assertEquals("DE", store.state.search.region!!.home)
         assertEquals("DE", store.state.search.region!!.current)
@@ -143,7 +136,6 @@ class RegionMiddlewareTest {
 
         store.dispatch(InitAction)
         middleware.updateJob?.joinBlocking()
-        store.waitUntilIdle()
 
         assertEquals("FR", store.state.search.region!!.home)
         assertEquals("FR", store.state.search.region!!.current)
@@ -153,7 +145,6 @@ class RegionMiddlewareTest {
 
         store.dispatch(RefreshSearchEnginesAction)
         middleware.updateJob?.joinBlocking()
-        store.waitUntilIdle()
 
         assertEquals("FR", store.state.search.region!!.home)
         assertEquals("DE", store.state.search.region!!.current)

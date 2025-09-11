@@ -10,7 +10,6 @@ import mozilla.components.browser.state.action.ContainerAction
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.ContainerState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -45,9 +44,6 @@ class ContainerMiddlewareTest {
                 middleware = listOf(middleware),
             )
 
-            store.waitUntilIdle() // wait to consume InitAction
-            store.waitUntilIdle() // wait to consume AddContainersAction
-
             store.dispatch(ContainerAction.AddContainerAction(container))
 
             verify(storage).addContainer(
@@ -68,9 +64,6 @@ class ContainerMiddlewareTest {
                 middleware = listOf(middleware),
             )
 
-            store.waitUntilIdle() // wait to consume InitAction
-            store.waitUntilIdle() // wait to consume AddContainersAction
-
             verify(storage).getContainers()
             assertEquals(container, store.state.containers["contextId"])
         }
@@ -88,9 +81,6 @@ class ContainerMiddlewareTest {
                 ),
                 middleware = listOf(middleware),
             )
-
-            store.waitUntilIdle() // wait to consume InitAction
-            store.waitUntilIdle() // wait to consume AddContainersAction
 
             store.dispatch(ContainerAction.RemoveContainerAction(container.contextId))
 

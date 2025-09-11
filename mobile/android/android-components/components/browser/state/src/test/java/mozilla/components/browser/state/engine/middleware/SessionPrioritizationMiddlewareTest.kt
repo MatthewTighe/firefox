@@ -16,7 +16,6 @@ import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineSession.SessionPriority.DEFAULT
 import mozilla.components.concept.engine.EngineSession.SessionPriority.HIGH
 import mozilla.components.support.test.any
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -75,7 +74,6 @@ class SessionPrioritizationMiddlewareTest {
         verify(engineSession1).updateSessionPriority(HIGH)
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         capture.assertLastAction(ContentAction.UpdatePriorityToDefaultAfterTimeoutAction::class) {}
     }

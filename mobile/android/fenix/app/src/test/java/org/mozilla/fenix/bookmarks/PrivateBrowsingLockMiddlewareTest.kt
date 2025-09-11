@@ -7,7 +7,6 @@ package org.mozilla.fenix.bookmarks
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.MiddlewareContext
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -50,7 +49,6 @@ class PrivateBrowsingLockMiddlewareTest {
         assertNull(middleware.pendingAction)
 
         store.dispatch(action)
-        store.waitUntilIdle()
 
         assertTrue(verificationRequested)
         assertFalse(testMiddlewareInvoked)
@@ -80,7 +78,6 @@ class PrivateBrowsingLockMiddlewareTest {
         assertNull(middleware.pendingAction)
 
         store.dispatch(action)
-        store.waitUntilIdle()
 
         assertTrue(verificationRequested)
         assertFalse(testMiddlewareInvoked)
@@ -110,7 +107,6 @@ class PrivateBrowsingLockMiddlewareTest {
         assertNull(middleware.pendingAction)
 
         store.dispatch(action)
-        store.waitUntilIdle()
 
         assertTrue(verificationRequested)
         assertFalse(testMiddlewareInvoked)
@@ -142,7 +138,6 @@ class PrivateBrowsingLockMiddlewareTest {
         assertNull(middleware.pendingAction)
 
         store.dispatch(action)
-        store.waitUntilIdle()
 
         assertFalse(verificationRequested)
         assertTrue(testMiddlewareInvoked)
@@ -172,7 +167,6 @@ class PrivateBrowsingLockMiddlewareTest {
         assertNull(middleware.pendingAction)
 
         store.dispatch(action)
-        store.waitUntilIdle()
 
         assertFalse(verificationRequested)
         assertTrue(testMiddlewareInvoked)
@@ -202,7 +196,6 @@ class PrivateBrowsingLockMiddlewareTest {
         assertNull(middleware.pendingAction)
 
         store.dispatch(action)
-        store.waitUntilIdle()
 
         assertFalse(verificationRequested)
         assertTrue(testMiddlewareInvoked)
@@ -230,8 +223,6 @@ class PrivateBrowsingLockMiddlewareTest {
         assertNotNull(middleware.pendingAction)
 
         store.dispatch(action)
-        store.waitUntilIdle()
-
         assertTrue(testMiddlewareInvoked)
         assertNull(middleware.pendingAction)
     }

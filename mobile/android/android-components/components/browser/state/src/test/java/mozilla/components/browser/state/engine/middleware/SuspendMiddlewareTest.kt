@@ -12,7 +12,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineSessionState
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -49,7 +48,6 @@ class SuspendMiddlewareTest {
 
         store.dispatch(EngineAction.SuspendEngineSessionAction(tab.id))
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         assertNull(store.state.findTabOrCustomTab(tab.id)?.engineState?.engineSession)
@@ -75,7 +73,6 @@ class SuspendMiddlewareTest {
 
         store.dispatch(EngineAction.SuspendEngineSessionAction(tab.id))
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         assertNull(store.state.findTabOrCustomTab(tab.id)?.engineState?.engineSession)
@@ -139,8 +136,6 @@ class SuspendMiddlewareTest {
         suspendStore.dispatch(EngineAction.SuspendEngineSessionAction(tab.id))
         killStore.dispatch(EngineAction.KillEngineSessionAction(tab.id))
 
-        suspendStore.waitUntilIdle()
-        killStore.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         assertNull(suspendStore.state.findTabOrCustomTab(tab.id)?.engineState?.engineSession)

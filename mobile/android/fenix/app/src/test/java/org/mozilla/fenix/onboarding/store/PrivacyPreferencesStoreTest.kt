@@ -5,7 +5,6 @@
 package org.mozilla.fenix.onboarding.store
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -87,5 +86,4 @@ class PrivacyPreferencesStoreTest {
  */
 private fun safeDispatch(store: PrivacyPreferencesStore, action: PrivacyPreferencesAction) {
     store.dispatch(action)
-    store.waitUntilIdle()
 }

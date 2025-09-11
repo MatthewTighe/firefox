@@ -7,8 +7,6 @@ package org.mozilla.fenix.settings.trustpanel
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.net.toUri
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runTest
 import mozilla.components.browser.state.state.ContentState
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.concept.engine.Engine
@@ -21,7 +19,6 @@ import mozilla.components.feature.sitepermissions.SitePermissionsRules
 import mozilla.components.lib.publicsuffixlist.PublicSuffixList
 import mozilla.components.support.ktx.kotlin.getOrigin
 import mozilla.components.support.test.any
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -97,7 +94,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.ToggleTrackingProtection)
-        store.waitUntilIdle()
 
         verify(addExceptionUseCase).invoke(sessionId)
         verify(reloadUrlUseCase).invoke(sessionId)
@@ -122,7 +118,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.ToggleTrackingProtection)
-        store.waitUntilIdle()
 
         verify(removeExceptionUseCase).invoke(sessionId)
         verify(reloadUrlUseCase).invoke(sessionId)
@@ -141,7 +136,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.UpdateTrackersBlocked(trackerLogList))
-        store.waitUntilIdle()
 
         verify(bucketedTrackers).updateIfNeeded(trackerLogList)
         assertEquals(store.state.numberOfTrackersBlocked, 1)
@@ -166,8 +160,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.RequestClearSiteDataDialog)
-        store.waitUntilIdle()
-        store.waitUntilIdle() // Wait to ensure no calls to store.dispatch(TrustPanelAction.UpdateBaseDomain(...))
 
         verify(store, never()).dispatch(TrustPanelAction.UpdateBaseDomain(baseDomain))
     }
@@ -192,8 +184,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.RequestClearSiteDataDialog)
-        store.waitUntilIdle()
-        store.waitUntilIdle() // Wait for call to store.dispatch(TrustPanelAction.UpdateBaseDomain(...))
 
         assertEquals(store.state.baseDomain, baseDomain)
     }
@@ -213,7 +203,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.TogglePermission(toggleablePermission))
-        store.waitUntilIdle()
 
         verify(requestPermissionsLauncher).launch(PhoneFeature.CAMERA.androidPermissionsList)
     }
@@ -233,7 +222,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.TogglePermission(toggleablePermission))
-        store.waitUntilIdle()
 
         // Ensure request permissions launcher is not accessed to request permission
         verify(requestPermissionsLauncher, never()).launch(any())
@@ -277,7 +265,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.TogglePermission(toggleablePermission))
-        store.waitUntilIdle()
 
         verify(permissionStorage).updateSitePermissions(updatedSitePermissions, false)
         verify(reloadUrlUseCase).invoke(sessionId)
@@ -327,7 +314,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.UpdateAutoplayValue(autoplayValue))
-        store.waitUntilIdle()
 
         verify(permissionStorage).add(updatedSitePermissions, false)
         verify(reloadUrlUseCase).invoke(sessionId)
@@ -371,7 +357,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.UpdateAutoplayValue(autoplayValue))
-        store.waitUntilIdle()
 
         verify(permissionStorage).updateSitePermissions(updatedSitePermissions, false)
         verify(reloadUrlUseCase).invoke(sessionId)
@@ -400,7 +385,6 @@ class TrustPanelMiddlewareTest {
         )
 
         store.dispatch(TrustPanelAction.UpdateAutoplayValue(autoplayValue))
-        store.waitUntilIdle()
 
         verify(permissionStorage, never()).updateSitePermissions(updatedSitePermissions, false)
         verify(reloadUrlUseCase, never()).invoke(sessionId)

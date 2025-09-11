@@ -5,7 +5,6 @@
 package org.mozilla.fenix.tabstray.syncedtabs
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -28,7 +27,6 @@ class SyncButtonBindingTest {
         binding.start()
 
         store.dispatch(TabsTrayAction.SyncNow)
-        store.waitUntilIdle()
 
         assertTrue(invoked)
     }
@@ -41,12 +39,9 @@ class SyncButtonBindingTest {
 
         binding.start()
 
-        store.waitUntilIdle()
-
         assertFalse(invoked)
 
         store.dispatch(TabsTrayAction.SyncCompleted)
-        store.waitUntilIdle()
 
         assertFalse(invoked)
     }

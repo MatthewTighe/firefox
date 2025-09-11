@@ -20,7 +20,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineView
 import mozilla.components.support.test.any
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -58,7 +57,6 @@ class SessionFeatureTest {
 
         feature.start()
 
-        store.waitUntilIdle()
         verify(view).render(engineSession)
     }
 
@@ -78,8 +76,6 @@ class SessionFeatureTest {
 
         feature.start()
 
-        store.waitUntilIdle()
-
         verify(view).render(engineSession)
     }
 
@@ -97,8 +93,6 @@ class SessionFeatureTest {
         val feature = SessionFeature(store, mock(), mock(), view, tabId = "D")
         verify(view, never()).render(any())
         feature.start()
-
-        store.waitUntilIdle()
 
         verify(view).render(engineSession)
     }
@@ -120,11 +114,9 @@ class SessionFeatureTest {
         verify(view, never()).render(any())
 
         feature.start()
-        store.waitUntilIdle()
         verify(view).render(engineSessionB)
 
         store.dispatch(TabListAction.SelectTabAction("A"))
-        store.waitUntilIdle()
         verify(view).render(engineSessionA)
     }
 
@@ -139,7 +131,6 @@ class SessionFeatureTest {
         verify(view, never()).render(any())
 
         feature.start()
-        store.waitUntilIdle()
         verify(store).dispatch(EngineAction.CreateEngineSessionAction("B"))
     }
 
@@ -160,13 +151,11 @@ class SessionFeatureTest {
         verify(view, never()).render(any())
 
         feature.start()
-        store.waitUntilIdle()
         verify(view).render(engineSessionB)
 
         feature.stop()
 
         store.dispatch(TabListAction.SelectTabAction("A"))
-        store.waitUntilIdle()
         verify(view, never()).render(engineSessionA)
     }
 
@@ -183,8 +172,6 @@ class SessionFeatureTest {
         val feature = SessionFeature(store, mock(), mock(), view)
 
         feature.start()
-
-        store.waitUntilIdle()
 
         verify(view).render(engineSession)
         verify(view, never()).release()
@@ -208,8 +195,6 @@ class SessionFeatureTest {
         verify(view, never()).render(any())
 
         feature.start()
-
-        store.waitUntilIdle()
 
         verify(view).render(engineSession)
 
@@ -236,8 +221,6 @@ class SessionFeatureTest {
         verify(view, never()).render(any())
 
         feature.start()
-
-        store.waitUntilIdle()
 
         verify(view).render(engineSession)
         verify(view, never()).release()
@@ -368,8 +351,6 @@ class SessionFeatureTest {
         verify(view, never()).render(any())
         feature.start()
 
-        store.waitUntilIdle()
-
         verify(view).render(engineSession)
 
         feature.stop()
@@ -393,7 +374,6 @@ class SessionFeatureTest {
         feature.start()
 
         store.dispatch(CrashAction.SessionCrashedAction("A"))
-        store.waitUntilIdle()
         verify(view, atLeastOnce()).release()
         middleware.assertNotDispatched(EngineAction.CreateEngineSessionAction::class)
     }
@@ -414,7 +394,6 @@ class SessionFeatureTest {
 
         assertEquals(0L, store.state.findTab("B")?.lastAccess)
         feature.start()
-        store.waitUntilIdle()
 
         assertNotEquals(0L, store.state.findTab("B")?.lastAccess)
         verify(view).render(engineSession)

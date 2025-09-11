@@ -10,7 +10,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import mozilla.components.concept.storage.Login
 import mozilla.components.concept.storage.LoginsStorage
 import mozilla.components.lib.state.Store
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -62,7 +61,6 @@ class LoginsMiddlewareTest {
             `when`(loginsStorage.list()).thenReturn(listOf())
             val middleware = buildMiddleware()
             val store = middleware.makeStore()
-            store.waitUntilIdle()
 
             assertEquals(0, store.state.loginItems.size)
         }
@@ -75,7 +73,6 @@ class LoginsMiddlewareTest {
             val middleware = buildMiddleware()
             val store = middleware.makeStore()
             store.dispatch(AddLoginAction.InitAdd)
-            store.waitUntilIdle()
             verify(navController).navigate(LoginsDestinations.ADD_LOGIN)
         }
 
@@ -97,7 +94,6 @@ class LoginsMiddlewareTest {
                     ),
                 ),
             )
-            store.waitUntilIdle()
             verify(navController).navigate(LoginsDestinations.LOGIN_DETAILS)
         }
 
@@ -119,7 +115,6 @@ class LoginsMiddlewareTest {
                     ),
                 ),
             )
-            store.waitUntilIdle()
 
             verify(navController).navigate(LoginsDestinations.EDIT_LOGIN)
         }
@@ -134,7 +129,6 @@ class LoginsMiddlewareTest {
             val store = middleware.makeStore()
 
             store.dispatch(LoginsListBackClicked)
-            store.waitUntilIdle()
 
             assertTrue(exited)
         }
@@ -145,7 +139,6 @@ class LoginsMiddlewareTest {
             `when`(loginsStorage.list()).thenReturn(loginList)
             val middleware = buildMiddleware()
             val store = middleware.makeStore()
-            store.waitUntilIdle()
 
             assertEquals(5, store.state.loginItems.size)
         }
@@ -161,7 +154,6 @@ class LoginsMiddlewareTest {
             val middleware = buildMiddleware()
             val store = middleware.makeStore()
             store.dispatch(LoginsListSortMenuAction.OrderByLastUsedClicked)
-            store.waitUntilIdle()
             assertEquals(LoginsSortOrder.LastUsed, newSortOrder)
         }
 
@@ -202,7 +194,5 @@ class LoginsMiddlewareTest {
     ) = LoginsStore(
         initialState = initialState,
         middleware = listOf(this),
-    ).also {
-        it.waitUntilIdle()
-    }
+    )
 }

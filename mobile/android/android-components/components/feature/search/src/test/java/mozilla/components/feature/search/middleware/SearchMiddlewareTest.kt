@@ -17,7 +17,6 @@ import mozilla.components.feature.search.ext.createSearchEngine
 import mozilla.components.feature.search.storage.CustomSearchEngineStorage
 import mozilla.components.feature.search.storage.SearchMetadataStorage
 import mozilla.components.support.test.fakes.android.FakeSharedPreferences
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -1836,12 +1835,6 @@ class SearchMiddlewareTest {
 }
 
 private fun wait(store: BrowserStore, dispatcher: TestDispatcher) {
-    // First we wait for the InitAction that may still need to be processed.
-    store.waitUntilIdle()
-
     // Now we wait for the Middleware that may need to asynchronously process an action the test dispatched
     dispatcher.scheduler.advanceUntilIdle()
-
-    // Since the Middleware may have dispatched an action, we now wait for the store again.
-    store.waitUntilIdle()
 }

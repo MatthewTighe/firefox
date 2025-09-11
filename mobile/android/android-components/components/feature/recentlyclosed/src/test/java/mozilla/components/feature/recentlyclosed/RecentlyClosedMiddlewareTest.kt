@@ -17,7 +17,6 @@ import mozilla.components.concept.engine.Engine
 import mozilla.components.feature.session.middleware.undo.UndoMiddleware
 import mozilla.components.support.test.argumentCaptor
 import mozilla.components.support.test.eq
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -68,7 +67,6 @@ class RecentlyClosedMiddlewareTest {
 
         store.dispatch(RecentlyClosedAction.AddClosedTabsAction(listOf(closedTab)))
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         verify(storage).addTabsToCollectionWithMax(
             listOf(closedTab),
@@ -95,7 +93,6 @@ class RecentlyClosedMiddlewareTest {
         store.dispatch(UndoAction.ClearRecoverableTabs(store.state.undoHistory.tag))
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         val closedTabCaptor = argumentCaptor<List<RecoverableTab>>()
         verify(storage).addTabsToCollectionWithMax(
@@ -135,7 +132,6 @@ class RecentlyClosedMiddlewareTest {
         store.dispatch(UndoAction.ClearRecoverableTabs(store.state.undoHistory.tag))
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         val closedTabCaptor = argumentCaptor<List<RecoverableTab>>()
         verify(storage).addTabsToCollectionWithMax(
@@ -167,7 +163,6 @@ class RecentlyClosedMiddlewareTest {
 
         store.dispatch(TabListAction.RemoveTabAction("1234"))
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         verify(storage).getTabs()
         verifyNoMoreInteractions(storage)
@@ -192,7 +187,6 @@ class RecentlyClosedMiddlewareTest {
         store.dispatch(UndoAction.ClearRecoverableTabs(store.state.undoHistory.tag))
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         val closedTabCaptor = argumentCaptor<List<RecoverableTab>>()
         verify(storage).addTabsToCollectionWithMax(
@@ -227,7 +221,6 @@ class RecentlyClosedMiddlewareTest {
         store.dispatch(UndoAction.ClearRecoverableTabs(store.state.undoHistory.tag))
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         val closedTabCaptor = argumentCaptor<List<RecoverableTab>>()
         verify(storage).addTabsToCollectionWithMax(
@@ -270,7 +263,6 @@ class RecentlyClosedMiddlewareTest {
         assertEquals("tab4", store.state.selectedTabId)
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         val closedTabCaptor = argumentCaptor<List<RecoverableTab>>()
 
@@ -308,12 +300,8 @@ class RecentlyClosedMiddlewareTest {
         val middleware = RecentlyClosedMiddleware(lazy { storage }, 5, scope)
         val store = BrowserStore(initialState = BrowserState(), middleware = listOf(middleware))
 
-        // Wait for Init action of store to be processed
-        store.waitUntilIdle()
-
         // Now wait for Middleware to process Init action and store to process action from middleware
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         verify(storage).getTabs()
         assertEquals(closedTab.state, store.state.closedTabs[0])
@@ -335,10 +323,7 @@ class RecentlyClosedMiddlewareTest {
 
         store.dispatch(RecentlyClosedAction.RemoveClosedTabAction(closedTab.state))
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
-
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
         verify(storage).removeTab(closedTab.state)
     }
 
@@ -357,10 +342,7 @@ class RecentlyClosedMiddlewareTest {
 
         store.dispatch(RecentlyClosedAction.RemoveAllClosedTabAction)
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
-
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
         verify(storage).removeAllTabs()
     }
 }

@@ -12,7 +12,6 @@ import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
 import org.junit.Assert.assertEquals
@@ -182,8 +181,6 @@ class UndoMiddlewareTest {
 
         restoreRecoverableTabs(dispatcher, store)
 
-        store.waitUntilIdle()
-
         assertEquals(0, store.state.tabs.size)
     }
 
@@ -266,7 +263,6 @@ class UndoMiddlewareTest {
         assertEquals("https://getpocket.com", store.state.undoHistory.tabs[1].state.url)
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         assertNull(store.state.undoHistory.selectedTabId)
         assertTrue(store.state.undoHistory.tabs.isEmpty())
@@ -289,5 +285,4 @@ private suspend fun restoreRecoverableTabs(dispatcher: TestDispatcher, store: Br
         store.dispatch(UndoAction.RestoreRecoverableTabs)
     }
     dispatcher.scheduler.advanceUntilIdle()
-    store.waitUntilIdle()
 }

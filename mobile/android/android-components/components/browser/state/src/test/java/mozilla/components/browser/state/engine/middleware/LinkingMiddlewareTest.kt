@@ -12,7 +12,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.support.test.any
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -182,7 +181,6 @@ class LinkingMiddlewareTest {
         val engineSession2: EngineSession = mock()
         store.dispatch(EngineAction.LinkEngineSessionAction(tab1.id, engineSession1))
         store.dispatch(EngineAction.LinkEngineSessionAction(tab2.id, engineSession2))
-        store.waitUntilIdle()
 
         // We only have a session for tab2 so we should only register an observer for tab2
         val engineObserver = store.state.findTab(tab2.id)?.engineState?.engineObserver
@@ -190,8 +188,6 @@ class LinkingMiddlewareTest {
 
         verify(engineSession2).register(engineObserver!!)
         engineObserver.onTitleChange("test")
-
-        store.waitUntilIdle()
 
         assertEquals("test", store.state.tabs[1].content.title)
     }
@@ -210,13 +206,11 @@ class LinkingMiddlewareTest {
 
         val engineSession: EngineSession = mock()
         store.dispatch(EngineAction.LinkEngineSessionAction(tab1.id, engineSession))
-        store.waitUntilIdle()
         assertNotNull(store.state.findTab(tab1.id)?.engineState?.engineObserver)
         assertNull(store.state.findTab(tab2.id)?.engineState?.engineObserver)
 
         store.dispatch(EngineAction.UnlinkEngineSessionAction(tab1.id))
         store.dispatch(EngineAction.UnlinkEngineSessionAction(tab2.id))
-        store.waitUntilIdle()
         assertNull(store.state.findTab(tab1.id)?.engineState?.engineObserver)
         assertNull(store.state.findTab(tab2.id)?.engineState?.engineObserver)
     }
@@ -236,14 +230,12 @@ class LinkingMiddlewareTest {
 
         store.dispatch(TabListAction.AddTabAction(tab1))
         store.dispatch(TabListAction.AddTabAction(tab2))
-        store.waitUntilIdle()
 
         // We only have a session for tab2 so we should only register an observer for tab2
         val engineObserver = store.state.findTab(tab2.id)?.engineState?.engineObserver
         assertNotNull(engineObserver)
         verify(engineSession).register(engineObserver!!)
         engineObserver.onTitleChange("test")
-        store.waitUntilIdle()
 
         assertEquals("test", store.state.tabs[1].content.title)
     }

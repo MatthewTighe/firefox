@@ -18,7 +18,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineSession.LoadUrlFlags
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
 import org.junit.Assert.assertEquals
@@ -72,7 +71,6 @@ class SessionUseCasesTest {
     @Test
     fun loadUrlWithEngineSession() {
         useCases.loadUrl("https://getpocket.com")
-        store.waitUntilIdle()
         middleware.assertNotDispatched(EngineAction.LoadUrlAction::class)
         verify(engineSession).loadUrl(url = "https://getpocket.com")
         middleware.assertLastAction(EngineAction.OptimizedLoadUrlTriggeredAction::class) { action ->
@@ -81,7 +79,6 @@ class SessionUseCasesTest {
         }
 
         useCases.loadUrl("https://www.mozilla.org", LoadUrlFlags.select(LoadUrlFlags.EXTERNAL))
-        store.waitUntilIdle()
         middleware.assertNotDispatched(EngineAction.LoadUrlAction::class)
         verify(engineSession).loadUrl(
             url = "https://www.mozilla.org",
@@ -94,7 +91,6 @@ class SessionUseCasesTest {
         }
 
         useCases.loadUrl("https://firefox.com", store.state.selectedTabId)
-        store.waitUntilIdle()
         middleware.assertNotDispatched(EngineAction.LoadUrlAction::class)
         verify(engineSession).loadUrl(url = "https://firefox.com")
         middleware.assertLastAction(EngineAction.OptimizedLoadUrlTriggeredAction::class) { action ->
@@ -107,7 +103,6 @@ class SessionUseCasesTest {
             store.state.selectedTabId,
             LoadUrlFlags.select(LoadUrlFlags.BYPASS_PROXY),
         )
-        store.waitUntilIdle()
         middleware.assertNotDispatched(EngineAction.LoadUrlAction::class)
         verify(engineSession).loadUrl(
             url = "https://developer.mozilla.org",
@@ -123,7 +118,6 @@ class SessionUseCasesTest {
             "https://www.mozilla.org/en-CA/firefox/browsers/mobile/",
             "bugzilla",
         )
-        store.waitUntilIdle()
         middleware.assertNotDispatched(EngineAction.LoadUrlAction::class)
         verify(childEngineSession).loadUrl(
             url = "https://www.mozilla.org/en-CA/firefox/browsers/mobile/",
@@ -139,7 +133,6 @@ class SessionUseCasesTest {
         store.dispatch(EngineAction.UnlinkEngineSessionAction("mozilla"))
 
         useCases.loadUrl("https://getpocket.com")
-        store.waitUntilIdle()
 
         middleware.assertLastAction(EngineAction.LoadUrlAction::class) { action ->
             assertEquals("mozilla", action.tabId)
@@ -147,7 +140,6 @@ class SessionUseCasesTest {
         }
 
         useCases.loadUrl("https://www.mozilla.org", LoadUrlFlags.select(LoadUrlFlags.EXTERNAL))
-        store.waitUntilIdle()
 
         middleware.assertLastAction(EngineAction.LoadUrlAction::class) { action ->
             assertEquals("mozilla", action.tabId)
@@ -156,7 +148,6 @@ class SessionUseCasesTest {
         }
 
         useCases.loadUrl("https://firefox.com", store.state.selectedTabId)
-        store.waitUntilIdle()
 
         middleware.assertLastAction(EngineAction.LoadUrlAction::class) { action ->
             assertEquals("mozilla", action.tabId)
@@ -168,7 +159,6 @@ class SessionUseCasesTest {
             store.state.selectedTabId,
             LoadUrlFlags.select(LoadUrlFlags.BYPASS_PROXY),
         )
-        store.waitUntilIdle()
 
         middleware.assertLastAction(EngineAction.LoadUrlAction::class) { action ->
             assertEquals("mozilla", action.tabId)
@@ -180,7 +170,6 @@ class SessionUseCasesTest {
     @Test
     fun loadData() {
         useCases.loadData("<html><body></body></html>", "text/html")
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.LoadDataAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertEquals("<html><body></body></html>", action.data)
@@ -193,7 +182,6 @@ class SessionUseCasesTest {
             "text/plain",
             tabId = store.state.selectedTabId,
         )
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.LoadDataAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertEquals("Should load in WebView", action.data)
@@ -207,7 +195,6 @@ class SessionUseCasesTest {
             "base64",
             store.state.selectedTabId,
         )
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.LoadDataAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertEquals("Should also load in WebView", action.data)
@@ -219,14 +206,12 @@ class SessionUseCasesTest {
     @Test
     fun reload() {
         useCases.reload()
-        store.waitUntilIdle()
 
         middleware.assertLastAction(EngineAction.ReloadAction::class) { action ->
             assertEquals("mozilla", action.tabId)
         }
 
         useCases.reload(store.state.selectedTabId, LoadUrlFlags.select(LoadUrlFlags.EXTERNAL))
-        store.waitUntilIdle()
 
         middleware.assertLastAction(EngineAction.ReloadAction::class) { action ->
             assertEquals("mozilla", action.tabId)
@@ -238,7 +223,6 @@ class SessionUseCasesTest {
     fun reloadBypassCache() {
         val flags = LoadUrlFlags.select(LoadUrlFlags.BYPASS_CACHE)
         useCases.reload(store.state.selectedTabId, flags = flags)
-        store.waitUntilIdle()
 
         middleware.assertLastAction(EngineAction.ReloadAction::class) { action ->
             assertEquals("mozilla", action.tabId)
@@ -249,22 +233,18 @@ class SessionUseCasesTest {
     @Test
     fun stopLoading() = runTest {
         useCases.stopLoading()
-        store.waitUntilIdle()
         verify(engineSession).stopLoading()
 
         useCases.stopLoading(store.state.selectedTabId)
-        store.waitUntilIdle()
         verify(engineSession, times(2)).stopLoading()
     }
 
     @Test
     fun goBack() {
         useCases.goBack(null)
-        store.waitUntilIdle()
         middleware.assertNotDispatched(EngineAction.GoBackAction::class)
 
         useCases.goBack(store.state.selectedTabId)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.GoBackAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertTrue(action.userInteraction)
@@ -272,7 +252,6 @@ class SessionUseCasesTest {
         middleware.reset()
 
         useCases.goBack(userInteraction = false)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.GoBackAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertFalse(action.userInteraction)
@@ -282,11 +261,9 @@ class SessionUseCasesTest {
     @Test
     fun goForward() {
         useCases.goForward(null)
-        store.waitUntilIdle()
         middleware.assertNotDispatched(EngineAction.GoForwardAction::class)
 
         useCases.goForward(store.state.selectedTabId)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.GoForwardAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertTrue(action.userInteraction)
@@ -294,7 +271,6 @@ class SessionUseCasesTest {
         middleware.reset()
 
         useCases.goForward(userInteraction = false)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.GoForwardAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertFalse(action.userInteraction)
@@ -304,18 +280,15 @@ class SessionUseCasesTest {
     @Test
     fun goToHistoryIndex() {
         useCases.goToHistoryIndex(tabId = null, index = 0)
-        store.waitUntilIdle()
         middleware.assertNotDispatched(EngineAction.GoToHistoryIndexAction::class)
 
         useCases.goToHistoryIndex(tabId = "test", index = 5)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.GoToHistoryIndexAction::class) { action ->
             assertEquals("test", action.tabId)
             assertEquals(5, action.index)
         }
 
         useCases.goToHistoryIndex(index = 10)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.GoToHistoryIndexAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertEquals(10, action.index)
@@ -325,26 +298,22 @@ class SessionUseCasesTest {
     @Test
     fun requestDesktopSite() {
         useCases.requestDesktopSite(true, store.state.selectedTabId)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.ToggleDesktopModeAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertTrue(action.enable)
         }
 
         useCases.requestDesktopSite(false)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.ToggleDesktopModeAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertFalse(action.enable)
         }
         useCases.requestDesktopSite(true, store.state.selectedTabId)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.ToggleDesktopModeAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertTrue(action.enable)
         }
         useCases.requestDesktopSite(false, store.state.selectedTabId)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.ToggleDesktopModeAction::class) { action ->
             assertEquals("mozilla", action.tabId)
             assertFalse(action.enable)
@@ -354,14 +323,12 @@ class SessionUseCasesTest {
     @Test
     fun exitFullscreen() {
         useCases.exitFullscreen(store.state.selectedTabId)
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.ExitFullScreenModeAction::class) { action ->
             assertEquals("mozilla", action.tabId)
         }
         middleware.reset()
 
         useCases.exitFullscreen()
-        store.waitUntilIdle()
         middleware.assertLastAction(EngineAction.ExitFullScreenModeAction::class) { action ->
             assertEquals("mozilla", action.tabId)
         }
@@ -380,7 +347,6 @@ class SessionUseCasesTest {
         }
 
         loadUseCase("https://www.example.com")
-        store.waitUntilIdle()
 
         assertEquals("https://www.example.com", tabCreatedForUrl)
         assertNotNull(createdTab)
@@ -397,7 +363,6 @@ class SessionUseCasesTest {
         var tabCreatedForUrl: String? = null
 
         store.dispatch(TabListAction.RemoveAllTabsAction())
-        store.waitUntilIdle()
 
         val loadUseCase = SessionUseCases.LoadDataUseCase(store) { url ->
             tabCreatedForUrl = url
@@ -405,7 +370,6 @@ class SessionUseCasesTest {
         }
 
         loadUseCase("Hello", mimeType = "text/plain", encoding = "UTF-8")
-        store.waitUntilIdle()
 
         assertEquals("about:blank", tabCreatedForUrl)
         assertNotNull(createdTab)
@@ -421,7 +385,6 @@ class SessionUseCasesTest {
     @Test
     fun `CrashRecoveryUseCase will restore specified session`() {
         useCases.crashRecovery.invoke(listOf("mozilla"))
-        store.waitUntilIdle()
 
         middleware.assertLastAction(CrashAction.RestoreCrashedSessionAction::class) { action ->
             assertEquals("mozilla", action.tabId)
@@ -450,7 +413,6 @@ class SessionUseCasesTest {
         val useCases = SessionUseCases(store)
 
         useCases.crashRecovery.invoke()
-        store.waitUntilIdle()
 
         middleware.assertFirstAction(CrashAction.RestoreCrashedSessionAction::class) { action ->
             assertEquals("tab1", action.tabId)
@@ -464,7 +426,6 @@ class SessionUseCasesTest {
     @Test
     fun `PurgeHistoryUseCase dispatches PurgeHistory action`() {
         useCases.purgeHistory()
-        store.waitUntilIdle()
 
         middleware.findFirstAction(EngineAction.PurgeHistoryAction::class)
     }
@@ -484,30 +445,25 @@ class SessionUseCasesTest {
 
         // Make sure use case doesn't crash for custom tab and non-existent tab
         useCases.updateLastAccess(customTab.id)
-        store.waitUntilIdle()
         assertEquals(0L, store.state.findTab(tab.id)?.lastAccess)
 
         // Update last access for a specific tab with default value
         useCases.updateLastAccess(tab.id)
-        store.waitUntilIdle()
         assertNotEquals(0L, store.state.findTab(tab.id)?.lastAccess)
 
         // Update last access for a specific tab with specific value
         useCases.updateLastAccess(tab.id, 123L)
-        store.waitUntilIdle()
         assertEquals(123L, store.state.findTab(tab.id)?.lastAccess)
 
         // Update last access for currently selected tab
         store.dispatch(TabListAction.SelectTabAction(otherTab.id))
         assertEquals(0L, store.state.findTab(otherTab.id)?.lastAccess)
         useCases.updateLastAccess()
-        store.waitUntilIdle()
         assertNotEquals(0L, store.state.findTab(otherTab.id)?.lastAccess)
 
         // Update last access for currently selected tab with specific value
         store.dispatch(TabListAction.SelectTabAction(otherTab.id))
         useCases.updateLastAccess(lastAccess = 345L)
-        store.waitUntilIdle()
         assertEquals(345L, store.state.findTab(otherTab.id)?.lastAccess)
     }
 }

@@ -21,7 +21,6 @@ import mozilla.components.support.base.Component
 import mozilla.components.support.base.facts.Action
 import mozilla.components.support.base.facts.processor.CollectionProcessor
 import mozilla.components.support.test.any
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -277,7 +276,6 @@ class ContextMenuFeatureTest {
 
         feature.onMenuCancelled("test-tab")
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         assertNull(store.state.findTab("test-tab")!!.content.hitResult)
@@ -318,7 +316,6 @@ class ContextMenuFeatureTest {
             ContextMenuUseCases(store),
         )
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         assertNotNull(store.state.findTab("test-tab")!!.content.hitResult)
@@ -326,7 +323,6 @@ class ContextMenuFeatureTest {
 
         feature.onMenuItemSelected("test-tab", "test-id")
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         assertNull(store.state.findTab("test-tab")!!.content.hitResult)

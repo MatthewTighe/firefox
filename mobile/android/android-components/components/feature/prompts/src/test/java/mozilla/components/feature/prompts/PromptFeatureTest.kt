@@ -69,7 +69,6 @@ import mozilla.components.support.base.facts.Action
 import mozilla.components.support.base.facts.processor.CollectionProcessor
 import mozilla.components.support.test.any
 import mozilla.components.support.test.eq
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -423,7 +422,6 @@ class PromptFeatureTest {
         val saveLoginPrompt: SaveLoginDialogFragment = mock()
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
-        store.waitUntilIdle()
 
         val feature = spy(
             PromptFeature(
@@ -476,8 +474,6 @@ class PromptFeatureTest {
 
         feature.handleDialogsRequest(promptRequest, session)
 
-        store.waitUntilIdle()
-
         verify(feature).dismissDialogRequest(promptRequest, session)
     }
 
@@ -509,8 +505,6 @@ class PromptFeatureTest {
 
         feature.handleDialogsRequest(promptRequest, session)
 
-        store.waitUntilIdle()
-
         assertTrue(onRemoveLastSavedPasswordCalled)
         verify(feature).dismissDialogRequest(promptRequest, session)
     }
@@ -540,8 +534,6 @@ class PromptFeatureTest {
         val session = tab()!!
 
         feature.handleDialogsRequest(promptRequest, session)
-
-        store.waitUntilIdle()
 
         verify(feature).dismissDialogRequest(promptRequest, session)
     }
@@ -578,8 +570,6 @@ class PromptFeatureTest {
         )
 
         feature.dismissDialogRequest(promptRequest, tab)
-
-        store.waitUntilIdle()
 
         verify(store).dispatch(ContentAction.ConsumePromptRequestAction(tab.id, promptRequest))
         assertTrue(onDismissWasCalled)
@@ -839,7 +829,6 @@ class PromptFeatureTest {
 
         verify(feature.addressPicker!!).dismissSelectAddressRequest(selectAddressPromptRequest)
 
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
 
@@ -891,7 +880,6 @@ class PromptFeatureTest {
         assertEquals(singleChoiceRequest, tab()!!.content.promptRequests[0])
         feature.onCancel(tabId, singleChoiceRequest.uid)
 
-        store.waitUntilIdle()
         assertTrue(tab()?.content?.promptRequests?.isEmpty() ?: false)
     }
 
@@ -917,7 +905,6 @@ class PromptFeatureTest {
         assertEquals(singleChoiceRequest, tab()!!.content.promptRequests[0])
         feature.onConfirm(tabId, singleChoiceRequest.uid, mock<Choice>())
 
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
 
@@ -943,7 +930,6 @@ class PromptFeatureTest {
         assertEquals(menuChoiceRequest, tab()!!.content.promptRequests[0])
         feature.onConfirm(tabId, menuChoiceRequest.uid, mock<Choice>())
 
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
 
@@ -969,7 +955,6 @@ class PromptFeatureTest {
         assertEquals(multipleChoiceRequest, tab()!!.content.promptRequests[0])
         feature.onConfirm(tabId, multipleChoiceRequest.uid, arrayOf<Choice>())
 
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
 
@@ -1002,13 +987,11 @@ class PromptFeatureTest {
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
         feature.onConfirm(tabId, promptRequest.uid, false)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onShowNoMoreAlertsWasCalled)
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
         feature.onCancel(tabId, promptRequest.uid)
-        store.waitUntilIdle()
         assertTrue(onDismissWasCalled)
     }
 
@@ -1032,7 +1015,6 @@ class PromptFeatureTest {
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
         feature.onCancel(tabId, promptRequest.uid)
-        store.waitUntilIdle()
         assertTrue(onDismissWasCalled)
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
@@ -1066,13 +1048,11 @@ class PromptFeatureTest {
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
         feature.onConfirm(tabId, promptRequest.uid, false to "")
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onConfirmWasCalled)
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
         feature.onCancel(tabId, promptRequest.uid)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onDismissWasCalled)
     }
@@ -1106,7 +1086,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onCancel(tabId, promptRequest.uid)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onDismissWasCalled)
     }
@@ -1150,7 +1129,6 @@ class PromptFeatureTest {
 
             val now = Date()
             feature.onConfirm(tabId, promptRequest.uid, now)
-            store.waitUntilIdle()
             assertTrue(tab()!!.content.promptRequests.isEmpty())
 
             assertEquals(now, selectedDate)
@@ -1206,7 +1184,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, filePickerRequest))
 
         feature.onActivityResult(FILE_PICKER_ACTIVITY_REQUEST_CODE, intent, RESULT_OK)
-        store.waitUntilIdle()
         assertTrue(onSingleFileSelectionWasCalled)
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
@@ -1249,7 +1226,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, filePickerRequest))
 
         feature.onActivityResult(FILE_PICKER_ACTIVITY_REQUEST_CODE, intent, RESULT_OK)
-        store.waitUntilIdle()
         assertTrue(onMultipleFileSelectionWasCalled)
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
@@ -1278,7 +1254,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, filePickerRequest))
 
         feature.onActivityResult(FILE_PICKER_ACTIVITY_REQUEST_CODE, intent, RESULT_CANCELED)
-        store.waitUntilIdle()
         assertTrue(onDismissWasCalled)
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
@@ -1410,14 +1385,10 @@ class PromptFeatureTest {
 
         loginPickerRequest.onConfirm(login)
 
-        store.waitUntilIdle()
-
         assertEquals(confirmedLogin, login)
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, loginPickerRequest))
         loginPickerRequest.onDismiss()
-
-        store.waitUntilIdle()
 
         assertTrue(onDismissWasCalled)
     }
@@ -1451,15 +1422,11 @@ class PromptFeatureTest {
 
         selectCreditCardRequest.onConfirm(creditCard)
 
-        store.waitUntilIdle()
-
         assertEquals(creditCard, confirmedCreditCard)
         assertTrue(onConfirmCalled)
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, selectCreditCardRequest))
         selectCreditCardRequest.onDismiss()
-
-        store.waitUntilIdle()
 
         assertTrue(onDismissCalled)
     }
@@ -1501,14 +1468,12 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onConfirm(tabId, promptRequest.uid, "" to "")
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onConfirmWasCalled)
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onCancel(tabId, promptRequest.uid)
-        store.waitUntilIdle()
         assertTrue(onDismissWasCalled)
     }
 
@@ -1550,7 +1515,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onConfirm(tabId, promptRequest.uid, "" to "")
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onLeaveWasCalled)
     }
@@ -1590,7 +1554,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onCancel(tabId, promptRequest.uid)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onDismissWasCalled)
     }
@@ -1625,14 +1588,12 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onConfirm(tabId, promptRequest.uid, "#f6b73c")
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onConfirmWasCalled)
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onCancel(tabId, promptRequest.uid)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onDismissWasCalled)
     }
@@ -1666,7 +1627,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onConfirm(tabId, promptRequest.uid, true)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onConfirmWasCalled)
     }
@@ -1702,7 +1662,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onCancel(tabId, promptRequest.uid, true)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onCancelWasCalled)
     }
@@ -1744,7 +1703,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onCancel(tabId, promptRequest.uid)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onCancelWasCalled)
     }
@@ -1793,21 +1751,18 @@ class PromptFeatureTest {
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
         feature.onConfirm(tabId, promptRequest.uid, true to MultiButtonDialogFragment.ButtonType.POSITIVE)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onPositiveButtonWasCalled)
 
         feature.promptAbuserDetector.resetJSAlertAbuseState()
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
         feature.onConfirm(tabId, promptRequest.uid, true to MultiButtonDialogFragment.ButtonType.NEGATIVE)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onNegativeButtonWasCalled)
 
         feature.promptAbuserDetector.resetJSAlertAbuseState()
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
         feature.onConfirm(tabId, promptRequest.uid, true to MultiButtonDialogFragment.ButtonType.NEUTRAL)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onNeutralButtonWasCalled)
     }
@@ -1850,7 +1805,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
 
         feature.onCancel(tabId, promptRequest.uid)
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onCancelWasCalled)
     }
@@ -2351,8 +2305,6 @@ class PromptFeatureTest {
 
         feature.handleDialogsRequest(promptRequest, session)
 
-        store.waitUntilIdle()
-
         verify(feature).dismissDialogRequest(promptRequest, session)
     }
 
@@ -2388,8 +2340,6 @@ class PromptFeatureTest {
         val session = tab()!!
 
         feature.handleDialogsRequest(promptRequest, session)
-
-        store.waitUntilIdle()
 
         verify(feature).dismissDialogRequest(promptRequest, session)
     }
@@ -2429,8 +2379,6 @@ class PromptFeatureTest {
 
         feature.handleDialogsRequest(promptRequest, session)
 
-        store.waitUntilIdle()
-
         verify(feature).dismissDialogRequest(promptRequest, session)
     }
 
@@ -2463,7 +2411,6 @@ class PromptFeatureTest {
         assertEquals(shareRequest, tab()!!.content.promptRequests[0])
         feature.onConfirm(tabId, shareRequest.uid, null)
 
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onSuccessCalled)
     }
@@ -2497,7 +2444,6 @@ class PromptFeatureTest {
         assertEquals(shareRequest, tab()!!.content.promptRequests[0])
         feature.onCancel(tabId, shareRequest.uid)
 
-        store.waitUntilIdle()
         assertTrue(tab()!!.content.promptRequests.isEmpty())
         assertTrue(onDismissCalled)
     }
@@ -2894,7 +2840,6 @@ class PromptFeatureTest {
         assertEquals(repostRequest, tab()!!.content.promptRequests[0])
         feature.onConfirm(tabId, repostRequest.uid, null)
 
-        store.waitUntilIdle()
         assertTrue(acceptCalled)
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
@@ -2924,7 +2869,6 @@ class PromptFeatureTest {
         assertEquals(repostRequest, tab()!!.content.promptRequests[0])
         feature.onCancel(tabId, repostRequest.uid)
 
-        store.waitUntilIdle()
         assertTrue(dismissCalled)
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
@@ -2969,8 +2913,6 @@ class PromptFeatureTest {
             value = creditCardEntry,
         )
 
-        store.waitUntilIdle()
-
         assertTrue(tab()!!.content.promptRequests.isEmpty())
     }
 
@@ -3003,16 +2945,12 @@ class PromptFeatureTest {
 
         request.onConfirm(creditCardEntry)
 
-        store.waitUntilIdle()
-
         assertEquals(creditCardEntry, confirmedCreditCard)
         assertTrue(onConfirmCalled)
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, request))
 
         request.onDismiss()
-
-        store.waitUntilIdle()
 
         assertTrue(onDismissCalled)
     }
@@ -3081,7 +3019,6 @@ class PromptFeatureTest {
         val dialogFragment: CreditCardSaveDialogFragment = mock()
 
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, promptRequest))
-        store.waitUntilIdle()
 
         val feature = PromptFeature(
             activity = mock(),
@@ -3238,7 +3175,6 @@ class PromptFeatureTest {
         store.dispatch(ContentAction.UpdatePromptRequestAction(tabId, filePickerRequest))
 
         feature.start()
-        store.waitUntilIdle()
 
         assertFalse(onDismissWasCalled)
         assertTrue(tab()!!.content.promptRequests.isNotEmpty())

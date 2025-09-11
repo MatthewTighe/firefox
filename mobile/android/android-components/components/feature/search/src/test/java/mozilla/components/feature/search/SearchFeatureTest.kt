@@ -13,7 +13,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.search.SearchRequest
 import mozilla.components.support.test.any
 import mozilla.components.support.test.eq
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.After
@@ -102,14 +101,10 @@ class SearchFeatureTest {
     fun `WHEN a search request has been handled THEN that request should have been consumed`() {
         val normalSearchRequest = SearchRequest(isPrivate = false, query = "query")
         store.dispatch(ContentAction.UpdateSearchRequestAction(SELECTED_TAB_ID, normalSearchRequest))
-        store.waitUntilIdle()
-
         assertNull(store.state.selectedTab!!.content.searchRequest)
 
         val privateSearchRequest = SearchRequest(isPrivate = true, query = "query")
         store.dispatch(ContentAction.UpdateSearchRequestAction(SELECTED_TAB_ID, privateSearchRequest))
-        store.waitUntilIdle()
-
         assertNull(store.state.selectedTab!!.content.searchRequest)
     }
 
@@ -119,14 +114,10 @@ class SearchFeatureTest {
         verify(performSearch, times(0)).invoke(searchRequest, SELECTED_TAB_ID)
 
         store.dispatch(ContentAction.UpdateSearchRequestAction(SELECTED_TAB_ID, searchRequest))
-        store.waitUntilIdle()
-
         verify(performSearch, times(1)).invoke(searchRequest, SELECTED_TAB_ID)
         assertNull(store.state.selectedTab!!.content.searchRequest)
 
         store.dispatch(ContentAction.UpdateSearchRequestAction(SELECTED_TAB_ID, searchRequest))
-        store.waitUntilIdle()
-
         verify(performSearch, times(2)).invoke(searchRequest, SELECTED_TAB_ID)
         assertNull(store.state.selectedTab!!.content.searchRequest)
     }

@@ -31,7 +31,6 @@ import mozilla.components.feature.downloads.ui.DownloaderApp
 import mozilla.components.support.test.any
 import mozilla.components.support.test.argumentCaptor
 import mozilla.components.support.test.eq
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.grantPermission
 import mozilla.components.support.test.robolectric.testContext
@@ -223,7 +222,6 @@ class DownloadsFeatureTest {
         store.dispatch(ContentAction.UpdateDownloadAction("test-tab", download))
 
         dispatcher.scheduler.advanceUntilIdle()
-        store.waitUntilIdle()
 
         verify(fragmentManager, never()).beginTransaction()
         verify(downloadManager).download(eq(download), anyString())
@@ -404,8 +402,6 @@ class DownloadsFeatureTest {
             arrayOf(INTERNET, WRITE_EXTERNAL_STORAGE),
             arrayOf(PackageManager.PERMISSION_GRANTED, PackageManager.PERMISSION_DENIED).toIntArray(),
         )
-
-        store.waitUntilIdle()
 
         verify(downloadManager, never()).download(any(), anyString())
         verify(closeDownloadResponseUseCase).invoke(anyString(), anyString())

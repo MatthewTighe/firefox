@@ -10,7 +10,6 @@ import junit.framework.TestCase.assertFalse
 import mozilla.components.feature.session.SessionFeature
 import mozilla.components.feature.tabs.CustomTabsUseCases
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -65,8 +64,6 @@ class OpenInFirefoxBindingTest {
         appStore.dispatch(AppAction.OpenInFirefoxStarted)
 
         // Wait for AppAction.OpenInFirefoxStarted
-        appStore.waitUntilIdle()
-
         verify(getSessionFeature).release()
         verify(migrateCustomTabsUseCases).invoke("", select = true)
         verify(activity).startActivity(openInFenixIntent)

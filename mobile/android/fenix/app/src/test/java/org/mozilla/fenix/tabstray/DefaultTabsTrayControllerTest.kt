@@ -35,7 +35,6 @@ import mozilla.components.concept.storage.BookmarkNodeType
 import mozilla.components.concept.storage.BookmarksStorage
 import mozilla.components.feature.accounts.push.CloseTabsUseCases
 import mozilla.components.feature.tabs.TabsUseCases
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -684,7 +683,6 @@ class DefaultTabsTrayControllerTest {
             ),
         )
         trayStore.dispatch(TabsTrayAction.ExitSelectMode)
-        trayStore.waitUntilIdle()
 
         controller.handleTabSelected(tab1, "Tabs tray")
         verify(exactly = 1) { controller.handleTabSelected(tab1, "Tabs tray") }
@@ -713,7 +711,6 @@ class DefaultTabsTrayControllerTest {
         trayStore.dispatch(TabsTrayAction.EnterSelectMode)
         trayStore.dispatch(TabsTrayAction.AddSelectTab(tab1))
         trayStore.dispatch(TabsTrayAction.AddSelectTab(tab2))
-        trayStore.waitUntilIdle()
 
         controller.handleTabSelected(tab1, "Tabs tray")
         middleware.assertLastAction(TabsTrayAction.RemoveSelectTab::class) {
@@ -731,7 +728,6 @@ class DefaultTabsTrayControllerTest {
         val middleware = CaptureActionsMiddleware<TabsTrayState, TabsTrayAction>()
         trayStore = TabsTrayStore(middlewares = listOf(middleware))
         trayStore.dispatch(TabsTrayAction.EnterSelectMode)
-        trayStore.waitUntilIdle()
         val controller = createController()
         val tab1 = TabSessionState(
             id = "1",
@@ -748,7 +744,6 @@ class DefaultTabsTrayControllerTest {
 
         trayStore.dispatch(TabsTrayAction.EnterSelectMode)
         trayStore.dispatch(TabsTrayAction.AddSelectTab(tab1))
-        trayStore.waitUntilIdle()
 
         controller.handleTabSelected(tab2, "Tabs tray")
 
@@ -762,7 +757,6 @@ class DefaultTabsTrayControllerTest {
         val middleware = CaptureActionsMiddleware<TabsTrayState, TabsTrayAction>()
         trayStore = TabsTrayStore(middlewares = listOf(middleware))
         trayStore.dispatch(TabsTrayAction.EnterSelectMode)
-        trayStore.waitUntilIdle()
         val controller = createController()
         val normalTab = TabSessionState(
             id = "1",
@@ -779,7 +773,6 @@ class DefaultTabsTrayControllerTest {
 
         trayStore.dispatch(TabsTrayAction.EnterSelectMode)
         trayStore.dispatch(TabsTrayAction.AddSelectTab(normalTab))
-        trayStore.waitUntilIdle()
 
         controller.handleTabSelected(inactiveTab, INACTIVE_TABS_FEATURE_NAME)
 
@@ -803,8 +796,6 @@ class DefaultTabsTrayControllerTest {
 
         createController().handleForceSelectedTabsAsInactiveClicked(numDays = 5)
 
-        browserStore.waitUntilIdle()
-
         val updatedCurrentTab = browserStore.state.tabs.first { it.id == currentTab.id }
         assertEquals(updatedCurrentTab, currentTab)
         val updatedSecondTab = browserStore.state.tabs.first { it.id == secondTab.id }
@@ -825,8 +816,6 @@ class DefaultTabsTrayControllerTest {
         every { trayStore.state.mode.selectedTabs } returns setOf(currentTab, secondTab)
 
         createController().handleForceSelectedTabsAsInactiveClicked(numDays = 5)
-
-        browserStore.waitUntilIdle()
 
         val updatedCurrentTab = browserStore.state.tabs.first { it.id == currentTab.id }
         assertEquals(updatedCurrentTab, currentTab)

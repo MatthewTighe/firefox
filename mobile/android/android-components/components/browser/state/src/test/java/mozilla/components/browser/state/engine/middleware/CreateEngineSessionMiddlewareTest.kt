@@ -16,7 +16,6 @@ import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineSessionState
 import mozilla.components.support.test.any
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -54,13 +53,11 @@ class CreateEngineSessionMiddlewareTest {
         assertNull(store.state.findTab(tab.id)?.engineState?.engineSession)
 
         store.dispatch(EngineAction.CreateEngineSessionAction(tab.id))
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
         verify(engine, times(1)).createSession(false)
         assertEquals(engineSession, store.state.findTab(tab.id)?.engineState?.engineSession)
 
         store.dispatch(EngineAction.CreateEngineSessionAction(tab.id))
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
         verify(engine, times(1)).createSession(false)
         assertEquals(engineSession, store.state.findTab(tab.id)?.engineState?.engineSession)
@@ -83,7 +80,6 @@ class CreateEngineSessionMiddlewareTest {
 
         store.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, engineSessionState))
         store.dispatch(EngineAction.CreateEngineSessionAction(tab.id))
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         verify(engineSession).restoreState(engineSessionState)
@@ -102,7 +98,6 @@ class CreateEngineSessionMiddlewareTest {
         )
 
         store.dispatch(EngineAction.CreateEngineSessionAction("invalid"))
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         verify(engine, never()).createSession(anyBoolean(), any())
@@ -126,7 +121,6 @@ class CreateEngineSessionMiddlewareTest {
             EngineAction.CreateEngineSessionAction("non-existent"),
         )
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         verify(engine, never()).createSession(anyBoolean(), any())
@@ -150,7 +144,6 @@ class CreateEngineSessionMiddlewareTest {
         val followupAction = ContentAction.UpdateTitleAction(tab.id, "test")
         store.dispatch(EngineAction.CreateEngineSessionAction(tab.id, followupAction = followupAction))
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         verify(engine, times(1)).createSession(false)
@@ -178,7 +171,6 @@ class CreateEngineSessionMiddlewareTest {
         store.dispatch(EngineAction.CreateEngineSessionAction(tab.id))
         store.dispatch(EngineAction.CreateEngineSessionAction(tab.id, followupAction = followupAction))
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         verify(engine, times(1)).createSession(false)
@@ -203,7 +195,6 @@ class CreateEngineSessionMiddlewareTest {
         val followupAction = ContentAction.UpdateTitleAction(customTab.id, "test")
         store.dispatch(EngineAction.CreateEngineSessionAction(customTab.id, followupAction = followupAction))
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         verify(engine, times(1)).createSession(false)
@@ -228,7 +219,6 @@ class CreateEngineSessionMiddlewareTest {
         val followupAction = ContentAction.UpdateTitleAction(customTab.id, "test")
         store.dispatch(EngineAction.CreateEngineSessionAction(customTab.id, followupAction = followupAction))
 
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
         verify(engine, times(1)).createSession(false)
@@ -255,7 +245,6 @@ class CreateEngineSessionMiddlewareTest {
         assertNull(store.state.findTab(tabs[0].id)?.engineState?.engineSession)
 
         store.dispatch(EngineAction.CreateEngineSessionAction(tabs[0].id))
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
         verify(engineSession).toggleDesktopMode(eq(true), eq(false))
     }
@@ -278,7 +267,6 @@ class CreateEngineSessionMiddlewareTest {
         assertNull(store.state.findTab(tabs[0].id)?.engineState?.engineSession)
 
         store.dispatch(EngineAction.CreateEngineSessionAction(tabs[1].id))
-        store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
         verify(engineSession).toggleDesktopMode(eq(false), eq(false))
     }

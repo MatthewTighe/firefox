@@ -10,7 +10,6 @@ import androidx.appcompat.app.AlertDialog
 import mozilla.components.browser.state.action.ExtensionsProcessAction
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.support.test.argumentCaptor
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.whenever
@@ -59,7 +58,6 @@ class ExtensionsProcessDisabledForegroundControllerTest {
         browserStore.dispatch(ExtensionsProcessAction.DisabledAction)
         browserStore.dispatch(ExtensionsProcessAction.ShowPromptAction(show = true))
         dispatcher.scheduler.advanceUntilIdle()
-        browserStore.waitUntilIdle()
         assertTrue(browserStore.state.showExtensionsProcessDisabledPrompt)
         assertTrue(browserStore.state.extensionsProcessDisabled)
 
@@ -67,8 +65,6 @@ class ExtensionsProcessDisabledForegroundControllerTest {
         verify(builder).show()
 
         buttonsContainerCaptor.value.findViewById<Button>(R.id.positive).performClick()
-
-        browserStore.waitUntilIdle()
 
         assertFalse(browserStore.state.showExtensionsProcessDisabledPrompt)
         assertFalse(browserStore.state.extensionsProcessDisabled)
@@ -100,7 +96,6 @@ class ExtensionsProcessDisabledForegroundControllerTest {
         browserStore.dispatch(ExtensionsProcessAction.DisabledAction)
         browserStore.dispatch(ExtensionsProcessAction.ShowPromptAction(show = true))
         dispatcher.scheduler.advanceUntilIdle()
-        browserStore.waitUntilIdle()
         assertTrue(browserStore.state.showExtensionsProcessDisabledPrompt)
         assertTrue(browserStore.state.extensionsProcessDisabled)
 
@@ -108,8 +103,6 @@ class ExtensionsProcessDisabledForegroundControllerTest {
         verify(builder).show()
 
         buttonsContainerCaptor.value.findViewById<Button>(R.id.negative).performClick()
-
-        browserStore.waitUntilIdle()
 
         assertFalse(browserStore.state.showExtensionsProcessDisabledPrompt)
         assertTrue(browserStore.state.extensionsProcessDisabled)
@@ -137,18 +130,15 @@ class ExtensionsProcessDisabledForegroundControllerTest {
         // First dispatch...
         browserStore.dispatch(ExtensionsProcessAction.ShowPromptAction(show = true))
         dispatcher.scheduler.advanceUntilIdle()
-        browserStore.waitUntilIdle()
 
         // Second dispatch... without having dismissed the dialog before!
         browserStore.dispatch(ExtensionsProcessAction.ShowPromptAction(show = true))
         dispatcher.scheduler.advanceUntilIdle()
-        browserStore.waitUntilIdle()
 
         verify(builder).setView(buttonsContainerCaptor.capture())
         verify(builder, times(1)).show()
 
         // Click a button to dismiss the dialog.
         buttonsContainerCaptor.value.findViewById<Button>(R.id.negative).performClick()
-        browserStore.waitUntilIdle()
     }
 }

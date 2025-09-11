@@ -12,7 +12,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.content.blocking.Tracker
-import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.robolectric.testContext
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -63,7 +62,6 @@ class CfrMiddlewareTest {
 
             browserStore.dispatch(updateSecurityInfoAction)
             browserStore.dispatch(trackerBlockedAction)
-            appStore.waitUntilIdle()
 
             assertTrue(appStore.state.showTrackingProtectionCfrForTab.getOrDefault("1", false))
         }
@@ -84,7 +82,6 @@ class CfrMiddlewareTest {
 
             browserStore.dispatch(TabListAction.AddTabAction(insecureTab))
             browserStore.dispatch(updateSecurityInfoAction)
-            appStore.waitUntilIdle()
 
             assertFalse(appStore.state.showTrackingProtectionCfrForTab.getOrDefault("1", false))
         }
@@ -104,7 +101,6 @@ class CfrMiddlewareTest {
             )
             browserStore.dispatch(TabListAction.AddTabAction(mozillaTab))
             browserStore.dispatch(updateSecurityInfoAction)
-            appStore.waitUntilIdle()
 
             assertFalse(appStore.state.showTrackingProtectionCfrForTab.getOrDefault("1", false))
         }

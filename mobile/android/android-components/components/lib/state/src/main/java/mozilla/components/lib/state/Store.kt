@@ -6,7 +6,10 @@ package mozilla.components.lib.state
 
 import androidx.annotation.CheckResult
 import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import mozilla.components.lib.state.internal.ReducerChainBuilder
+import org.intellij.lang.annotations.Flow
 import java.lang.ref.WeakReference
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -31,13 +34,14 @@ open class Store<S : State, A : Action>(
     @VisibleForTesting
     internal val subscriptions = Collections.newSetFromMap(ConcurrentHashMap<Subscription<S, A>, Boolean>())
 
-    @Volatile private var currentState = initialState
-
     /**
      * The current [State].
      */
+    private var _state = MutableStateFlow(initialState)
     val state: S
-        get() = currentState
+        get() = _state.value
+
+    val stateFlow: StateFlow<S> = _state
 
     /**
      * Registers an [Observer] function that will be invoked whenever the [State] changes.
@@ -70,12 +74,12 @@ open class Store<S : State, A : Action>(
      * Transitions from the current [State] to the passed in [state] and notifies all observers.
      */
     internal fun transitionTo(state: S) {
-        if (state == currentState) {
+        if (state == _state.value) {
             // Nothing has changed.
             return
         }
 
-        currentState = state
+        _state.value = state
         subscriptions.forEach { subscription -> subscription.dispatch(state) }
     }
 

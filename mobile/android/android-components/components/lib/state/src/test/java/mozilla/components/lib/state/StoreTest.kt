@@ -4,11 +4,15 @@
 
 package mozilla.components.lib.state
 
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.coroutines.flow.take
 import java.io.IOException
 
 class StoreTest {
@@ -286,5 +290,51 @@ class StoreTest {
 
         assertNotNull(caughtException)
         assertTrue(caughtException is IOException)
+    }
+
+    @Test
+    fun `StateFlow has an initial state`() = runTest {
+        val count = 23
+        val store = Store(
+            TestState(counter = count),
+            ::reducer,
+        )
+
+        val collectedStates = mutableListOf<TestState>()
+        val job = launch {
+            store.stateFlow.take(1).collect {
+                collectedStates.add(it)
+            }
+        }
+
+        job.join()
+
+        assertEquals(1, collectedStates.size)
+        assertEquals(count, collectedStates[0].counter)
+    }
+
+    @Test
+    fun `State can be observed as a Flow`() = runTest {
+        val count = 23
+        val store = Store(
+            TestState(counter = count),
+            ::reducer,
+        )
+
+        val collectedStates = mutableListOf<TestState>()
+        val job = launch {
+            store.stateFlow.take(2).collect {
+                collectedStates.add(it)
+            }
+        }
+
+        // Allow the initial state to be collected
+        delay(10)
+        store.dispatch(TestAction.IncrementAction)
+        job.join()
+
+        assertEquals(2, collectedStates.size)
+        assertEquals(count, collectedStates[0].counter)
+        assertEquals(count + 1, collectedStates[1].counter)
     }
 }

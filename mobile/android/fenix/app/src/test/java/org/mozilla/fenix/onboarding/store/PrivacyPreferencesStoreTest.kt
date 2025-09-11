@@ -5,7 +5,6 @@
 package org.mozilla.fenix.onboarding.store
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -87,6 +86,6 @@ class PrivacyPreferencesStoreTest {
  * Dispatches the [action] and ensures all [store] processing is completed.
  */
 private fun safeDispatch(store: PrivacyPreferencesStore, action: PrivacyPreferencesAction) {
-    store.dispatch(action).joinBlocking()
+    store.dispatch(action)
     store.waitUntilIdle()
 }

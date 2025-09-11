@@ -16,7 +16,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.mediasession.MediaSession
 import mozilla.components.feature.media.middleware.LastMediaAccessMiddleware
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -205,7 +204,7 @@ class RecentTabsListFeatureTest {
         assertTrue(appStore.state.recentTabs[0] is RecentTab.Tab)
         assertEquals(tab1, (appStore.state.recentTabs[0] as RecentTab.Tab).state)
 
-        browserStore.dispatch(TabListAction.SelectTabAction(tab2.id)).joinBlocking()
+        browserStore.dispatch(TabListAction.SelectTabAction(tab2.id))
 
         appStore.waitUntilIdle()
 
@@ -247,7 +246,7 @@ class RecentTabsListFeatureTest {
 
         browserStore.dispatch(
             MediaSessionAction.UpdateMediaPlaybackStateAction("2", MediaSession.PlaybackState.PLAYING),
-        ).joinBlocking()
+        )
         appStore.waitUntilIdle()
         assertEquals(2, appStore.state.recentTabs.size)
         assertTrue(appStore.state.recentTabs[0] is RecentTab.Tab)
@@ -306,7 +305,7 @@ class RecentTabsListFeatureTest {
         assertTrue(appStore.state.recentTabs[0] is RecentTab.Tab)
         assertEquals(selectedNormalTab, (appStore.state.recentTabs[0] as RecentTab.Tab).state)
 
-        browserStore.dispatch(TabListAction.SelectTabAction(privateTab.id)).joinBlocking()
+        browserStore.dispatch(TabListAction.SelectTabAction(privateTab.id))
 
         appStore.waitUntilIdle()
 
@@ -344,7 +343,7 @@ class RecentTabsListFeatureTest {
             assertNull(tab.state.content.icon)
         }
 
-        browserStore.dispatch(UpdateTitleAction("1", "test")).joinBlocking()
+        browserStore.dispatch(UpdateTitleAction("1", "test"))
 
         appStore.waitUntilIdle()
 
@@ -355,7 +354,6 @@ class RecentTabsListFeatureTest {
         }
 
         browserStore.dispatch(UpdateIconAction("1", "https://www.mozilla.org", mockk()))
-            .joinBlocking()
 
         appStore.waitUntilIdle()
 
@@ -380,7 +378,7 @@ class RecentTabsListFeatureTest {
         )
 
         feature.start()
-        browserStore.dispatch(TabListAction.RemoveTabsAction(listOf("1"))).joinBlocking()
+        browserStore.dispatch(TabListAction.RemoveTabsAction(listOf("1")))
         appStore.waitUntilIdle()
 
         assertEquals(1, appStore.state.recentTabs.size)

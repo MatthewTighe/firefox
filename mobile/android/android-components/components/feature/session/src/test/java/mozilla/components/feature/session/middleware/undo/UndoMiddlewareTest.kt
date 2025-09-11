@@ -12,7 +12,6 @@ import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import mozilla.components.support.test.rule.runTestOnMain
@@ -48,7 +47,7 @@ class UndoMiddlewareTest {
 
         store.dispatch(
             TabListAction.RemoveTabAction(tabId = "mozilla"),
-        ).joinBlocking()
+        )
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://getpocket.com", store.state.selectedTab!!.content.url)
@@ -80,7 +79,7 @@ class UndoMiddlewareTest {
 
         store.dispatch(
             TabListAction.RemoveTabsAction(listOf("mozilla", "pocket")),
-        ).joinBlocking()
+        )
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://firefox.com", store.state.selectedTab!!.content.url)
@@ -112,7 +111,7 @@ class UndoMiddlewareTest {
 
         store.dispatch(
             TabListAction.RemoveAllNormalTabsAction,
-        ).joinBlocking()
+        )
 
         assertEquals(1, store.state.tabs.size)
         assertNull(store.state.selectedTab)
@@ -144,7 +143,7 @@ class UndoMiddlewareTest {
 
         store.dispatch(
             TabListAction.RemoveAllTabsAction(),
-        ).joinBlocking()
+        )
 
         assertEquals(0, store.state.tabs.size)
         assertNull(store.state.selectedTab)
@@ -176,7 +175,7 @@ class UndoMiddlewareTest {
 
         store.dispatch(
             TabListAction.RemoveAllTabsAction(false),
-        ).joinBlocking()
+        )
 
         assertEquals(0, store.state.tabs.size)
         assertNull(store.state.selectedTab)
@@ -210,7 +209,7 @@ class UndoMiddlewareTest {
 
         store.dispatch(
             TabListAction.RemoveAllPrivateTabsAction,
-        ).joinBlocking()
+        )
 
         assertNull(store.state.undoHistory.selectedTabId)
         assertEquals(1, store.state.undoHistory.tabs.size)
@@ -219,7 +218,7 @@ class UndoMiddlewareTest {
 
         store.dispatch(
             TabListAction.RemoveAllNormalTabsAction,
-        ).joinBlocking()
+        )
 
         assertEquals("pocket", store.state.undoHistory.selectedTabId)
         assertEquals(2, store.state.undoHistory.tabs.size)
@@ -257,7 +256,7 @@ class UndoMiddlewareTest {
 
         store.dispatch(
             TabListAction.RemoveAllNormalTabsAction,
-        ).joinBlocking()
+        )
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://reddit.com/r/firefox", store.state.tabs[0].content.url)
@@ -287,7 +286,7 @@ private suspend fun restoreRecoverableTabs(dispatcher: TestDispatcher, store: Br
         // Otherwise we deadlock the test here when we wait for the store to complete and
         // at the same time the middleware dispatches a coroutine on the dispatcher which will
         // also block on the store in SessionManager.restore().
-        store.dispatch(UndoAction.RestoreRecoverableTabs).joinBlocking()
+        store.dispatch(UndoAction.RestoreRecoverableTabs)
     }
     dispatcher.scheduler.advanceUntilIdle()
     store.waitUntilIdle()

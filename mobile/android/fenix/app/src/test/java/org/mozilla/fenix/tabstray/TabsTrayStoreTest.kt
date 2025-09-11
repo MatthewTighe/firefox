@@ -5,7 +5,6 @@
 package org.mozilla.fenix.tabstray
 
 import mozilla.components.browser.state.state.createTab
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -180,7 +179,7 @@ class TabsTrayStoreTest {
 
         assertFalse(tabsTrayStore.state.inactiveTabsExpanded)
 
-        tabsTrayStore.dispatch(TabsTrayAction.UpdateInactiveExpanded(true)).joinBlocking()
+        tabsTrayStore.dispatch(TabsTrayAction.UpdateInactiveExpanded(true))
 
         assertTrue(tabsTrayStore.state.inactiveTabsExpanded)
     }

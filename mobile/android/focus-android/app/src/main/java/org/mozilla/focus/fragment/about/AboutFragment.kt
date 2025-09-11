@@ -4,7 +4,6 @@
 
 package org.mozilla.focus.fragment.about
 
-import android.os.Build
 import android.os.Bundle
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -23,7 +22,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.pm.PackageInfoCompat
-import kotlinx.coroutines.Job
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.support.utils.ext.getPackageInfoCompat
 import org.mozilla.focus.BuildConfig
@@ -125,7 +123,7 @@ class AboutFragment : BaseComposeFragment() {
         aboutVersion: String,
         content: String,
         secretSettingsUnlocker: SecretSettingsUnlocker,
-        openLearnMore: () -> Job,
+        openLearnMore: () -> Unit,
     ) {
         FocusTheme {
             Column(

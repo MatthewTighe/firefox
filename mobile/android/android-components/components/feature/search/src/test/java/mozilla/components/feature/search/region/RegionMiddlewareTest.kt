@@ -81,7 +81,7 @@ class RegionMiddlewareTest {
             middleware = listOf(middleware),
         )
 
-        store.dispatch(InitAction).joinBlocking()
+        store.dispatch(InitAction)
 
         dispatcher.scheduler.advanceUntilIdle()
         store.waitUntilIdle()
@@ -103,7 +103,7 @@ class RegionMiddlewareTest {
             middleware = listOf(middleware),
         )
 
-        store.dispatch(InitAction).joinBlocking()
+        store.dispatch(InitAction)
         middleware.updateJob?.joinBlocking()
         store.waitUntilIdle()
 
@@ -113,7 +113,7 @@ class RegionMiddlewareTest {
         locationService.region = LocationService.Region("DE", "Germany")
         regionManager.update()
 
-        store.dispatch(InitAction).joinBlocking()
+        store.dispatch(InitAction)
         middleware.updateJob?.joinBlocking()
         store.waitUntilIdle()
 
@@ -122,7 +122,7 @@ class RegionMiddlewareTest {
 
         clock.advanceBy(1000L * 60L * 60L * 24L * 21L)
 
-        store.dispatch(InitAction).joinBlocking()
+        store.dispatch(InitAction)
         middleware.updateJob?.joinBlocking()
         store.waitUntilIdle()
 
@@ -141,7 +141,7 @@ class RegionMiddlewareTest {
             middleware = listOf(middleware),
         )
 
-        store.dispatch(InitAction).joinBlocking()
+        store.dispatch(InitAction)
         middleware.updateJob?.joinBlocking()
         store.waitUntilIdle()
 
@@ -151,7 +151,7 @@ class RegionMiddlewareTest {
         locationService.region = LocationService.Region("DE", "Germany")
         regionManager.update()
 
-        store.dispatch(RefreshSearchEnginesAction).joinBlocking()
+        store.dispatch(RefreshSearchEnginesAction)
         middleware.updateJob?.joinBlocking()
         store.waitUntilIdle()
 

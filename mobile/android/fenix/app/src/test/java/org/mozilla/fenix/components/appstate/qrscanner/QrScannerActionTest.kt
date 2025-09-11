@@ -4,7 +4,6 @@
 
 package org.mozilla.fenix.components.appstate.qrscanner
 
-import mozilla.components.support.test.ext.joinBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mozilla.fenix.components.AppStore
@@ -18,7 +17,7 @@ class QrScannerActionTest {
     fun `WHEN the QrScanner is requested THEN state should reflect that`() {
         val store = AppStore(initialState = AppState())
 
-        store.dispatch(AppAction.QrScannerAction.QrScannerRequested).joinBlocking()
+        store.dispatch(AppAction.QrScannerAction.QrScannerRequested)
 
         val expectedState = AppState(
             qrScannerState = QrScannerState(
@@ -35,7 +34,7 @@ class QrScannerActionTest {
     fun `WHEN the QrScanner request is consumed THEN the state should reflect that`() {
         val store = AppStore(initialState = AppState())
 
-        store.dispatch(AppAction.QrScannerAction.QrScannerRequested).joinBlocking()
+        store.dispatch(AppAction.QrScannerAction.QrScannerRequested)
 
         var expectedState = AppState(
             qrScannerState = QrScannerState(
@@ -47,7 +46,7 @@ class QrScannerActionTest {
 
         assertEquals(expectedState, store.state)
 
-        store.dispatch(AppAction.QrScannerAction.QrScannerRequestConsumed).joinBlocking()
+        store.dispatch(AppAction.QrScannerAction.QrScannerRequestConsumed)
 
         expectedState = AppState(
             qrScannerState = QrScannerState(
@@ -64,7 +63,7 @@ class QrScannerActionTest {
     fun `WHEN the QrScanner Input is ready THEN the state should reflect that`() {
         val store = AppStore(initialState = AppState())
 
-        store.dispatch(AppAction.QrScannerAction.QrScannerInputAvailable("test")).joinBlocking()
+        store.dispatch(AppAction.QrScannerAction.QrScannerInputAvailable("test"))
 
         val expectedState = AppState(
             qrScannerState = QrScannerState(
@@ -81,7 +80,7 @@ class QrScannerActionTest {
     fun `WHEN the QrScanner Input is consumed THEN the state should reflect that`() {
         val store = AppStore(initialState = AppState())
 
-        store.dispatch(AppAction.QrScannerAction.QrScannerInputAvailable("test")).joinBlocking()
+        store.dispatch(AppAction.QrScannerAction.QrScannerInputAvailable("test"))
 
         var expectedState = AppState(
             qrScannerState = QrScannerState(
@@ -93,7 +92,7 @@ class QrScannerActionTest {
 
         assertEquals(expectedState, store.state)
 
-        store.dispatch(AppAction.QrScannerAction.QrScannerInputConsumed).joinBlocking()
+        store.dispatch(AppAction.QrScannerAction.QrScannerInputConsumed)
 
         expectedState = AppState(qrScannerState = QrScannerState.DEFAULT)
 
@@ -104,7 +103,7 @@ class QrScannerActionTest {
     fun `WHEN the QrScanner is dismissed THEN the state should reflect that`() {
         val store = AppStore(initialState = AppState())
 
-        store.dispatch(AppAction.QrScannerAction.QrScannerRequested).joinBlocking()
+        store.dispatch(AppAction.QrScannerAction.QrScannerRequested)
 
         var expectedState = AppState(
             qrScannerState = QrScannerState(
@@ -116,7 +115,7 @@ class QrScannerActionTest {
 
         assertEquals(expectedState, store.state)
 
-        store.dispatch(AppAction.QrScannerAction.QrScannerDismissed).joinBlocking()
+        store.dispatch(AppAction.QrScannerAction.QrScannerDismissed)
 
         expectedState = AppState(qrScannerState = QrScannerState.DEFAULT)
 

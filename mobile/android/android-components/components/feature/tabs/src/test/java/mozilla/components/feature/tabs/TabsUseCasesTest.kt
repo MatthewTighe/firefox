@@ -26,7 +26,6 @@ import mozilla.components.concept.engine.EngineSessionState
 import mozilla.components.concept.storage.HistoryMetadataKey
 import mozilla.components.support.test.any
 import mozilla.components.support.test.argumentCaptor
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -79,8 +78,8 @@ class TabsUseCasesTest {
     fun `SelectTabUseCase - tab is marked as selected in store`() {
         val tab = createTab("https://mozilla.org")
         val otherTab = createTab("https://firefox.com")
-        store.dispatch(TabListAction.AddTabAction(otherTab)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(otherTab))
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         assertEquals(otherTab.id, store.state.selectedTabId)
         assertEquals(otherTab, store.state.selectedTab)
@@ -94,7 +93,7 @@ class TabsUseCasesTest {
     @Test
     fun `RemoveTabUseCase - session will be removed from store`() {
         val tab = createTab("https://mozilla.org")
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
         assertEquals(1, store.state.tabs.size)
 
         tabsUseCases.removeTab(tab.id)
@@ -105,10 +104,10 @@ class TabsUseCasesTest {
     @Test
     fun `RemoveTabUseCase - remove by ID and select parent if it exists`() {
         val parentTab = createTab("https://firefox.com")
-        store.dispatch(TabListAction.AddTabAction(parentTab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(parentTab))
 
         val tab = createTab("https://mozilla.org", parent = parentTab)
-        store.dispatch(TabListAction.AddTabAction(tab, select = true)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab, select = true))
         assertEquals(2, store.state.tabs.size)
         assertEquals(tab.id, store.state.selectedTabId)
 
@@ -122,8 +121,8 @@ class TabsUseCasesTest {
     fun `RemoveTabsUseCase - list of sessions can be removed`() {
         val tab = createTab("https://mozilla.org")
         val otherTab = createTab("https://firefox.com")
-        store.dispatch(TabListAction.AddTabAction(otherTab)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(otherTab))
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         assertEquals(otherTab.id, store.state.selectedTabId)
         assertEquals(otherTab, store.state.selectedTab)
@@ -351,11 +350,11 @@ class TabsUseCasesTest {
     @Test
     fun `RemoveAllTabsUseCase will remove all sessions`() {
         val tab = createTab("https://mozilla.org")
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
         assertEquals(1, store.state.tabs.size)
 
         val tab2 = createTab("https://firefox.com", private = true)
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab2))
         assertEquals(2, store.state.tabs.size)
 
         tabsUseCases.removeAllTabs()
@@ -366,11 +365,11 @@ class TabsUseCasesTest {
     @Test
     fun `RemoveNormalTabsUseCase and RemovePrivateTabsUseCase will remove sessions for particular type of tabs private or normal`() {
         val tab = createTab("https://mozilla.org")
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
         assertEquals(1, store.state.tabs.size)
 
         val privateTab = createTab("https://firefox.com", private = true)
-        store.dispatch(TabListAction.AddTabAction(privateTab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(privateTab))
         assertEquals(2, store.state.tabs.size)
 
         tabsUseCases.removeNormalTabs()
@@ -424,7 +423,7 @@ class TabsUseCasesTest {
         val sessionStorage: SessionStorage = mock()
         whenever(sessionStorage.restore(any())).thenReturn(recoverableBrowserState)
 
-        store.dispatch(TabListAction.AddTabAction(tab = newTab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab = newTab))
 
         tabsUseCases.restore.invoke(
             storage = sessionStorage,
@@ -442,8 +441,8 @@ class TabsUseCasesTest {
         val tab = createTab("https://mozilla.org")
         val otherTab = createTab("https://firefox.com")
 
-        store.dispatch(TabListAction.AddTabAction(otherTab)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(otherTab))
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         assertEquals(otherTab.id, store.state.selectedTabId)
         assertEquals(otherTab, store.state.selectedTab)
@@ -468,8 +467,8 @@ class TabsUseCasesTest {
         val tab = createTab("https://mozilla.org", historyMetadata = historyMetadata)
         val otherTab = createTab("https://firefox.com")
 
-        store.dispatch(TabListAction.AddTabAction(otherTab)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(otherTab))
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         assertEquals(otherTab.id, store.state.selectedTabId)
         assertEquals(otherTab, store.state.selectedTab)
@@ -488,7 +487,7 @@ class TabsUseCasesTest {
     fun `selectOrAddTab adds new tab if no matching existing tab could be found`() {
         val tab = createTab("https://mozilla.org")
 
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         assertEquals(tab.id, store.state.selectedTabId)
         assertEquals(tab, store.state.selectedTab)
@@ -510,7 +509,7 @@ class TabsUseCasesTest {
             referrerUrl = "https://firefox.com",
         )
 
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         assertEquals(tab.id, store.state.selectedTabId)
         assertEquals(tab, store.state.selectedTab)
@@ -530,8 +529,8 @@ class TabsUseCasesTest {
         val tab = createTab("https://mozilla.org")
         val otherTab = createTab("https://firefox.com")
 
-        store.dispatch(TabListAction.AddTabAction(otherTab)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(otherTab))
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         assertEquals(otherTab, store.state.selectedTab)
         assertEquals(2, store.state.tabs.size)
@@ -548,7 +547,7 @@ class TabsUseCasesTest {
     fun `selectOrAddTab adds new tab if no matching existing tab could be found with ignoreFragment set to true`() {
         val tab = createTab("https://mozilla.org")
 
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         assertEquals(tab.id, store.state.selectedTabId)
         assertEquals(tab, store.state.selectedTab)
@@ -574,7 +573,7 @@ class TabsUseCasesTest {
 
     @Test
     fun `selectOrAddTab adds new tab when store desktop mode is true and tab's desktop mode matches`() {
-        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode).joinBlocking()
+        store.dispatch(DefaultDesktopModeAction.ToggleDesktopMode)
         assertEquals(true, store.state.desktopMode)
 
         val tabID = tabsUseCases.selectOrAddTab(url = "https://firefox.com")
@@ -599,13 +598,13 @@ class TabsUseCasesTest {
             TabListAction.AddTabAction(
                 createTab(id = "mozilla", url = "https://www.mozilla.org"),
             ),
-        ).joinBlocking()
+        )
         assertEquals(1, store.state.tabs.size)
 
         val engineSessionState: EngineSessionState = mock()
         store.dispatch(
             EngineAction.UpdateEngineSessionStateAction("mozilla", engineSessionState),
-        ).joinBlocking()
+        )
 
         val tab = store.state.findTab("mozilla")!!
         val dupId = tabsUseCases.duplicateTab.invoke(tab)
@@ -624,7 +623,7 @@ class TabsUseCasesTest {
     @Test
     fun `duplicateTab creates duplicates of private tabs`() {
         val tab = createTab(id = "mozilla", url = "https://www.mozilla.org", private = true)
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
         tabsUseCases.duplicateTab.invoke(tab)
         store.waitUntilIdle()
 
@@ -636,7 +635,7 @@ class TabsUseCasesTest {
     @Test
     fun `duplicateTab keeps contextId`() {
         val tab = createTab(id = "mozilla", url = "https://www.mozilla.org", contextId = "work")
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
         tabsUseCases.duplicateTab.invoke(tab)
         store.waitUntilIdle()
 
@@ -648,7 +647,7 @@ class TabsUseCasesTest {
     @Test
     fun `duplicateTab without tab argument uses the selected tab`() {
         var tab = createTab(url = "https://www.mozilla.org")
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
         var dupId = tabsUseCases.duplicateTab.invoke(selectNewTab = true)!!
         store.waitUntilIdle()
 
@@ -672,9 +671,9 @@ class TabsUseCasesTest {
     @Test
     fun `MoveTabsUseCase will move a tab`() {
         val tab = createTab("https://mozilla.org")
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
         val tab2 = createTab("https://firefox.com", private = true)
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab2))
         assertEquals(2, store.state.tabs.size)
         assertEquals("https://mozilla.org", store.state.tabs[0].content.url)
         assertEquals("https://firefox.com", store.state.tabs[1].content.url)
@@ -690,7 +689,7 @@ class TabsUseCasesTest {
     @Test
     fun `MigratePrivateTabUseCase will migrate a private tab`() {
         val tab = createTab("https://mozilla.org", private = true)
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
         assertEquals(1, store.state.tabs.size)
         assertEquals(true, store.state.tabs[0].content.private)
 
@@ -708,7 +707,7 @@ class TabsUseCasesTest {
     fun `MigratePrivateTabUseCase will respect alternativeUrl`() {
         // This (obviously!) isn't a real reader-mode URL, but is fine for the purposes of this test.
         val tab = createTab("https://mozilla.org/reader-mode", private = true)
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         tabsUseCases.migratePrivateTabUseCase(store.state.tabs[0].id, "https://mozilla.org/not-reader-mode")
         store.waitUntilIdle()
@@ -721,7 +720,7 @@ class TabsUseCasesTest {
     @Test
     fun `MigratePrivateTabUseCase will fail on a regular tab`() {
         val tab = createTab("https://mozilla.org")
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
         assertEquals(1, store.state.tabs.size)
         assertThrows(IllegalArgumentException::class.java) {
             tabsUseCases.migratePrivateTabUseCase(tab.id)

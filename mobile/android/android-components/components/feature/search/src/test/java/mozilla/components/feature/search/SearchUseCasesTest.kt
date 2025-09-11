@@ -9,6 +9,7 @@ import mozilla.components.browser.state.action.BrowserAction
 import mozilla.components.browser.state.action.ContentAction
 import mozilla.components.browser.state.action.EngineAction
 import mozilla.components.browser.state.action.TabListAction
+import mozilla.components.browser.state.engine.EngineMiddleware
 import mozilla.components.browser.state.search.RegionState
 import mozilla.components.browser.state.search.SearchEngine
 import mozilla.components.browser.state.state.BrowserState
@@ -22,7 +23,6 @@ import mozilla.components.concept.engine.EngineSession.LoadUrlFlags
 import mozilla.components.feature.search.ext.createSearchEngine
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
@@ -64,14 +64,15 @@ class SearchUseCasesTest {
         sessionUseCases = mock()
         loadUrlUseCase = mock()
         doReturn(loadUrlUseCase).`when`(sessionUseCases).loadUrl
-
         store = BrowserStore(
             initialState = BrowserState(
                 search = SearchState(
                     regionSearchEngines = listOf(searchEngine),
                 ),
             ),
-            middleware = listOf(middleware),
+            middleware = listOf(middleware) + EngineMiddleware.create(
+                engine = mock(),
+            ),
         )
 
         useCases = SearchUseCases(
@@ -94,7 +95,7 @@ class SearchUseCasesTest {
                 tab = createTab(url = "https://www.mozilla.org", id = id),
                 select = true,
             ),
-        ).joinBlocking()
+        )
 
         useCases.defaultSearch(
             searchTerms = searchTerms,

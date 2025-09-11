@@ -10,7 +10,6 @@ import mozilla.components.browser.state.action.ContainerAction
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.ContainerState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
@@ -49,7 +48,7 @@ class ContainerMiddlewareTest {
             store.waitUntilIdle() // wait to consume InitAction
             store.waitUntilIdle() // wait to consume AddContainersAction
 
-            store.dispatch(ContainerAction.AddContainerAction(container)).joinBlocking()
+            store.dispatch(ContainerAction.AddContainerAction(container))
 
             verify(storage).addContainer(
                 container.contextId,
@@ -94,7 +93,6 @@ class ContainerMiddlewareTest {
             store.waitUntilIdle() // wait to consume AddContainersAction
 
             store.dispatch(ContainerAction.RemoveContainerAction(container.contextId))
-                .joinBlocking()
 
             verify(storage).removeContainer(container)
         }

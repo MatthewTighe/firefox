@@ -17,7 +17,6 @@ import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineView
 import mozilla.components.concept.engine.InputResultDetail
 import mozilla.components.concept.engine.selection.SelectionActionDelegate
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -88,7 +87,7 @@ class SwipeRefreshFeatureTest {
 
         val selectedTab = store.state.findCustomTabOrSelectedTab()!!
 
-        store.dispatch(ContentAction.UpdateRefreshCanceledStateAction(selectedTab.id, true)).joinBlocking()
+        store.dispatch(ContentAction.UpdateRefreshCanceledStateAction(selectedTab.id, true))
         store.waitUntilIdle()
 
         assertFalse(selectedTab.content.refreshCanceled)
@@ -104,15 +103,15 @@ class SwipeRefreshFeatureTest {
         // Ignoring the first event from the initial state.
         reset(mockLayout)
 
-        store.dispatch(ContentAction.UpdateRefreshCanceledStateAction(selectedTab.id, true)).joinBlocking()
+        store.dispatch(ContentAction.UpdateRefreshCanceledStateAction(selectedTab.id, true))
         store.waitUntilIdle()
 
         verify(mockLayout, times(2)).isRefreshing = false
 
         // To trigger to an event we have to change loading from its previous value (false to true).
         // As if we dispatch with loading = false, none event will be trigger.
-        store.dispatch(ContentAction.UpdateLoadingStateAction(selectedTab.id, true)).joinBlocking()
-        store.dispatch(ContentAction.UpdateLoadingStateAction(selectedTab.id, false)).joinBlocking()
+        store.dispatch(ContentAction.UpdateLoadingStateAction(selectedTab.id, true))
+        store.dispatch(ContentAction.UpdateLoadingStateAction(selectedTab.id, false))
 
         verify(mockLayout, times(3)).isRefreshing = false
     }

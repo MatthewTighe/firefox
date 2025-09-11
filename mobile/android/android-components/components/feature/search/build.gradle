@@ -9,9 +9,13 @@ apply plugin: 'kotlin-android'
 
 android {
     defaultConfig {
-        minSdkVersion = config.minSdkVersion
+        minSdkVersion config.minSdkVersion
         compileSdk = config.compileSdkVersion
-        targetSdkVersion = config.targetSdkVersion
+        targetSdkVersion config.targetSdkVersion
+    }
+    
+    testOptions {
+        unitTests.returnDefaultValues = true
     }
 
     buildTypes {

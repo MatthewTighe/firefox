@@ -9,7 +9,6 @@ import mozilla.components.browser.state.search.SearchEngine
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.SearchState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.mock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -51,7 +50,7 @@ class SearchActionTest {
                 additionalAvailableSearchEngines = emptyList(),
                 regionSearchEnginesOrder = listOf("id1", "id2"),
             ),
-        ).joinBlocking()
+        )
 
         val searchEngines = store.state.search.regionSearchEngines
         assertFalse(searchEngines.isEmpty())
@@ -81,7 +80,7 @@ class SearchActionTest {
 
         store.dispatch(
             SearchAction.ApplicationSearchEnginesLoaded(searchEngineList),
-        ).joinBlocking()
+        )
 
         val searchEngines = store.state.search.applicationSearchEngines
         assertEquals(2, searchEngines.size)
@@ -119,7 +118,7 @@ class SearchActionTest {
                 additionalAvailableSearchEngines = emptyList(),
                 regionSearchEnginesOrder = emptyList(),
             ),
-        ).joinBlocking()
+        )
 
         val searchEngines = store.state.search.customSearchEngines
         assertFalse(searchEngines.isEmpty())
@@ -142,7 +141,7 @@ class SearchActionTest {
         )
 
         // Add a custom search engine
-        store.dispatch(SearchAction.UpdateCustomSearchEngineAction(customSearchEngine)).joinBlocking()
+        store.dispatch(SearchAction.UpdateCustomSearchEngineAction(customSearchEngine))
 
         store.state.search.customSearchEngines.let { searchEngines ->
             assertTrue(searchEngines.isNotEmpty())
@@ -158,7 +157,7 @@ class SearchActionTest {
         )
 
         // Add another search engine
-        store.dispatch(SearchAction.UpdateCustomSearchEngineAction(customSearchEngine2)).joinBlocking()
+        store.dispatch(SearchAction.UpdateCustomSearchEngineAction(customSearchEngine2))
 
         store.state.search.customSearchEngines.let { searchEngines ->
             assertTrue(searchEngines.isNotEmpty())
@@ -171,7 +170,7 @@ class SearchActionTest {
         val updated = customSearchEngine.copy(
             name = "My awesome search engine",
         )
-        store.dispatch(SearchAction.UpdateCustomSearchEngineAction(updated)).joinBlocking()
+        store.dispatch(SearchAction.UpdateCustomSearchEngineAction(updated))
 
         store.state.search.customSearchEngines.let { searchEngines ->
             assertTrue(searchEngines.isNotEmpty())
@@ -200,10 +199,10 @@ class SearchActionTest {
 
         assertEquals(1, store.state.search.customSearchEngines.size)
 
-        store.dispatch(SearchAction.RemoveCustomSearchEngineAction("unrecognized_id")).joinBlocking()
+        store.dispatch(SearchAction.RemoveCustomSearchEngineAction("unrecognized_id"))
         assertEquals(1, store.state.search.customSearchEngines.size)
 
-        store.dispatch(SearchAction.RemoveCustomSearchEngineAction(customSearchEngine.id)).joinBlocking()
+        store.dispatch(SearchAction.RemoveCustomSearchEngineAction(customSearchEngine.id))
         assertTrue(store.state.search.customSearchEngines.isEmpty())
     }
 
@@ -226,12 +225,12 @@ class SearchActionTest {
 
         assertNull(store.state.search.userSelectedSearchEngineId)
 
-        store.dispatch(SearchAction.SelectSearchEngineAction(searchEngine.id, null)).joinBlocking()
+        store.dispatch(SearchAction.SelectSearchEngineAction(searchEngine.id, null))
         assertEquals(searchEngine.id, store.state.search.userSelectedSearchEngineId)
 
         assertEquals(searchEngine.id, store.state.search.userSelectedSearchEngineId)
 
-        store.dispatch(SearchAction.SelectSearchEngineAction("unrecognized_id", null)).joinBlocking()
+        store.dispatch(SearchAction.SelectSearchEngineAction("unrecognized_id", null))
         // We allow setting an ID of a search engine that is not in the state since loading happens
         // asynchronously and the search engine may not be loaded yet.
         assertEquals("unrecognized_id", store.state.search.userSelectedSearchEngineId)
@@ -242,7 +241,7 @@ class SearchActionTest {
         val store = BrowserStore()
         assertNull(store.state.search.region)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR")))
 
         assertNotNull(store.state.search.region)
         assertEquals("DE", store.state.search.region!!.home)
@@ -274,7 +273,7 @@ class SearchActionTest {
 
         store.dispatch(
             SearchAction.RestoreHiddenSearchEnginesAction,
-        ).joinBlocking()
+        )
 
         assertEquals(3, store.state.search.regionSearchEngines.size)
         assertEquals(0, store.state.search.hiddenSearchEngines.size)
@@ -308,7 +307,7 @@ class SearchActionTest {
 
         store.dispatch(
             SearchAction.RestoreHiddenSearchEnginesAction,
-        ).joinBlocking()
+        )
 
         assertEquals(3, store.state.search.regionSearchEngines.size)
         assertEquals(0, store.state.search.hiddenSearchEngines.size)
@@ -336,7 +335,7 @@ class SearchActionTest {
 
         store.dispatch(
             SearchAction.ShowSearchEngineAction("duckduckgo"),
-        ).joinBlocking()
+        )
 
         assertEquals(0, store.state.search.hiddenSearchEngines.size)
         assertEquals(3, store.state.search.regionSearchEngines.size)
@@ -364,7 +363,7 @@ class SearchActionTest {
 
         store.dispatch(
             SearchAction.HideSearchEngineAction("google"),
-        ).joinBlocking()
+        )
 
         assertEquals(2, store.state.search.hiddenSearchEngines.size)
         assertEquals(1, store.state.search.regionSearchEngines.size)
@@ -396,19 +395,19 @@ class SearchActionTest {
 
         store.dispatch(
             SearchAction.ShowSearchEngineAction("banana"),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             SearchAction.HideSearchEngineAction("banana"),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             SearchAction.HideSearchEngineAction("unknown-search"),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             SearchAction.ShowSearchEngineAction("also-unknown-search"),
-        ).joinBlocking()
+        )
 
         assertEquals(2, store.state.search.regionSearchEngines.size)
         assertEquals(1, store.state.search.hiddenSearchEngines.size)
@@ -429,7 +428,7 @@ class SearchActionTest {
         )
         val store = BrowserStore(state)
 
-        store.dispatch(SearchAction.RefreshSearchEnginesAction).joinBlocking()
+        store.dispatch(SearchAction.RefreshSearchEnginesAction)
 
         assertEquals(state.search, store.state.search)
     }

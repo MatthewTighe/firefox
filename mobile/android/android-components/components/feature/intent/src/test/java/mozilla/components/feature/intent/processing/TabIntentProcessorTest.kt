@@ -25,7 +25,6 @@ import mozilla.components.feature.search.SearchUseCases
 import mozilla.components.feature.search.ext.createSearchEngine
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
@@ -107,7 +106,7 @@ class TabIntentProcessorTest {
         assertNotNull(tab)
 
         val otherTab = createTab("https://firefox.com")
-        store.dispatch(TabListAction.AddTabAction(otherTab, select = true)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(otherTab, select = true))
         assertEquals(2, store.state.tabs.size)
         assertEquals(otherTab, store.state.selectedTab)
         assertTrue(store.state.tabs[1].source is SessionState.Source.Internal.None)
@@ -151,7 +150,7 @@ class TabIntentProcessorTest {
         assertNotNull(tab)
 
         val otherTab = createTab("https://firefox.com")
-        store.dispatch(TabListAction.AddTabAction(otherTab, select = true)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(otherTab, select = true))
         assertEquals(2, store.state.tabs.size)
         assertEquals(otherTab, store.state.selectedTab)
 
@@ -185,7 +184,7 @@ class TabIntentProcessorTest {
         assertNotNull(tab)
 
         val otherTab = createTab("https://firefox.com")
-        store.dispatch(TabListAction.AddTabAction(otherTab, select = true)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(otherTab, select = true))
         assertEquals(2, store.state.tabs.size)
         assertEquals(otherTab, store.state.selectedTab)
 

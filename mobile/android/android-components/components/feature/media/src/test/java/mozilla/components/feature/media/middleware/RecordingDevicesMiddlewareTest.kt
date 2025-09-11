@@ -17,7 +17,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.media.RecordingDevice
 import mozilla.components.support.base.android.NotificationsDelegate
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.whenever
@@ -122,7 +121,7 @@ class RecordingDevicesMiddlewareTest {
                     RecordingDevice(RecordingDevice.Type.CAMERA, RecordingDevice.Status.RECORDING),
                 ),
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(1, notificationManager.size())
 
@@ -131,7 +130,7 @@ class RecordingDevicesMiddlewareTest {
                 sessionId = "mozilla",
                 devices = emptyList(),
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(0, notificationManager.size())
     }

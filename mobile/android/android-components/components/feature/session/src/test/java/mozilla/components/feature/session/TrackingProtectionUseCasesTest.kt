@@ -25,7 +25,6 @@ import mozilla.components.concept.engine.content.blocking.TrackingProtectionExce
 import mozilla.components.concept.engine.content.blocking.TrackingProtectionExceptionStorage
 import mozilla.components.support.test.any
 import mozilla.components.support.test.eq
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.whenever
@@ -116,7 +115,7 @@ class TrackingProtectionUseCasesTest {
 
         store.dispatch(
             EngineAction.UnlinkEngineSessionAction("A"),
-        ).joinBlocking()
+        )
 
         whenever(engine.getTrackersLog(any(), any(), any())).then {
             onSuccess(emptyList())
@@ -149,7 +148,7 @@ class TrackingProtectionUseCasesTest {
     fun `add exception with a null engine session will not call the store`() {
         store.dispatch(
             EngineAction.UnlinkEngineSessionAction("A"),
-        ).joinBlocking()
+        )
 
         useCases.addException("A")
 
@@ -189,10 +188,10 @@ class TrackingProtectionUseCasesTest {
             override val url: String = tab1.content.url
         }
 
-        store.dispatch(TabListAction.AddTabAction(tab1)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab3)).joinBlocking()
-        store.dispatch(CustomTabListAction.AddCustomTabAction(customTab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab1))
+        store.dispatch(TabListAction.AddTabAction(tab2))
+        store.dispatch(TabListAction.AddTabAction(tab3))
+        store.dispatch(CustomTabListAction.AddCustomTabAction(customTab))
         store.waitUntilIdle()
 
         assertTrue(store.state.findTab(tab1.id)!!.trackingProtection.ignoredOnTrackingProtection)
@@ -220,7 +219,7 @@ class TrackingProtectionUseCasesTest {
     fun `remove exception with a null engine session will not call the store`() {
         store.dispatch(
             EngineAction.UnlinkEngineSessionAction("A"),
-        ).joinBlocking()
+        )
 
         useCases.removeException("A")
 
@@ -248,7 +247,7 @@ class TrackingProtectionUseCasesTest {
 
         store.dispatch(
             EngineAction.UnlinkEngineSessionAction("A"),
-        ).joinBlocking()
+        )
 
         useCases.containsException("A") {
             contains = it

@@ -15,7 +15,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineSessionState
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -132,7 +131,7 @@ class TrimMemoryMiddlewareTest {
             SystemAction.LowMemoryAction(
                 level = ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN,
             ),
-        ).joinBlocking()
+        )
 
         store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
@@ -198,7 +197,7 @@ class TrimMemoryMiddlewareTest {
             SystemAction.LowMemoryAction(
                 level = ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL,
             ),
-        ).joinBlocking()
+        )
 
         store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()

@@ -7,7 +7,6 @@ package mozilla.components.browser.state.action
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.content.DownloadState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -27,7 +26,7 @@ class DownloadActionTest {
             destinationDirectory = "",
             directoryPath = "",
         )
-        store.dispatch(DownloadAction.AddDownloadAction(download1)).joinBlocking()
+        store.dispatch(DownloadAction.AddDownloadAction(download1))
         assertEquals(download1, store.state.downloads[download1.id])
         assertEquals(1, store.state.downloads.size)
 
@@ -36,7 +35,7 @@ class DownloadActionTest {
             destinationDirectory = "",
             directoryPath = "",
         )
-        store.dispatch(DownloadAction.AddDownloadAction(download2)).joinBlocking()
+        store.dispatch(DownloadAction.AddDownloadAction(download2))
         assertEquals(download2, store.state.downloads[download2.id])
         assertEquals(2, store.state.downloads.size)
     }
@@ -51,10 +50,10 @@ class DownloadActionTest {
             directoryPath = "",
             notificationId = 100,
         )
-        store.dispatch(DownloadAction.AddDownloadAction(download)).joinBlocking()
+        store.dispatch(DownloadAction.AddDownloadAction(download))
         assertNotNull(store.state.downloads[download.id]!!.notificationId)
 
-        store.dispatch(DownloadAction.DismissDownloadNotificationAction(download.id)).joinBlocking()
+        store.dispatch(DownloadAction.DismissDownloadNotificationAction(download.id))
         assertNull(store.state.downloads[download.id]!!.notificationId)
     }
 
@@ -68,11 +67,11 @@ class DownloadActionTest {
             directoryPath = "",
             notificationId = 100,
         )
-        store.dispatch(DownloadAction.AddDownloadAction(download)).joinBlocking()
+        store.dispatch(DownloadAction.AddDownloadAction(download))
         assertNotNull(store.state.downloads[download.id]!!.notificationId)
         assertEquals(1, store.state.downloads.size)
 
-        store.dispatch(DownloadAction.DismissDownloadNotificationAction("-1")).joinBlocking()
+        store.dispatch(DownloadAction.DismissDownloadNotificationAction("-1"))
         assertNotNull(store.state.downloads[download.id]!!.notificationId)
         assertEquals(download, store.state.downloads[download.id])
     }
@@ -82,12 +81,12 @@ class DownloadActionTest {
         val store = BrowserStore(BrowserState())
 
         val download1 = DownloadState("https://mozilla.org/download1", destinationDirectory = "", directoryPath = "")
-        store.dispatch(DownloadAction.RestoreDownloadStateAction(download1)).joinBlocking()
+        store.dispatch(DownloadAction.RestoreDownloadStateAction(download1))
         assertEquals(download1, store.state.downloads[download1.id])
         assertEquals(1, store.state.downloads.size)
 
         val download2 = DownloadState("https://mozilla.org/download2", destinationDirectory = "", directoryPath = "")
-        store.dispatch(DownloadAction.RestoreDownloadStateAction(download2)).joinBlocking()
+        store.dispatch(DownloadAction.RestoreDownloadStateAction(download2))
         assertEquals(download2, store.state.downloads[download2.id])
         assertEquals(2, store.state.downloads.size)
     }
@@ -97,7 +96,7 @@ class DownloadActionTest {
         val store = BrowserStore(BrowserState())
 
         val state = store.state
-        store.dispatch(DownloadAction.RestoreDownloadsStateAction).joinBlocking()
+        store.dispatch(DownloadAction.RestoreDownloadsStateAction)
         assertSame(store.state, state)
     }
 
@@ -106,11 +105,11 @@ class DownloadActionTest {
         val store = BrowserStore(BrowserState())
 
         val download = DownloadState("https://mozilla.org/download1", destinationDirectory = "", directoryPath = "")
-        store.dispatch(DownloadAction.AddDownloadAction(download)).joinBlocking()
+        store.dispatch(DownloadAction.AddDownloadAction(download))
         assertEquals(download, store.state.downloads[download.id])
         assertFalse(store.state.downloads.isEmpty())
 
-        store.dispatch(DownloadAction.RemoveDownloadAction(download.id)).joinBlocking()
+        store.dispatch(DownloadAction.RemoveDownloadAction(download.id))
         assertTrue(store.state.downloads.isEmpty())
     }
 
@@ -120,13 +119,13 @@ class DownloadActionTest {
 
         val download = DownloadState("https://mozilla.org/download1", destinationDirectory = "", directoryPath = "")
         val download2 = DownloadState("https://mozilla.org/download2", destinationDirectory = "", directoryPath = "")
-        store.dispatch(DownloadAction.AddDownloadAction(download)).joinBlocking()
-        store.dispatch(DownloadAction.AddDownloadAction(download2)).joinBlocking()
+        store.dispatch(DownloadAction.AddDownloadAction(download))
+        store.dispatch(DownloadAction.AddDownloadAction(download2))
 
         assertFalse(store.state.downloads.isEmpty())
         assertEquals(2, store.state.downloads.size)
 
-        store.dispatch(DownloadAction.RemoveAllDownloadsAction).joinBlocking()
+        store.dispatch(DownloadAction.RemoveAllDownloadsAction)
         assertTrue(store.state.downloads.isEmpty())
     }
 
@@ -136,12 +135,12 @@ class DownloadActionTest {
         val download = DownloadState("https://mozilla.org/download1", destinationDirectory = "", directoryPath = "")
         val download2 = DownloadState("https://mozilla.org/download2", destinationDirectory = "", directoryPath = "")
 
-        store.dispatch(DownloadAction.AddDownloadAction(download)).joinBlocking()
-        store.dispatch(DownloadAction.AddDownloadAction(download2)).joinBlocking()
+        store.dispatch(DownloadAction.AddDownloadAction(download))
+        store.dispatch(DownloadAction.AddDownloadAction(download2))
 
         val updatedDownload = download.copy(fileName = "filename.txt")
 
-        store.dispatch(DownloadAction.UpdateDownloadAction(updatedDownload)).joinBlocking()
+        store.dispatch(DownloadAction.UpdateDownloadAction(updatedDownload))
 
         assertFalse(store.state.downloads.isEmpty())
         assertEquals(2, store.state.downloads.size)

@@ -9,7 +9,6 @@ import mozilla.components.browser.state.action.ContentAction
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -40,20 +39,20 @@ class FileUploadsDirCleanerMiddlewareTest {
             ),
         )
 
-        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.wikipedia.org")).joinBlocking()
+        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.wikipedia.org"))
         dispatcher.scheduler.advanceUntilIdle()
         store.waitUntilIdle()
 
         verify(fileUploadsDirCleaner).cleanRecentUploads()
 
-        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.wikipedia.org/cats")).joinBlocking()
+        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.wikipedia.org/cats"))
         dispatcher.scheduler.advanceUntilIdle()
         store.waitUntilIdle()
 
         // Same site, no cleanups expected
         verify(fileUploadsDirCleaner, times(1)).cleanRecentUploads()
 
-        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.example.com")).joinBlocking()
+        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.example.com"))
         dispatcher.scheduler.advanceUntilIdle()
         store.waitUntilIdle()
 
@@ -76,7 +75,7 @@ class FileUploadsDirCleanerMiddlewareTest {
             ),
         )
 
-        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.mozilla.org")).joinBlocking()
+        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.mozilla.org"))
         dispatcher.scheduler.advanceUntilIdle()
         store.waitUntilIdle()
 
@@ -98,7 +97,7 @@ class FileUploadsDirCleanerMiddlewareTest {
             ),
         )
 
-        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.wikipedia.org")).joinBlocking()
+        store.dispatch(ContentAction.UpdateUrlAction("test-tab", "https://www.wikipedia.org"))
         dispatcher.scheduler.advanceUntilIdle()
         store.waitUntilIdle()
 

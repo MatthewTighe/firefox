@@ -13,7 +13,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.support.test.any
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -57,7 +56,7 @@ class CustomTabsUseCasesTest {
     @Test
     fun `MigrateCustomTabUseCase - turns custom tab into regular tab and selects it`() {
         val customTab = createCustomTab("https://mozilla.org")
-        store.dispatch(CustomTabListAction.AddCustomTabAction(customTab)).joinBlocking()
+        store.dispatch(CustomTabListAction.AddCustomTabAction(customTab))
         assertEquals(0, store.state.tabs.size)
         assertEquals(1, store.state.customTabs.size)
 
@@ -69,7 +68,7 @@ class CustomTabsUseCasesTest {
         assertNull(store.state.selectedTabId)
 
         val otherCustomTab = createCustomTab("https://firefox.com")
-        store.dispatch(CustomTabListAction.AddCustomTabAction(otherCustomTab)).joinBlocking()
+        store.dispatch(CustomTabListAction.AddCustomTabAction(otherCustomTab))
         assertEquals(1, store.state.tabs.size)
         assertEquals(1, store.state.customTabs.size)
 

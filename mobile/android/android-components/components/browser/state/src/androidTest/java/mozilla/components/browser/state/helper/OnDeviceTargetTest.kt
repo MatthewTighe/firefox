@@ -43,7 +43,7 @@ class OnDeviceTargetTest {
 
         assertNull(observedTabId)
 
-        store.dispatchBlockingOnIdle(
+        store.dispatch(
             TabListAction.AddTabAction(createTab("https://www.mozilla.org", id = "mozilla")),
         )
 
@@ -51,7 +51,7 @@ class OnDeviceTargetTest {
             assertEquals("mozilla", observedTabId)
         }
 
-        store.dispatchBlockingOnIdle(
+        store.dispatch(
             TabListAction.AddTabAction(createTab("https://example.org", id = "example")),
         )
 
@@ -59,7 +59,7 @@ class OnDeviceTargetTest {
             assertEquals("mozilla", observedTabId)
         }
 
-        store.dispatchBlockingOnIdle(
+        store.dispatch(
             TabListAction.SelectTabAction("example"),
         )
 
@@ -67,7 +67,7 @@ class OnDeviceTargetTest {
             assertEquals("example", observedTabId)
         }
 
-        store.dispatchBlockingOnIdle(
+        store.dispatch(
             TabListAction.RemoveTabAction("example"),
         )
 
@@ -75,7 +75,7 @@ class OnDeviceTargetTest {
             assertEquals("mozilla", observedTabId)
         }
 
-        store.dispatchBlockingOnIdle(TabListAction.RemoveAllTabsAction())
+        store.dispatch(TabListAction.RemoveAllTabsAction())
 
         rule.runOnIdle {
             assertNull(observedTabId)
@@ -107,13 +107,13 @@ class OnDeviceTargetTest {
 
         assertEquals("mozilla", observedTabId)
 
-        store.dispatchBlockingOnIdle(TabListAction.SelectTabAction("example"))
+        store.dispatch(TabListAction.SelectTabAction("example"))
 
         rule.runOnIdle {
             assertEquals("mozilla", observedTabId)
         }
 
-        store.dispatchBlockingOnIdle(TabListAction.RemoveTabAction("mozilla"))
+        store.dispatch(TabListAction.RemoveTabAction("mozilla"))
 
         rule.runOnIdle {
             assertNull(observedTabId)
@@ -149,29 +149,22 @@ class OnDeviceTargetTest {
 
         assertEquals("reddit", observedTabId)
 
-        store.dispatchBlockingOnIdle(TabListAction.SelectTabAction("example"))
+        store.dispatch(TabListAction.SelectTabAction("example"))
 
         rule.runOnIdle {
             assertEquals("reddit", observedTabId)
         }
 
-        store.dispatchBlockingOnIdle(TabListAction.RemoveTabAction("mozilla"))
+        store.dispatch(TabListAction.RemoveTabAction("mozilla"))
 
         rule.runOnIdle {
             assertEquals("reddit", observedTabId)
         }
 
-        store.dispatchBlockingOnIdle(CustomTabListAction.RemoveCustomTabAction("reddit"))
+        store.dispatch(CustomTabListAction.RemoveCustomTabAction("reddit"))
 
         rule.runOnIdle {
             assertNull(observedTabId)
-        }
-    }
-
-    private fun BrowserStore.dispatchBlockingOnIdle(action: BrowserAction) {
-        rule.runOnIdle {
-            val job = dispatch(action)
-            runBlocking { job.join() }
         }
     }
 }

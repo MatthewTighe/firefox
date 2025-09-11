@@ -20,7 +20,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.feature.top.sites.TopSite
 import mozilla.components.feature.top.sites.TopSitesUseCases
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertEquals
@@ -405,7 +404,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -443,7 +442,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -530,7 +529,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -568,7 +567,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -606,7 +605,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("US", "US")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 
@@ -644,7 +643,7 @@ class DefaultTopSiteControllerTest {
 
         every { controller.getAvailableSearchEngines() } returns listOf(searchEngine)
 
-        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR"))).joinBlocking()
+        store.dispatch(SearchAction.SetRegionAction(RegionState("DE", "FR")))
 
         controller.handleSelectTopSite(topSite, position = 0)
 

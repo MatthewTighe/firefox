@@ -95,7 +95,7 @@ class ManifestUpdateFeatureTest {
                 sessionId,
                 baseManifest,
             ),
-        ).joinBlocking()
+        )
 
         feature.start()
 
@@ -121,7 +121,7 @@ class ManifestUpdateFeatureTest {
                 sessionId,
                 baseManifest,
             ),
-        ).joinBlocking()
+        )
 
         feature.start()
 
@@ -133,7 +133,7 @@ class ManifestUpdateFeatureTest {
                 sessionId,
                 newManifest,
             ),
-        ).joinBlocking()
+        )
 
         feature.updateJob!!.joinBlocking()
 
@@ -159,7 +159,7 @@ class ManifestUpdateFeatureTest {
                 sessionId,
                 baseManifest,
             ),
-        ).joinBlocking()
+        )
 
         feature.updateJob?.joinBlocking()
 
@@ -183,7 +183,7 @@ class ManifestUpdateFeatureTest {
                 sessionId,
                 baseManifest,
             ),
-        ).joinBlocking()
+        )
 
         feature.start()
 
@@ -192,7 +192,7 @@ class ManifestUpdateFeatureTest {
             ContentAction.RemoveWebAppManifestAction(
                 sessionId,
             ),
-        ).joinBlocking()
+        )
 
         feature.updateJob?.joinBlocking()
 
@@ -216,7 +216,7 @@ class ManifestUpdateFeatureTest {
                 sessionId,
                 baseManifest,
             ),
-        ).joinBlocking()
+        )
 
         feature.start()
 
@@ -226,7 +226,7 @@ class ManifestUpdateFeatureTest {
                 sessionId,
                 WebAppManifest(name = "Mozilla", startUrl = "https://netscape.com"),
             ),
-        ).joinBlocking()
+        )
 
         feature.updateJob?.joinBlocking()
 

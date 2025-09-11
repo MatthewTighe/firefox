@@ -37,9 +37,9 @@ class PdfStateMiddlewareTest {
             middleware = listOf(PdfStateMiddleware(this), captureActionsMiddleware),
         )
 
-        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 10)).join()
-        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 50)).join()
-        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 99)).join()
+        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 10))
+        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 50))
+        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 99))
         store.waitUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
 
         // If the action is not dispatched then the below call would throw an AssertionError.
@@ -53,8 +53,8 @@ class PdfStateMiddlewareTest {
             middleware = listOf(PdfStateMiddleware(this), captureActionsMiddleware),
         )
 
-        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 100)).join()
-        store.waitUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
+        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 100))
+        testScheduler.advanceUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
 
         assertTrue(captureActionsMiddleware.findFirstAction(ContentAction.EnteredPdfViewer::class).tabId == NORMAL_TAB_ID)
     }
@@ -66,8 +66,8 @@ class PdfStateMiddlewareTest {
             middleware = listOf(PdfStateMiddleware(this), captureActionsMiddleware),
         )
 
-        store.dispatch(ContentAction.UpdateProgressAction(CUSTOM_TAB_ID, 100)).join()
-        store.waitUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
+        store.dispatch(ContentAction.UpdateProgressAction(CUSTOM_TAB_ID, 100))
+        testScheduler.advanceUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
 
         assertTrue(captureActionsMiddleware.findFirstAction(ContentAction.EnteredPdfViewer::class).tabId == CUSTOM_TAB_ID)
     }
@@ -82,8 +82,8 @@ class PdfStateMiddlewareTest {
             middleware = listOf(PdfStateMiddleware(this), captureActionsMiddleware),
         )
 
-        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 100)).join()
-        store.waitUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
+        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 100))
+        testScheduler.advanceUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
 
         assertTrue(captureActionsMiddleware.findFirstAction(ContentAction.ExitedPdfViewer::class).tabId == NORMAL_TAB_ID)
     }
@@ -98,8 +98,8 @@ class PdfStateMiddlewareTest {
             middleware = listOf(PdfStateMiddleware(this), captureActionsMiddleware),
         )
 
-        store.dispatch(ContentAction.UpdateProgressAction(CUSTOM_TAB_ID, 100)).join()
-        store.waitUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
+        store.dispatch(ContentAction.UpdateProgressAction(CUSTOM_TAB_ID, 100))
+        testScheduler.advanceUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
 
         assertTrue(captureActionsMiddleware.findFirstAction(ContentAction.ExitedPdfViewer::class).tabId == CUSTOM_TAB_ID)
     }
@@ -126,8 +126,8 @@ class PdfStateMiddlewareTest {
             middleware = listOf(PdfStateMiddleware(this), captureActionsMiddleware),
         )
 
-        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 100)).join()
-        store.waitUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
+        store.dispatch(ContentAction.UpdateProgressAction(NORMAL_TAB_ID, 100))
+        testScheduler.advanceUntilIdle() // wait for the actions dispatched from PdfStateMiddleware to be handled in CaptureActionsMiddleware
 
         assertTrue(captureActionsMiddleware.findFirstAction(ContentAction.ExitedPdfViewer::class).tabId == NORMAL_TAB_ID)
     }

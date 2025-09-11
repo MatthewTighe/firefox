@@ -18,7 +18,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineSession.LoadUrlFlags
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
@@ -137,7 +136,7 @@ class SessionUseCasesTest {
 
     @Test
     fun loadUrlWithoutEngineSession() {
-        store.dispatch(EngineAction.UnlinkEngineSessionAction("mozilla")).joinBlocking()
+        store.dispatch(EngineAction.UnlinkEngineSessionAction("mozilla"))
 
         useCases.loadUrl("https://getpocket.com")
         store.waitUntilIdle()
@@ -373,7 +372,7 @@ class SessionUseCasesTest {
         var createdTab: TabSessionState? = null
         var tabCreatedForUrl: String? = null
 
-        store.dispatch(TabListAction.RemoveAllTabsAction()).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllTabsAction())
 
         val loadUseCase = SessionUseCases.DefaultLoadUrlUseCase(store) { url ->
             tabCreatedForUrl = url
@@ -397,7 +396,7 @@ class SessionUseCasesTest {
         var createdTab: TabSessionState? = null
         var tabCreatedForUrl: String? = null
 
-        store.dispatch(TabListAction.RemoveAllTabsAction()).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllTabsAction())
         store.waitUntilIdle()
 
         val loadUseCase = SessionUseCases.LoadDataUseCase(store) { url ->
@@ -499,14 +498,14 @@ class SessionUseCasesTest {
         assertEquals(123L, store.state.findTab(tab.id)?.lastAccess)
 
         // Update last access for currently selected tab
-        store.dispatch(TabListAction.SelectTabAction(otherTab.id)).joinBlocking()
+        store.dispatch(TabListAction.SelectTabAction(otherTab.id))
         assertEquals(0L, store.state.findTab(otherTab.id)?.lastAccess)
         useCases.updateLastAccess()
         store.waitUntilIdle()
         assertNotEquals(0L, store.state.findTab(otherTab.id)?.lastAccess)
 
         // Update last access for currently selected tab with specific value
-        store.dispatch(TabListAction.SelectTabAction(otherTab.id)).joinBlocking()
+        store.dispatch(TabListAction.SelectTabAction(otherTab.id))
         useCases.updateLastAccess(lastAccess = 345L)
         store.waitUntilIdle()
         assertEquals(345L, store.state.findTab(otherTab.id)?.lastAccess)

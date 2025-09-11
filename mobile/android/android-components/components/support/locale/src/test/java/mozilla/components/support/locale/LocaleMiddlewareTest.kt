@@ -9,7 +9,6 @@ import kotlinx.coroutines.test.runTest
 import mozilla.components.browser.state.action.LocaleAction
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -59,7 +58,7 @@ class LocaleMiddlewareTest {
 
         assertEquals(store.state.locale, null)
 
-        store.dispatch(LocaleAction.RestoreLocaleStateAction).joinBlocking()
+        store.dispatch(LocaleAction.RestoreLocaleStateAction)
         store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -89,7 +88,7 @@ class LocaleMiddlewareTest {
         assertEquals(store.state.locale, null)
 
         val newLocale = "es".toLocale()
-        store.dispatch(LocaleAction.UpdateLocaleAction(newLocale)).joinBlocking()
+        store.dispatch(LocaleAction.UpdateLocaleAction(newLocale))
         dispatcher.scheduler.advanceUntilIdle()
 
         verify(localeManager).setNewLocale(testContext, locale = newLocale)

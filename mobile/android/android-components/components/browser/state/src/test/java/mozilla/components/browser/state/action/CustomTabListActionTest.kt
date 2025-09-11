@@ -10,7 +10,6 @@ import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.state.createCustomTab
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -31,7 +30,7 @@ class CustomTabListActionTest {
             source = SessionState.Source.Internal.CustomTab,
         )
 
-        store.dispatch(CustomTabListAction.AddCustomTabAction(customTab)).joinBlocking()
+        store.dispatch(CustomTabListAction.AddCustomTabAction(customTab))
 
         assertEquals(0, store.state.tabs.size)
         assertEquals(1, store.state.customTabs.size)
@@ -50,7 +49,7 @@ class CustomTabListActionTest {
 
         assertEquals(2, store.state.customTabs.size)
 
-        store.dispatch(CustomTabListAction.RemoveCustomTabAction(customTab2.id)).joinBlocking()
+        store.dispatch(CustomTabListAction.RemoveCustomTabAction(customTab2.id))
 
         assertEquals(1, store.state.customTabs.size)
         assertEquals(customTab1, store.state.customTabs[0])
@@ -66,7 +65,7 @@ class CustomTabListActionTest {
 
         assertEquals(2, store.state.customTabs.size)
 
-        store.dispatch(CustomTabListAction.RemoveCustomTabAction("unknown id")).joinBlocking()
+        store.dispatch(CustomTabListAction.RemoveCustomTabAction("unknown id"))
 
         assertEquals(2, store.state.customTabs.size)
         assertEquals(customTab1, store.state.customTabs[0])
@@ -85,7 +84,7 @@ class CustomTabListActionTest {
         assertEquals(2, store.state.customTabs.size)
         assertEquals(1, store.state.tabs.size)
 
-        store.dispatch(CustomTabListAction.RemoveAllCustomTabsAction).joinBlocking()
+        store.dispatch(CustomTabListAction.RemoveAllCustomTabsAction)
         assertEquals(0, store.state.customTabs.size)
         assertEquals(1, store.state.tabs.size)
     }

@@ -7,7 +7,6 @@ package org.mozilla.fenix.bookmarks
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.MiddlewareContext
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertFalse
@@ -50,7 +49,7 @@ class PrivateBrowsingLockMiddlewareTest {
         assertFalse(testMiddlewareInvoked)
         assertNull(middleware.pendingAction)
 
-        store.dispatch(action).joinBlocking()
+        store.dispatch(action)
         store.waitUntilIdle()
 
         assertTrue(verificationRequested)
@@ -80,7 +79,7 @@ class PrivateBrowsingLockMiddlewareTest {
         assertFalse(testMiddlewareInvoked)
         assertNull(middleware.pendingAction)
 
-        store.dispatch(action).joinBlocking()
+        store.dispatch(action)
         store.waitUntilIdle()
 
         assertTrue(verificationRequested)
@@ -110,7 +109,7 @@ class PrivateBrowsingLockMiddlewareTest {
         assertFalse(testMiddlewareInvoked)
         assertNull(middleware.pendingAction)
 
-        store.dispatch(action).joinBlocking()
+        store.dispatch(action)
         store.waitUntilIdle()
 
         assertTrue(verificationRequested)
@@ -142,7 +141,7 @@ class PrivateBrowsingLockMiddlewareTest {
         assertFalse(testMiddlewareInvoked)
         assertNull(middleware.pendingAction)
 
-        store.dispatch(action).joinBlocking()
+        store.dispatch(action)
         store.waitUntilIdle()
 
         assertFalse(verificationRequested)
@@ -172,7 +171,7 @@ class PrivateBrowsingLockMiddlewareTest {
         assertFalse(testMiddlewareInvoked)
         assertNull(middleware.pendingAction)
 
-        store.dispatch(action).joinBlocking()
+        store.dispatch(action)
         store.waitUntilIdle()
 
         assertFalse(verificationRequested)
@@ -202,7 +201,7 @@ class PrivateBrowsingLockMiddlewareTest {
         assertFalse(testMiddlewareInvoked)
         assertNull(middleware.pendingAction)
 
-        store.dispatch(action).joinBlocking()
+        store.dispatch(action)
         store.waitUntilIdle()
 
         assertFalse(verificationRequested)
@@ -230,7 +229,7 @@ class PrivateBrowsingLockMiddlewareTest {
         assertFalse(testMiddlewareInvoked)
         assertNotNull(middleware.pendingAction)
 
-        store.dispatch(action).joinBlocking()
+        store.dispatch(action)
         store.waitUntilIdle()
 
         assertTrue(testMiddlewareInvoked)

@@ -18,7 +18,6 @@ import mozilla.components.browser.state.state.getGroupById
 import mozilla.components.browser.state.state.recover.RecoverableTab
 import mozilla.components.browser.state.state.recover.TabState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.mock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -37,7 +36,7 @@ class TabListActionTest {
 
         val tab = createTab(url = "https://www.mozilla.org")
 
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
 
         assertEquals(1, store.state.tabs.size)
         assertEquals(tab.id, store.state.selectedTabId)
@@ -59,7 +58,7 @@ class TabListActionTest {
 
         val newTab = createTab("https://firefox.com")
 
-        store.dispatch(TabListAction.AddTabAction(newTab, select = true)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(newTab, select = true))
 
         assertEquals(2, store.state.tabs.size)
         assertEquals(newTab.id, store.state.selectedTabId)
@@ -75,7 +74,7 @@ class TabListActionTest {
         assertNull(existingTab.id, store.state.selectedTabId)
 
         val newTab = createTab("https://firefox.com")
-        store.dispatch(TabListAction.AddTabAction(newTab, select = false)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(newTab, select = false))
 
         assertEquals(1, store.state.tabs.size)
         assertEquals(newTab.id, store.state.selectedTabId)
@@ -90,10 +89,10 @@ class TabListActionTest {
         val tab3 = createTab("https://wiki.mozilla.org", parent = tab1)
         val tab4 = createTab("https://github.com/mozilla-mobile/android-components", parent = tab2)
 
-        store.dispatch(TabListAction.AddTabAction(tab1)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab3)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab4)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab1))
+        store.dispatch(TabListAction.AddTabAction(tab2))
+        store.dispatch(TabListAction.AddTabAction(tab3))
+        store.dispatch(TabListAction.AddTabAction(tab4))
 
         assertEquals(4, store.state.tabs.size)
         assertNull(store.state.tabs[0].parentId)
@@ -109,8 +108,8 @@ class TabListActionTest {
         val tab1 = createTab("https://www.mozilla.org")
         val tab2 = createTab("https://www.firefox.com", source = SessionState.Source.Internal.Menu)
 
-        store.dispatch(TabListAction.AddTabAction(tab1)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab1))
+        store.dispatch(TabListAction.AddTabAction(tab2))
 
         assertEquals(2, store.state.tabs.size)
         assertEquals(SessionState.Source.Internal.None, store.state.tabs[0].source)
@@ -129,13 +128,13 @@ class TabListActionTest {
         val child002 = createTab("https://www.mozilla.org/en-US/technology/", parent = parent01)
         val child003 = createTab("https://getpocket.com/add/", parent = parent02)
 
-        store.dispatch(TabListAction.AddTabAction(parent01)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab1)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(child001)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(parent02)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(child002)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(child003)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(parent01))
+        store.dispatch(TabListAction.AddTabAction(tab1))
+        store.dispatch(TabListAction.AddTabAction(child001))
+        store.dispatch(TabListAction.AddTabAction(tab2))
+        store.dispatch(TabListAction.AddTabAction(parent02))
+        store.dispatch(TabListAction.AddTabAction(child002))
+        store.dispatch(TabListAction.AddTabAction(child003))
 
         assertEquals(parent01.id, store.state.tabs[0].id) // ├── parent 1
         assertEquals(child002.id, store.state.tabs[1].id) // │   ├── child 2
@@ -159,7 +158,6 @@ class TabListActionTest {
         assertNull(store.state.selectedTabId)
 
         store.dispatch(TabListAction.SelectTabAction("a"))
-            .joinBlocking()
 
         assertEquals("a", store.state.selectedTabId)
     }
@@ -175,7 +173,6 @@ class TabListActionTest {
         val store = BrowserStore(state)
 
         store.dispatch(TabListAction.RemoveTabAction("a"))
-            .joinBlocking()
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.firefox.com", store.state.tabs[0].content.url)
@@ -195,7 +192,7 @@ class TabListActionTest {
         )
         val store = BrowserStore(state)
 
-        store.dispatch(TabListAction.RemoveTabAction("a")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("a"))
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.firefox.com", store.state.tabs[0].content.url)
         assertEquals(listOf("b"), store.state.tabPartitions[tabPartition.id]?.getGroupById(tabGroup.id)?.tabIds)
@@ -213,7 +210,6 @@ class TabListActionTest {
         val store = BrowserStore(state)
 
         store.dispatch(TabListAction.RemoveTabsAction(listOf("a", "b")))
-            .joinBlocking()
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("https://www.getpocket.com", store.state.tabs[0].content.url)
@@ -233,7 +229,7 @@ class TabListActionTest {
         )
         val store = BrowserStore(state)
 
-        store.dispatch(TabListAction.RemoveTabsAction(listOf("a", "b"))).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabsAction(listOf("a", "b")))
         assertEquals(0, store.state.tabs.size)
         assertEquals(0, store.state.tabPartitions[tabPartition.id]?.getGroupById(tabGroup.id)?.tabIds?.size)
     }
@@ -249,7 +245,6 @@ class TabListActionTest {
         val store = BrowserStore(state)
 
         store.dispatch(TabListAction.RemoveTabAction("c"))
-            .joinBlocking()
 
         assertEquals(2, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
@@ -269,7 +264,7 @@ class TabListActionTest {
 
         assertEquals("a", store.state.selectedTabId)
 
-        store.dispatch(TabListAction.RemoveTabAction("a")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("a"))
 
         assertNull(store.state.selectedTabId)
     }
@@ -291,7 +286,7 @@ class TabListActionTest {
 
         assertEquals("a", store.state.selectedTabId)
 
-        store.dispatch(TabListAction.RemoveTabAction("a")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("a"))
 
         assertNull(store.state.selectedTabId)
     }
@@ -315,16 +310,16 @@ class TabListActionTest {
 
         assertEquals("c", store.state.selectedTabId)
 
-        store.dispatch(TabListAction.RemoveTabAction("c")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("c"))
         assertEquals("d", store.state.selectedTabId)
 
-        store.dispatch(TabListAction.RemoveTabAction("a")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("a"))
         assertEquals("d", store.state.selectedTabId)
 
-        store.dispatch(TabListAction.RemoveTabAction("d")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("d"))
         assertEquals("b", store.state.selectedTabId)
 
-        store.dispatch(TabListAction.RemoveTabAction("b")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("b"))
         assertNull(store.state.selectedTabId)
     }
 
@@ -348,11 +343,11 @@ class TabListActionTest {
         val store = BrowserStore(state)
 
         // [a*, b, c, (d*), e*] -> [a*, b, c, (e*)]
-        store.dispatch(TabListAction.RemoveTabAction("d")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("d"))
         assertEquals("e", store.state.selectedTabId)
 
         // [a*, b, c, (e*)] -> [(a*), b, c]
-        store.dispatch(TabListAction.RemoveTabAction("e")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("e"))
         assertEquals("a", store.state.selectedTabId)
     }
 
@@ -376,16 +371,16 @@ class TabListActionTest {
         val store = BrowserStore(state)
 
         // [a, b*, c*, (d), e] -> [a, b*, c* (e)]
-        store.dispatch(TabListAction.RemoveTabAction("d")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("d"))
         assertEquals("e", store.state.selectedTabId)
 
         // [a, b*, c*, (e)] -> [(a), b*, c*]
-        store.dispatch(TabListAction.RemoveTabAction("e")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("e"))
         assertEquals("a", store.state.selectedTabId)
 
         // After removing the last normal tab NO private tab should get selected
         // [(a), b*, c*] -> [b*, c*]
-        store.dispatch(TabListAction.RemoveTabAction("a")).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction("a"))
         assertNull(store.state.selectedTabId)
     }
 
@@ -396,7 +391,7 @@ class TabListActionTest {
         val initialState = BrowserState(tabs = listOf(normalTab, privateTab), selectedTabId = normalTab.id)
         val store = BrowserStore(initialState)
 
-        store.dispatch(TabListAction.RemoveTabAction(normalTab.id)).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction(normalTab.id))
 
         assertNull(store.state.selectedTabId)
         assertEquals(1, store.state.tabs.size)
@@ -409,7 +404,7 @@ class TabListActionTest {
         val initialState = BrowserState(tabs = listOf(normalTab, privateTab), selectedTabId = privateTab.id)
         val store = BrowserStore(initialState)
 
-        store.dispatch(TabListAction.RemoveTabAction(privateTab.id)).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction(privateTab.id))
 
         assertNull(store.state.selectedTabId)
         assertEquals(1, store.state.tabs.size)
@@ -421,7 +416,7 @@ class TabListActionTest {
         val initialState = BrowserState(tabs = tabs, selectedTabId = tabs.first().id)
         val store = BrowserStore(initialState)
 
-        store.dispatch(TabListAction.RemoveAllNormalTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllNormalTabsAction)
 
         assertNull(store.state.selectedTabId)
         assertEquals(1, store.state.tabs.size)
@@ -433,7 +428,7 @@ class TabListActionTest {
         val initialState = BrowserState(tabs = tabs, selectedTabId = tabs.first().id)
         val store = BrowserStore(initialState)
 
-        store.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllPrivateTabsAction)
 
         assertNull(store.state.selectedTabId)
         assertEquals(1, store.state.tabs.size)
@@ -448,13 +443,13 @@ class TabListActionTest {
         val tab2 = createTab("https://getpocket.com")
         val child = createTab("https://www.mozilla.org/en-US/internet-health/", parent = parent)
 
-        store.dispatch(TabListAction.AddTabAction(parent)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab1)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(child)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(parent))
+        store.dispatch(TabListAction.AddTabAction(tab1))
+        store.dispatch(TabListAction.AddTabAction(tab2))
+        store.dispatch(TabListAction.AddTabAction(child))
 
-        store.dispatch(TabListAction.SelectTabAction(child.id)).joinBlocking()
-        store.dispatch(TabListAction.RemoveTabAction(child.id, selectParentIfExists = true)).joinBlocking()
+        store.dispatch(TabListAction.SelectTabAction(child.id))
+        store.dispatch(TabListAction.RemoveTabAction(child.id, selectParentIfExists = true))
 
         assertEquals(parent.id, store.state.selectedTabId)
         assertEquals("https://www.mozilla.org", store.state.selectedTab?.content?.url)
@@ -471,14 +466,14 @@ class TabListActionTest {
         val child1 = createTab("https://www.mozilla.org/en-US/internet-health/", parent = parent)
         val child2 = createTab("https://www.mozilla.org/en-US/technology/", parent = parent)
 
-        store.dispatch(TabListAction.AddTabAction(parent)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab1)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(child1)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(child2)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(parent))
+        store.dispatch(TabListAction.AddTabAction(tab1))
+        store.dispatch(TabListAction.AddTabAction(tab2))
+        store.dispatch(TabListAction.AddTabAction(child1))
+        store.dispatch(TabListAction.AddTabAction(child2))
 
-        store.dispatch(TabListAction.SelectTabAction(child1.id)).joinBlocking()
-        store.dispatch(TabListAction.RemoveTabAction(child1.id, selectParentIfExists = false)).joinBlocking()
+        store.dispatch(TabListAction.SelectTabAction(child1.id))
+        store.dispatch(TabListAction.RemoveTabAction(child1.id, selectParentIfExists = false))
 
         assertEquals(tab1.id, store.state.selectedTabId)
         assertEquals("https://www.firefox.com", store.state.selectedTab?.content?.url)
@@ -492,12 +487,12 @@ class TabListActionTest {
         val tab2 = createTab("https://getpocket.com")
         val tab3 = createTab("https://www.mozilla.org/en-US/internet-health/")
 
-        store.dispatch(TabListAction.AddTabAction(tab1)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab3)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab1))
+        store.dispatch(TabListAction.AddTabAction(tab2))
+        store.dispatch(TabListAction.AddTabAction(tab3))
 
-        store.dispatch(TabListAction.SelectTabAction(tab3.id)).joinBlocking()
-        store.dispatch(TabListAction.RemoveTabAction(tab3.id, selectParentIfExists = true)).joinBlocking()
+        store.dispatch(TabListAction.SelectTabAction(tab3.id))
+        store.dispatch(TabListAction.RemoveTabAction(tab3.id, selectParentIfExists = true))
 
         assertEquals(tab2.id, store.state.selectedTabId)
         assertEquals("https://getpocket.com", store.state.selectedTab?.content?.url)
@@ -512,10 +507,10 @@ class TabListActionTest {
         val tab2 = createTab("https://www.mozilla.org/en-US/internet-health/", parent = tab1)
         val tab3 = createTab("https://www.mozilla.org/en-US/technology/", parent = tab2)
 
-        store.dispatch(TabListAction.AddTabAction(tab0)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab1)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab2)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(tab3)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab0))
+        store.dispatch(TabListAction.AddTabAction(tab1))
+        store.dispatch(TabListAction.AddTabAction(tab2))
+        store.dispatch(TabListAction.AddTabAction(tab3))
 
         // tab0 <- tab1 <- tab2 <- tab3
         assertEquals(tab0.id, store.state.tabs[0].id)
@@ -528,7 +523,7 @@ class TabListActionTest {
         assertEquals(tab1.id, store.state.tabs[2].parentId)
         assertEquals(tab2.id, store.state.tabs[3].parentId)
 
-        store.dispatch(TabListAction.RemoveTabAction(tab2.id)).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction(tab2.id))
 
         // tab0 <- tab1 <- tab3
         assertEquals(tab0.id, store.state.tabs[0].id)
@@ -539,7 +534,7 @@ class TabListActionTest {
         assertEquals(tab0.id, store.state.tabs[1].parentId)
         assertEquals(tab1.id, store.state.tabs[2].parentId)
 
-        store.dispatch(TabListAction.RemoveTabAction(tab0.id)).joinBlocking()
+        store.dispatch(TabListAction.RemoveTabAction(tab0.id))
 
         // tab1 <- tab3
         assertEquals(tab1.id, store.state.tabs[0].id)
@@ -578,7 +573,7 @@ class TabListActionTest {
                 selectedTabId = "d",
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.BEGINNING,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("a", store.state.tabs[0].id)
@@ -617,7 +612,7 @@ class TabListActionTest {
                 selectedTabId = "d",
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.BEGINNING,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("c", store.state.tabs[0].id)
@@ -656,7 +651,7 @@ class TabListActionTest {
                 selectedTabId = "d",
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.END,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("a", store.state.tabs[0].id)
@@ -694,7 +689,7 @@ class TabListActionTest {
                 selectedTabId = "d",
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.BEGINNING,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("c", store.state.tabs[0].id)
@@ -732,7 +727,7 @@ class TabListActionTest {
                 selectedTabId = "d",
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.END,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("a", store.state.tabs[0].id)
@@ -764,7 +759,7 @@ class TabListActionTest {
                 selectedTabId = null,
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.BEGINNING,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("c", store.state.tabs[0].id)
@@ -795,7 +790,7 @@ class TabListActionTest {
                 selectedTabId = null,
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.AT_INDEX,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(3, store.state.tabs.size)
         assertEquals("c", store.state.tabs[0].id)
@@ -824,7 +819,7 @@ class TabListActionTest {
                 selectedTabId = null,
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.AT_INDEX,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(3, store.state.tabs.size)
         assertEquals("a", store.state.tabs[0].id)
@@ -853,7 +848,7 @@ class TabListActionTest {
                 selectedTabId = null,
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.AT_INDEX,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(3, store.state.tabs.size)
         assertEquals("a", store.state.tabs[0].id)
@@ -882,7 +877,7 @@ class TabListActionTest {
                 selectedTabId = null,
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.AT_INDEX,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(3, store.state.tabs.size)
         assertEquals("a", store.state.tabs[0].id)
@@ -912,7 +907,7 @@ class TabListActionTest {
                 selectedTabId = null,
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.AT_INDEX,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("d", store.state.tabs[0].id)
@@ -943,7 +938,7 @@ class TabListActionTest {
                 selectedTabId = null,
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.AT_INDEX,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("d", store.state.tabs[0].id)
@@ -974,7 +969,7 @@ class TabListActionTest {
                 selectedTabId = null,
                 restoreLocation = TabListAction.RestoreAction.RestoreLocation.AT_INDEX,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("a", store.state.tabs[0].id)
@@ -998,7 +993,7 @@ class TabListActionTest {
         )
 
         val store = BrowserStore(state)
-        store.dispatch(TabListAction.RemoveAllTabsAction()).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllTabsAction())
 
         assertTrue(store.state.tabs.isEmpty())
         assertNull(store.state.selectedTabId)
@@ -1020,7 +1015,7 @@ class TabListActionTest {
         )
         val store = BrowserStore(state)
 
-        store.dispatch(TabListAction.RemoveAllTabsAction()).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllTabsAction())
         assertEquals(0, store.state.tabs.size)
         assertEquals(0, store.state.tabPartitions[tabPartition.id]?.getGroupById(tabGroup.id)?.tabIds?.size)
     }
@@ -1039,7 +1034,7 @@ class TabListActionTest {
         )
 
         val store = BrowserStore(state)
-        store.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllPrivateTabsAction)
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("a", store.state.tabs[0].id)
@@ -1063,7 +1058,7 @@ class TabListActionTest {
         )
 
         val store = BrowserStore(state)
-        store.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllPrivateTabsAction)
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("a", store.state.tabs[0].id)
@@ -1088,7 +1083,7 @@ class TabListActionTest {
         )
         val store = BrowserStore(state)
 
-        store.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllPrivateTabsAction)
         assertEquals(1, store.state.tabs.size)
         assertEquals(1, store.state.tabPartitions[tabPartition.id]?.getGroupById(normalTabGroup.id)?.tabIds?.size)
         assertEquals(0, store.state.tabPartitions[tabPartition.id]?.getGroupById(privateTabGroup.id)?.tabIds?.size)
@@ -1108,7 +1103,7 @@ class TabListActionTest {
         )
 
         val store = BrowserStore(state)
-        store.dispatch(TabListAction.RemoveAllNormalTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllNormalTabsAction)
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("b", store.state.tabs[0].id)
@@ -1132,7 +1127,7 @@ class TabListActionTest {
         )
 
         val store = BrowserStore(state)
-        store.dispatch(TabListAction.RemoveAllNormalTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllNormalTabsAction)
 
         assertEquals(1, store.state.tabs.size)
         assertEquals("b", store.state.tabs[0].id)
@@ -1158,7 +1153,7 @@ class TabListActionTest {
         )
         val store = BrowserStore(state)
 
-        store.dispatch(TabListAction.RemoveAllNormalTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllNormalTabsAction)
         assertEquals(1, store.state.tabs.size)
         assertEquals(0, store.state.tabPartitions[tabPartition.id]?.getGroupById(normalTabGroup.id)?.tabIds?.size)
         assertEquals(1, store.state.tabPartitions[tabPartition.id]?.getGroupById(privateTabGroup.id)?.tabIds?.size)
@@ -1178,7 +1173,7 @@ class TabListActionTest {
                     createTab(id = "b", url = "https://www.firefox.com", private = true),
                 ),
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(2, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
@@ -1206,7 +1201,7 @@ class TabListActionTest {
                     createTab(id = "b", url = "https://www.firefox.com", private = true),
                 ),
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(3, store.state.tabs.size)
         assertEquals("https://getpocket.com", store.state.tabs[0].content.url)
@@ -1231,7 +1226,7 @@ class TabListActionTest {
                     createTab(id = "d", url = "https://getpocket.com", private = true),
                 ),
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(4, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
@@ -1257,7 +1252,7 @@ class TabListActionTest {
                     createTab(id = "c", url = "https://getpocket.com", private = true),
                 ),
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(3, store.state.tabs.size)
         assertEquals("https://www.mozilla.org", store.state.tabs[0].content.url)
@@ -1280,7 +1275,7 @@ class TabListActionTest {
             ),
         )
 
-        store.dispatch(TabListAction.RemoveAllNormalTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllNormalTabsAction)
 
         assertEquals(0, store.state.normalTabs.size)
         assertEquals(2, store.state.privateTabs.size)
@@ -1301,7 +1296,7 @@ class TabListActionTest {
             ),
         )
 
-        store.dispatch(TabListAction.RemoveAllNormalTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllNormalTabsAction)
 
         assertEquals(0, store.state.normalTabs.size)
         assertEquals(2, store.state.privateTabs.size)
@@ -1322,7 +1317,7 @@ class TabListActionTest {
             ),
         )
 
-        store.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllPrivateTabsAction)
 
         assertEquals(2, store.state.normalTabs.size)
         assertEquals(0, store.state.privateTabs.size)
@@ -1341,7 +1336,7 @@ class TabListActionTest {
             ),
         )
 
-        store.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllPrivateTabsAction)
 
         assertEquals(0, store.state.normalTabs.size)
         assertEquals(0, store.state.privateTabs.size)
@@ -1362,7 +1357,7 @@ class TabListActionTest {
             ),
         )
 
-        store.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllPrivateTabsAction)
 
         assertEquals(2, store.state.normalTabs.size)
         assertEquals(0, store.state.privateTabs.size)
@@ -1381,7 +1376,7 @@ class TabListActionTest {
                 targetTabId,
                 placeAfter,
             ),
-        ).joinBlocking()
+        )
     }
 
     @Test
@@ -1483,12 +1478,12 @@ class TabListActionTest {
         val child = createTab("https://www.mozilla.org/en-US/internet-health/", parent = parent)
         val nonChildTab = createTab("https://www.firefox.com")
 
-        store.dispatch(TabListAction.AddTabAction(parent)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(nonChildTab)).joinBlocking()
-        store.dispatch(TabListAction.AddTabAction(child)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(parent))
+        store.dispatch(TabListAction.AddTabAction(nonChildTab))
+        store.dispatch(TabListAction.AddTabAction(child))
 
-        store.dispatch(TabListAction.SelectTabAction(nonChildTab.id)).joinBlocking()
-        store.dispatch(TabListAction.RemoveTabAction(child.id, selectParentIfExists = true)).joinBlocking()
+        store.dispatch(TabListAction.SelectTabAction(nonChildTab.id))
+        store.dispatch(TabListAction.RemoveTabAction(child.id, selectParentIfExists = true))
 
         assertEquals(nonChildTab.id, store.state.selectedTabId)
         assertEquals(nonChildTab.content.url, store.state.selectedTab?.content?.url)

@@ -20,7 +20,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineView
 import mozilla.components.support.test.any
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.mock
@@ -52,7 +51,7 @@ class SessionFeatureTest {
         doReturn(actualView).`when`(view).asView()
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSession))
 
         val feature = SessionFeature(store, mock(), mock(), view)
         verify(view, never()).render(any())
@@ -72,7 +71,7 @@ class SessionFeatureTest {
         doReturn(actualView).`when`(view).asView()
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("C", engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("C", engineSession))
 
         val feature = SessionFeature(store, mock(), mock(), view, tabId = "C")
         verify(view, never()).render(any())
@@ -93,7 +92,7 @@ class SessionFeatureTest {
         doReturn(actualView).`when`(view).asView()
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("D", engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("D", engineSession))
 
         val feature = SessionFeature(store, mock(), mock(), view, tabId = "D")
         verify(view, never()).render(any())
@@ -114,8 +113,8 @@ class SessionFeatureTest {
 
         val engineSessionA: EngineSession = mock()
         val engineSessionB: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("A", engineSessionA)).joinBlocking()
-        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSessionB)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("A", engineSessionA))
+        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSessionB))
 
         val feature = SessionFeature(store, mock(), mock(), view)
         verify(view, never()).render(any())
@@ -124,7 +123,7 @@ class SessionFeatureTest {
         store.waitUntilIdle()
         verify(view).render(engineSessionB)
 
-        store.dispatch(TabListAction.SelectTabAction("A")).joinBlocking()
+        store.dispatch(TabListAction.SelectTabAction("A"))
         store.waitUntilIdle()
         verify(view).render(engineSessionA)
     }
@@ -154,8 +153,8 @@ class SessionFeatureTest {
 
         val engineSessionA: EngineSession = mock()
         val engineSessionB: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("A", engineSessionA)).joinBlocking()
-        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSessionB)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("A", engineSessionA))
+        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSessionB))
 
         val feature = SessionFeature(store, mock(), mock(), view)
         verify(view, never()).render(any())
@@ -166,7 +165,7 @@ class SessionFeatureTest {
 
         feature.stop()
 
-        store.dispatch(TabListAction.SelectTabAction("A")).joinBlocking()
+        store.dispatch(TabListAction.SelectTabAction("A"))
         store.waitUntilIdle()
         verify(view, never()).render(engineSessionA)
     }
@@ -180,7 +179,7 @@ class SessionFeatureTest {
         doReturn(actualView).`when`(view).asView()
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSession))
         val feature = SessionFeature(store, mock(), mock(), view)
 
         feature.start()
@@ -190,7 +189,7 @@ class SessionFeatureTest {
         verify(view).render(engineSession)
         verify(view, never()).release()
 
-        store.dispatch(TabListAction.RemoveAllTabsAction()).joinBlocking()
+        store.dispatch(TabListAction.RemoveAllTabsAction())
         verify(view).release()
     }
 
@@ -203,7 +202,7 @@ class SessionFeatureTest {
         doReturn(actualView).`when`(view).asView()
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSession))
 
         val feature = SessionFeature(store, mock(), mock(), view)
         verify(view, never()).render(any())
@@ -218,7 +217,7 @@ class SessionFeatureTest {
         feature.release()
         verify(view).release()
 
-        store.dispatch(TabListAction.SelectTabAction("A")).joinBlocking()
+        store.dispatch(TabListAction.SelectTabAction("A"))
         verify(view, never()).render(newEngineSession)
     }
 
@@ -231,7 +230,7 @@ class SessionFeatureTest {
         doReturn(actualView).`when`(view).asView()
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("D", engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("D", engineSession))
 
         val feature = SessionFeature(store, mock(), mock(), view, tabId = "D")
         verify(view, never()).render(any())
@@ -243,7 +242,7 @@ class SessionFeatureTest {
         verify(view).render(engineSession)
         verify(view, never()).release()
 
-        store.dispatch(CustomTabListAction.RemoveCustomTabAction("D")).joinBlocking()
+        store.dispatch(CustomTabListAction.RemoveCustomTabAction("D"))
         verify(view).release()
     }
 
@@ -301,7 +300,7 @@ class SessionFeatureTest {
                     "A",
                     canGoBack = true,
                 ),
-            ).joinBlocking()
+            )
 
             val useCase: SessionUseCases.GoBackUseCase = mock()
 
@@ -343,7 +342,7 @@ class SessionFeatureTest {
                     "A",
                     canGoForward = true,
                 ),
-            ).joinBlocking()
+            )
 
             val forwardUseCase: SessionUseCases.GoForwardUseCase = mock()
 
@@ -363,7 +362,7 @@ class SessionFeatureTest {
         doReturn(actualView).`when`(view).asView()
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("D", engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("D", engineSession))
 
         val feature = SessionFeature(store, mock(), mock(), view, tabId = "D")
         verify(view, never()).render(any())
@@ -387,13 +386,13 @@ class SessionFeatureTest {
         doReturn(actualView).`when`(view).asView()
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("A", engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("A", engineSession))
 
         val feature = SessionFeature(store, mock(), mock(), view, tabId = "A")
         verify(view, never()).render(any())
         feature.start()
 
-        store.dispatch(CrashAction.SessionCrashedAction("A")).joinBlocking()
+        store.dispatch(CrashAction.SessionCrashedAction("A"))
         store.waitUntilIdle()
         verify(view, atLeastOnce()).release()
         middleware.assertNotDispatched(EngineAction.CreateEngineSessionAction::class)
@@ -408,7 +407,7 @@ class SessionFeatureTest {
         doReturn(actualView).`when`(view).asView()
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction("B", engineSession))
 
         val feature = SessionFeature(store, mock(), mock(), view)
         verify(view, never()).render(any())

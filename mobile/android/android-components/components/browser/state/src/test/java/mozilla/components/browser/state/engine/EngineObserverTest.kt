@@ -1204,7 +1204,6 @@ class EngineObserverTest {
             "tab-id",
             permissionRequest,
         )
-        doReturn(Job()).`when`(store).dispatch(action)
 
         observer.onContentPermissionRequest(permissionRequest)
         verify(store).dispatch(action)

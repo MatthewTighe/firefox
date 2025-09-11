@@ -4,7 +4,6 @@
 
 package org.mozilla.fenix.components.appstate
 
-import mozilla.components.support.test.ext.joinBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mozilla.fenix.components.AppStore
@@ -16,28 +15,28 @@ class ReaderViewStateReducerTest {
     @Test
     fun `WHEN reader view started action is dispatched THEN reader view state is updated`() {
         val appStore = AppStore()
-        appStore.dispatch(ReaderViewAction.ReaderViewStarted).joinBlocking()
+        appStore.dispatch(ReaderViewAction.ReaderViewStarted)
         assertEquals(ReaderViewState.Active, appStore.state.readerViewState)
     }
 
     @Test
     fun `WHEN reader view dismissed action is dispatched THEN reader view state is updated`() {
         val appStore = AppStore()
-        appStore.dispatch(ReaderViewAction.ReaderViewDismissed).joinBlocking()
+        appStore.dispatch(ReaderViewAction.ReaderViewDismissed)
         assertEquals(ReaderViewState.Dismiss, appStore.state.readerViewState)
     }
 
     @Test
     fun `WHEN reader view controls shown action is dispatched THEN reader view state is updated`() {
         val appStore = AppStore()
-        appStore.dispatch(ReaderViewAction.ReaderViewControlsShown).joinBlocking()
+        appStore.dispatch(ReaderViewAction.ReaderViewControlsShown)
         assertEquals(ReaderViewState.ShowControls, appStore.state.readerViewState)
     }
 
     @Test
     fun `WHEN reader view reset action is dispatched THEN reader view state is updated`() {
         val appStore = AppStore()
-        appStore.dispatch(ReaderViewAction.Reset).joinBlocking()
+        appStore.dispatch(ReaderViewAction.Reset)
         assertEquals(ReaderViewState.None, appStore.state.readerViewState)
     }
 }

@@ -42,7 +42,7 @@ class IconMessageHandlerTest {
             val icon = Icon(bitmap, source = Icon.Source.DOWNLOAD)
             val deferredIcon = GlobalScope.async { icon }
 
-            val store: BrowserStore = BrowserStore(
+            val store = BrowserStore(
                 BrowserState(
                     tabs = listOf(
                         createTab(url = "https://www.theverge.com/", id = "test-url"),
@@ -208,7 +208,6 @@ class IconMessageHandlerTest {
             }
 
             store.dispatch(TrackingProtectionAction.ClearTrackersAction("test-url"))
-                .join()
 
             // Loaded icon will be set on session
 

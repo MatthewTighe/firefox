@@ -329,7 +329,7 @@ class DownloadUIStoreTest {
         assertEquals(store.state.pendingDeletionIds, deleteItemSet)
         assertEquals(expectedUIStateAfterDeleteAction, store.state)
 
-        dispatcher.scheduler.advanceTimeBy(UNDO_DELAY_PASSED.milliseconds)
+        dispatcher.scheduler.advanceTimeBy(testContext.getUndoDelay().milliseconds)
         assertEquals(store.state.pendingDeletionIds, deleteItemSet)
         assertEquals(expectedUIStateAfterDeleteAction, store.state)
     }
@@ -375,22 +375,28 @@ class DownloadUIStoreTest {
             mode = DownloadUIState.Mode.Normal,
             pendingDeletionIds = emptySet(),
         )
-        val expectedUIStateAfterDeleteAction = DownloadUIState(
+        val expectedUIStateAfterDeleteActionWithPendingDelete = DownloadUIState(
             items = listOf(fileItem1),
             mode = DownloadUIState.Mode.Normal,
             pendingDeletionIds = setOf("1"),
         )
 
+        val expectedUIStateAfterDeleteActionAfterPendingDeleteTimeout = DownloadUIState(
+            items = listOf(fileItem1),
+            mode = DownloadUIState.Mode.Normal,
+            pendingDeletionIds = emptySet(),
+        )
+
         assertEquals(expectedUIStateBeforeDeleteAction, store.state)
 
         store.dispatch(DownloadUIAction.AddPendingDeletionSet(setOf("1")))
-        assertEquals(expectedUIStateAfterDeleteAction, store.state)
+        assertEquals(expectedUIStateAfterDeleteActionWithPendingDelete, store.state)
 
-        dispatcher.scheduler.advanceTimeBy(UNDO_DELAY_PASSED.milliseconds)
+        dispatcher.scheduler.advanceTimeBy(testContext.getUndoDelay())
         store.dispatch(DownloadUIAction.UndoPendingDeletion)
         dispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals(expectedUIStateAfterDeleteAction, store.state)
+        assertEquals(expectedUIStateAfterDeleteActionAfterPendingDeleteTimeout, store.state)
     }
 
     @Test

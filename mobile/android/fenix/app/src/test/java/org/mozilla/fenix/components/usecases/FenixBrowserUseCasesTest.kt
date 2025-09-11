@@ -10,6 +10,7 @@ import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifyOrder
+import mozilla.components.browser.state.engine.EngineMiddleware
 import mozilla.components.browser.state.search.SearchEngine
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.SearchState
@@ -17,6 +18,7 @@ import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.base.profiler.Profiler
+import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.utils.ABOUT_HOME_URL
 import mozilla.components.feature.search.SearchUseCases
@@ -24,7 +26,9 @@ import mozilla.components.feature.search.ext.createSearchEngine
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.test.robolectric.testContext
+import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
@@ -40,6 +44,9 @@ class FenixBrowserUseCasesTest {
     private lateinit var searchUseCases: SearchUseCases
     private lateinit var defaultSearchUseCase: SearchUseCases.DefaultSearchUseCase
     private lateinit var useCases: FenixBrowserUseCases
+
+    @get:Rule
+    val coroutinesTestRule = MainCoroutineRule()
 
     @Before
     fun setup() {
@@ -66,6 +73,10 @@ class FenixBrowserUseCasesTest {
                 search = SearchState(
                     regionSearchEngines = listOf(searchEngine),
                 ),
+            ),
+            middleware = EngineMiddleware.create(
+                mockk<Engine>(),
+                coroutinesTestRule.scope,
             ),
         )
         defaultSearchUseCase = spyk(

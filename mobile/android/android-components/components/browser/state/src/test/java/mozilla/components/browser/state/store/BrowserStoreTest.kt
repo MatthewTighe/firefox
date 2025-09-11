@@ -12,7 +12,6 @@ import mozilla.components.browser.state.action.TabListAction
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.lib.state.Middleware
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -59,7 +58,6 @@ class BrowserStoreTest {
         val tab = createTab(url = "https://www.mozilla.org")
 
         store.dispatch(TabListAction.AddTabAction(tab))
-            .join()
 
         assertEquals(1, store.state.tabs.size)
         assertEquals(tab.id, store.state.selectedTabId)
@@ -86,10 +84,10 @@ class BrowserStoreTest {
         val store = BrowserStore()
         assertFalse(store.state.restoreComplete)
 
-        store.dispatch(RestoreCompleteAction).joinBlocking()
+        store.dispatch(RestoreCompleteAction)
         assertTrue(store.state.restoreComplete)
 
-        store.dispatch(RestoreCompleteAction).joinBlocking()
+        store.dispatch(RestoreCompleteAction)
         assertTrue(store.state.restoreComplete)
     }
 }

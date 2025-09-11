@@ -19,7 +19,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.webextension.WebExtensionInstallException
 import mozilla.components.feature.addons.Addon
 import mozilla.components.support.ktx.android.content.appVersionName
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertFalse
@@ -78,7 +77,7 @@ class WebExtensionPromptFeatureTest {
                     mockk(),
                 ),
             ),
-        ).joinBlocking()
+        )
 
         verify { webExtensionPromptFeature.handleInstallationFailedRequest(any()) }
     }
@@ -260,7 +259,7 @@ class WebExtensionPromptFeatureTest {
                     mockk(),
                 ),
             ),
-        ).joinBlocking()
+        )
 
         verify { webExtensionPromptFeature.handleAfterInstallationRequest(any()) }
     }

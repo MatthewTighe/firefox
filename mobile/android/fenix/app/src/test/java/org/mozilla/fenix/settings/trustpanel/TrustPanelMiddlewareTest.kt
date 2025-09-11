@@ -7,6 +7,8 @@ package org.mozilla.fenix.settings.trustpanel
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.net.toUri
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import mozilla.components.browser.state.state.ContentState
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.concept.engine.Engine
@@ -36,7 +38,6 @@ import org.mockito.Mockito.spy
 import org.mockito.Mockito.verify
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.PermissionStorage
-import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.settings.PhoneFeature
 import org.mozilla.fenix.settings.toggle
 import org.mozilla.fenix.settings.trustpanel.middleware.TrustPanelMiddleware
@@ -315,6 +316,13 @@ class TrustPanelMiddlewareTest {
             trustPanelState = TrustPanelState(
                 sitePermissions = null,
                 sessionState = sessionState,
+                websitePermissionsState = mapOf(
+                    PhoneFeature.AUTOPLAY to WebsitePermission.Autoplay(
+                        autoplayValue = AutoplayValue.AUTOPLAY_BLOCK_AUDIBLE,
+                        isVisible = true,
+                        deviceFeature = PhoneFeature.CAMERA,
+                    ),
+                ),
             ),
         )
 
@@ -352,6 +360,13 @@ class TrustPanelMiddlewareTest {
             trustPanelState = TrustPanelState(
                 sitePermissions = originalSitePermissions,
                 sessionState = sessionState,
+                websitePermissionsState = mapOf(
+                    PhoneFeature.AUTOPLAY to WebsitePermission.Autoplay(
+                        autoplayValue = AutoplayValue.AUTOPLAY_BLOCK_AUDIBLE,
+                        isVisible = true,
+                        deviceFeature = PhoneFeature.CAMERA,
+                    ),
+                ),
             ),
         )
 

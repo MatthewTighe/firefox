@@ -696,7 +696,7 @@ class HistoryFragment : LibraryPageFragment<History>(), UserInteractionHandler, 
                 )
             }
             browserStore.dispatch(RecentlyClosedAction.RemoveAllClosedTabAction)
-            browserStore.dispatch(EngineAction.PurgeHistoryAction).join()
+            browserStore.dispatch(EngineAction.PurgeHistoryAction)
 
             historyStore.dispatch(HistoryFragmentAction.ExitDeletionMode)
 

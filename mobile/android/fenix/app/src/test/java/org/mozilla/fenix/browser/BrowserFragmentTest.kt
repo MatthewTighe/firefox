@@ -30,7 +30,6 @@ import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.toolbar.BrowserToolbar
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.After
 import org.junit.Assert.assertTrue
@@ -175,7 +174,7 @@ class BrowserFragmentTest {
     @Test
     fun `GIVEN tabs are restored WHEN there are no tabs THEN navigate to home`() {
         browserFragment.observeRestoreComplete(store, navController)
-        store.dispatch(RestoreCompleteAction).joinBlocking()
+        store.dispatch(RestoreCompleteAction)
 
         verify(exactly = 1) { navController.popBackStack(R.id.homeFragment, false) }
     }
@@ -184,7 +183,7 @@ class BrowserFragmentTest {
     fun `GIVEN tabs are restored WHEN there are tabs THEN do not navigate`() {
         addAndSelectTab(testTab)
         browserFragment.observeRestoreComplete(store, navController)
-        store.dispatch(RestoreCompleteAction).joinBlocking()
+        store.dispatch(RestoreCompleteAction)
 
         verify(exactly = 0) { navController.popBackStack(R.id.homeFragment, false) }
     }
@@ -193,7 +192,7 @@ class BrowserFragmentTest {
     fun `GIVEN tabs are restored WHEN there is no selected tab THEN navigate to home`() {
         val store = BrowserStore(initialState = BrowserState(tabs = listOf(testTab)))
         browserFragment.observeRestoreComplete(store, navController)
-        store.dispatch(RestoreCompleteAction).joinBlocking()
+        store.dispatch(RestoreCompleteAction)
 
         verify(exactly = 1) { navController.popBackStack(R.id.homeFragment, false) }
     }
@@ -264,6 +263,7 @@ class BrowserFragmentTest {
 
         val newSelectedTab: TabSessionState = mockk(relaxed = true)
         every { newSelectedTab.content.loadRequest?.triggeredByRedirect } returns true
+        every { newSelectedTab.parentId } returns null
 
         browserFragment.observeTabSource(store)
         addAndSelectTab(newSelectedTab)
@@ -465,8 +465,8 @@ class BrowserFragmentTest {
     }
 
     private fun addAndSelectTab(tab: TabSessionState) {
-        store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
-        store.dispatch(TabListAction.SelectTabAction(tab.id)).joinBlocking()
+        store.dispatch(TabListAction.AddTabAction(tab))
+        store.dispatch(TabListAction.SelectTabAction(tab.id))
     }
 
     internal class MockedLifecycleOwner(initialState: Lifecycle.State) : LifecycleOwner {

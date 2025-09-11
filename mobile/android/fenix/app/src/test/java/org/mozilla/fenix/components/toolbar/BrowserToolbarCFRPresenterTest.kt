@@ -22,7 +22,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.toolbar.BrowserToolbar
 import mozilla.components.concept.engine.EngineSession
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertNotNull
@@ -67,7 +66,7 @@ class BrowserToolbarCFRPresenterTest {
                 privateTab.id,
                 EngineSession.CookieBannerHandlingStatus.HANDLED,
             ),
-        ).joinBlocking()
+        )
 
         verify { presenter.showCookieBannersCFR() }
         verify { settings.shouldShowCookieBannersCFR = false }

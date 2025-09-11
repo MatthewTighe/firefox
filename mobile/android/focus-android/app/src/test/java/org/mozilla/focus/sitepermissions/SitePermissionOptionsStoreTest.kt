@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.focus.sitepermissions
 
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.mock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -41,7 +40,7 @@ class SitePermissionOptionsStoreTest {
 
     @Test
     fun `GIVEN site permission screen store WHEN android permission action is dispatched THEN site permission options screen state is updated`() {
-        store.dispatch(SitePermissionOptionsScreenAction.AndroidPermission(true)).joinBlocking()
+        store.dispatch(SitePermissionOptionsScreenAction.AndroidPermission(true))
 
         verify(storage).getSitePermissionOptions(SitePermission.CAMERA)
         verify(storage).permissionSelectedOption(SitePermission.CAMERA)
@@ -52,7 +51,7 @@ class SitePermissionOptionsStoreTest {
 
     @Test
     fun `GIVEN site permission screen store WHEN select permission action is dispatched THEN site permission options screen state is updated`() {
-        store.dispatch(SitePermissionOptionsScreenAction.Select(SitePermissionOption.Blocked())).joinBlocking()
+        store.dispatch(SitePermissionOptionsScreenAction.Select(SitePermissionOption.Blocked()))
 
         verify(storage).saveCurrentSitePermissionOptionInSharePref(SitePermissionOption.Blocked(), SitePermission.CAMERA)
         assertEquals(SitePermissionOption.Blocked(), store.state.selectedSitePermissionOption)
@@ -72,7 +71,7 @@ class SitePermissionOptionsStoreTest {
                 sitePermissionLabel,
                 true,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(AutoplayOption.AllowAudioVideo(), store.state.selectedSitePermissionOption)
         assertTrue(store.state.isAndroidPermissionGranted)

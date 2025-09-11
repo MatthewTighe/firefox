@@ -12,14 +12,17 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import mozilla.components.browser.state.engine.EngineMiddleware
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.ContentState
 import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.browser.state.store.BrowserStore
+import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.sync.DeviceType
 import mozilla.components.feature.tabs.TabsUseCases
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.robolectric.testContext
+import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
@@ -43,6 +46,9 @@ class DefaultRecentSyncedTabControllerTest {
 
     @get:Rule
     val gleanTestRule = FenixGleanTestRule(testContext)
+
+    @get:Rule
+    val coroutinesTestRule = MainCoroutineRule()
 
     private val fenixBrowserUseCases: FenixBrowserUseCases = mockk(relaxed = true)
     private val tabsUseCases: TabsUseCases = mockk()
@@ -85,6 +91,10 @@ class DefaultRecentSyncedTabControllerTest {
                     ),
                 ),
                 selectedTabId = nonSyncId,
+            ),
+            middleware = EngineMiddleware.create(
+                mockk<Engine>(),
+                coroutinesTestRule.scope,
             ),
         )
         val selectOrAddTabUseCase = TabsUseCases.SelectOrAddUseCase(store)

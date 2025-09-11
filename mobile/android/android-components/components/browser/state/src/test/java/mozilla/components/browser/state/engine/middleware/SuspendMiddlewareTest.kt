@@ -12,7 +12,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineSessionState
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -43,12 +42,12 @@ class SuspendMiddlewareTest {
         )
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession))
 
         val state: EngineSessionState = mock()
-        store.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, state)).joinBlocking()
+        store.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, state))
 
-        store.dispatch(EngineAction.SuspendEngineSessionAction(tab.id)).joinBlocking()
+        store.dispatch(EngineAction.SuspendEngineSessionAction(tab.id))
 
         store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
@@ -69,12 +68,12 @@ class SuspendMiddlewareTest {
         )
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession))
 
         val state: EngineSessionState = mock()
-        store.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, state)).joinBlocking()
+        store.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, state))
 
-        store.dispatch(EngineAction.SuspendEngineSessionAction(tab.id)).joinBlocking()
+        store.dispatch(EngineAction.SuspendEngineSessionAction(tab.id))
 
         store.waitUntilIdle()
         dispatcher.scheduler.advanceUntilIdle()
@@ -95,7 +94,7 @@ class SuspendMiddlewareTest {
             ),
         )
 
-        store.dispatch(EngineAction.SuspendEngineSessionAction("invalid")).joinBlocking()
+        store.dispatch(EngineAction.SuspendEngineSessionAction("invalid"))
         verify(store, never()).dispatch(EngineAction.UnlinkEngineSessionAction("invalid"))
     }
 
@@ -111,7 +110,7 @@ class SuspendMiddlewareTest {
             ),
         )
 
-        store.dispatch(EngineAction.SuspendEngineSessionAction(tab.id)).joinBlocking()
+        store.dispatch(EngineAction.SuspendEngineSessionAction(tab.id))
         verify(store, never()).dispatch(EngineAction.UnlinkEngineSessionAction(tab.id))
     }
 
@@ -130,15 +129,15 @@ class SuspendMiddlewareTest {
         )
 
         val engineSession: EngineSession = mock()
-        suspendStore.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession)).joinBlocking()
-        killStore.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession)).joinBlocking()
+        suspendStore.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession))
+        killStore.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession))
 
         val state: EngineSessionState = mock()
-        suspendStore.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, state)).joinBlocking()
-        killStore.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, state)).joinBlocking()
+        suspendStore.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, state))
+        killStore.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, state))
 
-        suspendStore.dispatch(EngineAction.SuspendEngineSessionAction(tab.id)).joinBlocking()
-        killStore.dispatch(EngineAction.KillEngineSessionAction(tab.id)).joinBlocking()
+        suspendStore.dispatch(EngineAction.SuspendEngineSessionAction(tab.id))
+        killStore.dispatch(EngineAction.KillEngineSessionAction(tab.id))
 
         suspendStore.waitUntilIdle()
         killStore.waitUntilIdle()

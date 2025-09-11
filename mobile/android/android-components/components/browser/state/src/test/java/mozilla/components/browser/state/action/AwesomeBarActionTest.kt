@@ -8,7 +8,6 @@ import mozilla.components.browser.state.state.AwesomeBarState
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.awesomebar.AwesomeBar
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.mock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -34,7 +33,7 @@ class AwesomeBarActionTest {
                     visibleProviderGroups = mapOf(providerGroup to providerGroupSuggestions),
                 ),
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(1, store.state.awesomeBarState.visibilityState.visibleProviderGroups.size)
         assertEquals(providerGroupSuggestions, store.state.awesomeBarState.visibilityState.visibleProviderGroups[providerGroup])
@@ -51,7 +50,7 @@ class AwesomeBarActionTest {
         val provider: AwesomeBar.SuggestionProvider = mock()
         val suggestion = AwesomeBar.Suggestion(provider)
 
-        store.dispatch(AwesomeBarAction.SuggestionClicked(suggestion)).joinBlocking()
+        store.dispatch(AwesomeBarAction.SuggestionClicked(suggestion))
 
         assertTrue(store.state.awesomeBarState.visibilityState.visibleProviderGroups.isEmpty())
         assertEquals(suggestion, store.state.awesomeBarState.clickedSuggestion)
@@ -77,7 +76,7 @@ class AwesomeBarActionTest {
         assertTrue(store.state.awesomeBarState.visibilityState.visibleProviderGroups.isNotEmpty())
         assertNotNull(store.state.awesomeBarState.clickedSuggestion)
 
-        store.dispatch(AwesomeBarAction.EngagementFinished(abandoned = false)).joinBlocking()
+        store.dispatch(AwesomeBarAction.EngagementFinished(abandoned = false))
 
         assertTrue(store.state.awesomeBarState.visibilityState.visibleProviderGroups.isEmpty())
         assertNull(store.state.awesomeBarState.clickedSuggestion)
@@ -103,7 +102,7 @@ class AwesomeBarActionTest {
         assertTrue(store.state.awesomeBarState.visibilityState.visibleProviderGroups.isNotEmpty())
         assertNotNull(store.state.awesomeBarState.clickedSuggestion)
 
-        store.dispatch(AwesomeBarAction.EngagementFinished(abandoned = true)).joinBlocking()
+        store.dispatch(AwesomeBarAction.EngagementFinished(abandoned = true))
 
         assertTrue(store.state.awesomeBarState.visibilityState.visibleProviderGroups.isEmpty())
         assertNull(store.state.awesomeBarState.clickedSuggestion)

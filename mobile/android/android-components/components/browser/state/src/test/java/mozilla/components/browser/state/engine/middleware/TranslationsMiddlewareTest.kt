@@ -38,7 +38,6 @@ import mozilla.components.concept.engine.translate.TranslationSupport
 import mozilla.components.lib.state.MiddlewareContext
 import mozilla.components.support.test.any
 import mozilla.components.support.test.argumentCaptor
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.whenever
@@ -125,6 +124,7 @@ class TranslationsMiddlewareTest {
 
         doReturn(mockSessionState).`when`(tab).translationsState
         doReturn(mockBrowserState).`when`(state).translationEngine
+        whenever(store.state).thenReturn(state)
     }
 
     @Test
@@ -802,7 +802,7 @@ class TranslationsMiddlewareTest {
                 tabId = tab.id,
                 operation = TranslationOperation.FETCH_NEVER_TRANSLATE_SITES,
             ),
-        ).joinBlocking()
+        )
         waitForIdle()
 
         verify(store).dispatch(

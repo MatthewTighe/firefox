@@ -11,12 +11,13 @@ import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import mozilla.components.service.pocket.PocketStoriesService
 import mozilla.components.service.pocket.PocketStory.ContentRecommendation
 import mozilla.components.service.pocket.PocketStory.PocketRecommendedStory
 import mozilla.components.service.pocket.PocketStory.SponsoredContent
 import mozilla.components.service.pocket.PocketStory.SponsoredContentCallbacks
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -81,7 +82,7 @@ class PocketMiddlewareTest {
                     ),
                 ),
             ),
-        ).joinBlocking()
+        )
 
         coVerify { pocketService.updateStoriesTimesShown(listOf(story2.copy(timesShown = 1))) }
     }
@@ -147,9 +148,9 @@ class PocketMiddlewareTest {
     }
 
     @Test
-    fun `WHEN PocketStoriesCategoriesChange is dispatched THEN intercept and dispatch PocketStoriesCategoriesSelectionsChange`() = runTestOnMain {
+    fun `WHEN PocketStoriesCategoriesChange is dispatched THEN intercept and dispatch PocketStoriesCategoriesSelectionsChange`() = runTest {
         val dataStore = FakeDataStore()
-        val currentCategories = listOf(mockk<PocketRecommendedStoriesCategory>())
+        val currentCategories = listOf<PocketRecommendedStoriesCategory>()
         val pocketMiddleware = PocketMiddleware(
             mockk(),
             dataStore,
@@ -168,7 +169,9 @@ class PocketMiddlewareTest {
             ),
         )
 
-        appStore.dispatch(ContentRecommendationsAction.PocketStoriesCategoriesChange(currentCategories)).joinBlocking()
+        appStore.dispatch(ContentRecommendationsAction.PocketStoriesCategoriesChange(currentCategories))
+
+        advanceUntilIdle()
 
         verify {
             appStore.dispatch(
@@ -205,11 +208,11 @@ class PocketMiddlewareTest {
         dataStore.assertSelectedCategories()
         appStore.assertSelectedCategories()
 
-        appStore.dispatch(ContentRecommendationsAction.SelectPocketStoriesCategory(categ2.name)).joinBlocking()
+        appStore.dispatch(ContentRecommendationsAction.SelectPocketStoriesCategory(categ2.name))
         dataStore.assertSelectedCategories(categ2.name)
         appStore.assertSelectedCategories(categ2.name)
 
-        appStore.dispatch(ContentRecommendationsAction.SelectPocketStoriesCategory(categ1.name)).joinBlocking()
+        appStore.dispatch(ContentRecommendationsAction.SelectPocketStoriesCategory(categ1.name))
         dataStore.assertSelectedCategories(categ2.name, categ1.name)
         appStore.assertSelectedCategories(categ2.name, categ1.name)
     }
@@ -242,11 +245,11 @@ class PocketMiddlewareTest {
         dataStore.assertSelectedCategories(persistedCateg1.name, persistedCateg2.name)
         appStore.assertSelectedCategories(persistedCateg1.name, persistedCateg2.name)
 
-        appStore.dispatch(ContentRecommendationsAction.DeselectPocketStoriesCategory(categ2.name)).joinBlocking()
+        appStore.dispatch(ContentRecommendationsAction.DeselectPocketStoriesCategory(categ2.name))
         dataStore.assertSelectedCategories(persistedCateg1.name)
         appStore.assertSelectedCategories(persistedCateg1.name)
 
-        appStore.dispatch(ContentRecommendationsAction.DeselectPocketStoriesCategory(categ1.name)).joinBlocking()
+        appStore.dispatch(ContentRecommendationsAction.DeselectPocketStoriesCategory(categ1.name))
         dataStore.assertSelectedCategories()
         appStore.assertSelectedCategories()
     }
@@ -265,7 +268,7 @@ class PocketMiddlewareTest {
     @Test
     fun `WHEN restoreSelectedCategories is called THEN dispatch PocketStoriesCategoriesSelectionsChange with data read from the persistence layer`() = runTestOnMain {
         val dataStore = FakeDataStore("testCategory")
-        val currentCategories = listOf(mockk<PocketRecommendedStoriesCategory>())
+        val currentCategories = listOf<PocketRecommendedStoriesCategory>()
         val captorMiddleware = CaptureActionsMiddleware<AppState, AppAction>()
         val appStore = AppStore(
             initialState = AppState(),

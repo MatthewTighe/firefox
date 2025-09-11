@@ -21,7 +21,6 @@ import mozilla.components.support.base.Component
 import mozilla.components.support.base.facts.Action
 import mozilla.components.support.base.facts.processor.CollectionProcessor
 import mozilla.components.support.test.any
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
@@ -81,7 +80,7 @@ class ContextMenuFeatureTest {
                 "test-tab",
                 HitResult.UNKNOWN("https://www.mozilla.org"),
             ),
-        ).joinBlocking()
+        )
 
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -111,7 +110,7 @@ class ContextMenuFeatureTest {
                 "test-tab",
                 HitResult.UNKNOWN("https://www.mozilla.org"),
             ),
-        ).joinBlocking()
+        )
 
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -134,7 +133,7 @@ class ContextMenuFeatureTest {
                 "test-tab",
                 HitResult.UNKNOWN("https://www.mozilla.org"),
             ),
-        ).joinBlocking()
+        )
 
         val feature = ContextMenuFeature(
             fragmentManager,
@@ -206,7 +205,6 @@ class ContextMenuFeatureTest {
         )
 
         store.dispatch(TabListAction.RemoveTabAction("test-tab"))
-            .joinBlocking()
 
         feature.start()
 
@@ -263,7 +261,7 @@ class ContextMenuFeatureTest {
                 "test-tab",
                 HitResult.UNKNOWN("https://www.mozilla.org"),
             ),
-        ).joinBlocking()
+        )
 
         val (engineView, _) = mockEngineView()
 
@@ -300,7 +298,7 @@ class ContextMenuFeatureTest {
                 "test-tab",
                 HitResult.UNKNOWN("https://www.mozilla.org"),
             ),
-        ).joinBlocking()
+        )
 
         val (engineView, view) = mockEngineView()
         var actionInvoked = false
@@ -351,7 +349,7 @@ class ContextMenuFeatureTest {
                 "test-tab",
                 HitResult.UNKNOWN("https://www.mozilla.org"),
             ),
-        ).joinBlocking()
+        )
 
         val (engineView, _) = mockEngineView()
         val candidate = ContextMenuCandidate(

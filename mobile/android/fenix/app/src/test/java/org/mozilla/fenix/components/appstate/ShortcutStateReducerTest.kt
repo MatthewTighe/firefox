@@ -4,7 +4,6 @@
 
 package org.mozilla.fenix.components.appstate
 
-import mozilla.components.support.test.ext.joinBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mozilla.fenix.components.AppStore
@@ -16,7 +15,7 @@ class ShortcutStateReducerTest {
     fun `WHEN shortcut added action is dispatched THEN state is updated`() {
         val appStore = AppStore()
 
-        appStore.dispatch(AppAction.ShortcutAction.ShortcutAdded).joinBlocking()
+        appStore.dispatch(AppAction.ShortcutAction.ShortcutAdded)
 
         assertEquals(SnackbarState.ShortcutAdded, appStore.state.snackbarState)
     }

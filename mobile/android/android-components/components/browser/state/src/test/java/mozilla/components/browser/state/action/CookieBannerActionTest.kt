@@ -12,7 +12,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession.CookieBannerHandlingStatus.DETECTED
 import mozilla.components.concept.engine.EngineSession.CookieBannerHandlingStatus.HANDLED
 import mozilla.components.concept.engine.EngineSession.CookieBannerHandlingStatus.NO_DETECTED
-import mozilla.components.support.test.ext.joinBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -39,11 +38,9 @@ class CookieBannerActionTest {
         assertEquals(NO_DETECTED, tabState().cookieBanner)
 
         store.dispatch(CookieBannerAction.UpdateStatusAction(tabId = tab.id, status = HANDLED))
-            .joinBlocking()
 
         assertEquals(HANDLED, tabState().cookieBanner)
 
         store.dispatch(CookieBannerAction.UpdateStatusAction(tabId = tab.id, status = DETECTED))
-            .joinBlocking()
     }
 }

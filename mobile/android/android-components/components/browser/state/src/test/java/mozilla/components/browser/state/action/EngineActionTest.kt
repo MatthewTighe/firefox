@@ -14,7 +14,6 @@ import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineSessionState
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.mock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -47,7 +46,7 @@ class EngineActionTest {
         assertNull(engineState().engineSession)
 
         val engineSession: EngineSession = mock()
-        store.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession, timestamp = 1234)).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction(tab.id, engineSession, timestamp = 1234))
 
         assertNotNull(engineState().engineSession)
         assertEquals(engineSession, engineState().engineSession)
@@ -56,14 +55,14 @@ class EngineActionTest {
 
     @Test
     fun `UnlinkEngineSessionAction - Detaches engine session`() {
-        store.dispatch(EngineAction.LinkEngineSessionAction(tab.id, mock())).joinBlocking()
-        store.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, mock())).joinBlocking()
-        store.dispatch(EngineAction.UpdateEngineSessionObserverAction(tab.id, mock())).joinBlocking()
+        store.dispatch(EngineAction.LinkEngineSessionAction(tab.id, mock()))
+        store.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, mock()))
+        store.dispatch(EngineAction.UpdateEngineSessionObserverAction(tab.id, mock()))
         assertNotNull(engineState().engineSession)
         assertNotNull(engineState().engineSessionState)
         assertNotNull(engineState().engineObserver)
 
-        store.dispatch(EngineAction.UnlinkEngineSessionAction(tab.id)).joinBlocking()
+        store.dispatch(EngineAction.UnlinkEngineSessionAction(tab.id))
         assertNull(engineState().engineSession)
         assertNotNull(engineState().engineSessionState)
         assertNull(engineState().engineObserver)
@@ -74,7 +73,7 @@ class EngineActionTest {
         assertNull(engineState().engineSessionState)
 
         val engineSessionState: EngineSessionState = mock()
-        store.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, engineSessionState)).joinBlocking()
+        store.dispatch(EngineAction.UpdateEngineSessionStateAction(tab.id, engineSessionState))
         assertNotNull(engineState().engineSessionState)
         assertEquals(engineSessionState, engineState().engineSessionState)
     }
@@ -84,7 +83,7 @@ class EngineActionTest {
         assertNull(engineState().engineObserver)
 
         val engineObserver: EngineSession.Observer = mock()
-        store.dispatch(EngineAction.UpdateEngineSessionObserverAction(tab.id, engineObserver)).joinBlocking()
+        store.dispatch(EngineAction.UpdateEngineSessionObserverAction(tab.id, engineObserver))
         assertNotNull(engineState().engineObserver)
         assertEquals(engineObserver, engineState().engineObserver)
     }
@@ -114,7 +113,7 @@ class EngineActionTest {
             ),
         )
 
-        store.dispatch(EngineAction.PurgeHistoryAction).joinBlocking()
+        store.dispatch(EngineAction.PurgeHistoryAction)
 
         assertNull(store.state.findTab(tab1.id)!!.engineState.engineSessionState)
         assertNotNull(store.state.findTab(tab2.id)!!.engineState.engineSessionState)
@@ -127,14 +126,14 @@ class EngineActionTest {
     fun `UpdateEngineSessionInitializingAction - Updates initializing flag`() {
         assertFalse(engineState().initializing)
 
-        store.dispatch(EngineAction.UpdateEngineSessionInitializingAction(tab.id, true)).joinBlocking()
+        store.dispatch(EngineAction.UpdateEngineSessionInitializingAction(tab.id, true))
         assertTrue(engineState().initializing)
     }
 
     @Test
     fun `OptimizedLoadUrlTriggeredAction - State is not changed`() {
         val state = store.state
-        store.dispatch(EngineAction.OptimizedLoadUrlTriggeredAction(tab.id, "https://mozilla.org")).joinBlocking()
+        store.dispatch(EngineAction.OptimizedLoadUrlTriggeredAction(tab.id, "https://mozilla.org"))
         assertSame(store.state, state)
     }
 }

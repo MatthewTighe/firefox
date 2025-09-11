@@ -4,7 +4,6 @@
 
 package org.mozilla.fenix.components.appstate
 
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -20,7 +19,7 @@ class AppActionTest {
     fun `WHEN UpdateInactiveExpanded is dispatched THEN update inactiveTabsExpanded`() {
         assertFalse(appStore.state.inactiveTabsExpanded)
 
-        appStore.dispatch(AppAction.UpdateInactiveExpanded(true)).joinBlocking()
+        appStore.dispatch(AppAction.UpdateInactiveExpanded(true))
 
         assertTrue(appStore.state.inactiveTabsExpanded)
     }

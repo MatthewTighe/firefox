@@ -46,7 +46,6 @@ import mozilla.components.compose.browser.toolbar.store.BrowserToolbarMenuItem.B
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import mozilla.components.compose.browser.toolbar.store.EnvironmentCleared
 import mozilla.components.compose.browser.toolbar.store.EnvironmentRehydrated
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.test.rule.MainLooperTestRule
@@ -277,7 +276,7 @@ class BrowserToolbarMiddlewareTest {
         var toolbarBrowserActions = toolbarStore.state.displayState.browserActionsEnd
         assertEquals(2, toolbarBrowserActions.size)
 
-        appStore.dispatch(AppAction.OrientationChange(Landscape)).joinBlocking()
+        appStore.dispatch(AppAction.OrientationChange(Landscape))
         mainLooperRule.idle()
 
         toolbarBrowserActions = toolbarStore.state.displayState.browserActionsEnd
@@ -306,7 +305,7 @@ class BrowserToolbarMiddlewareTest {
         assertEqualsToolbarButton(expectedToolbarButton(), tabCounterButton)
         assertEquals(expectedMenuButton(), menuButton)
 
-        appStore.dispatch(AppAction.OrientationChange(Portrait)).joinBlocking()
+        appStore.dispatch(AppAction.OrientationChange(Portrait))
         mainLooperRule.idle()
 
         toolbarBrowserActions = toolbarStore.state.displayState.browserActionsEnd
@@ -330,8 +329,8 @@ class BrowserToolbarMiddlewareTest {
 
         val newNormalTab = createTab("test.com", private = false)
         val newPrivateTab = createTab("test.com", private = true)
-        browserStore.dispatch(AddTabAction(newNormalTab)).joinBlocking()
-        browserStore.dispatch(AddTabAction(newPrivateTab)).joinBlocking()
+        browserStore.dispatch(AddTabAction(newNormalTab))
+        browserStore.dispatch(AddTabAction(newPrivateTab))
         mainLooperRule.idle()
 
         toolbarBrowserActions = toolbarStore.state.displayState.browserActionsEnd
@@ -361,7 +360,7 @@ class BrowserToolbarMiddlewareTest {
         var tabCounterButton = toolbarBrowserActions[0] as TabCounterAction
         assertEqualsToolbarButton(expectedToolbarButton(1, true), tabCounterButton)
 
-        browserStore.dispatch(RemoveTabAction(initialPrivateTab.id)).joinBlocking()
+        browserStore.dispatch(RemoveTabAction(initialPrivateTab.id))
         mainLooperRule.idle()
 
         toolbarBrowserActions = toolbarStore.state.displayState.browserActionsEnd
@@ -572,7 +571,7 @@ class BrowserToolbarMiddlewareTest {
         val toolbarStore = buildStore(middleware)
         val newSearchEngine = SearchEngine("test", "Test", mock(), type = APPLICATION)
 
-        appStore.dispatch(SearchEngineSelected(newSearchEngine, true)).joinBlocking()
+        appStore.dispatch(SearchEngineSelected(newSearchEngine, true))
         shadowOf(Looper.getMainLooper()).idle() // wait for observing and processing the search engine update
 
         assertSearchSelectorEquals(
@@ -595,14 +594,14 @@ class BrowserToolbarMiddlewareTest {
         val middleware = BrowserToolbarMiddleware(appStore, browserStore, mockk(), mockk())
         val toolbarStore = buildStore(middleware)
 
-        browserStore.dispatch(ApplicationSearchEnginesLoaded(listOf(otherSearchEngine))).joinBlocking()
+        browserStore.dispatch(ApplicationSearchEnginesLoaded(listOf(otherSearchEngine)))
 
         assertNotEquals(
             appStore.state.searchState.selectedSearchEngine?.searchEngine,
             browserStore.state.search.selectedOrDefaultSearchEngine,
         )
         assertSearchSelectorEquals(
-            expectedSearchSelector(selectedSearchEngine),
+            expectedSearchSelector(selectedSearchEngine, listOf(otherSearchEngine)),
             toolbarStore.state.displayState.pageActionsStart[0] as SearchSelectorAction,
         )
     }

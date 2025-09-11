@@ -98,13 +98,13 @@ class HomepageThumbnailsTest {
             TabListAction.AddTabAction(
                 createTab(homepageUrl, id = "1"),
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             TabListAction.SelectTabAction(
             tabId = "1",
         ),
-        ).joinBlocking()
+        )
 
         store.waitUntilIdle()
 
@@ -116,13 +116,13 @@ class HomepageThumbnailsTest {
             TabListAction.AddTabAction(
                 createTab(homepageUrl, id = "2"),
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             TabListAction.SelectTabAction(
             "2",
         ),
-        ).joinBlocking()
+        )
 
         store.waitUntilIdle()
 
@@ -134,13 +134,13 @@ class HomepageThumbnailsTest {
             TabListAction.AddTabAction(
                 createTab("www.google.com", id = "3"),
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             TabListAction.SelectTabAction(
             tabId = "3",
         ),
-        ).joinBlocking()
+        )
 
         store.waitUntilIdle()
 
@@ -152,13 +152,13 @@ class HomepageThumbnailsTest {
             TabListAction.AddTabAction(
                 createTab(homepageUrl, id = "4"),
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             TabListAction.SelectTabAction(
                 tabId = "4",
             ),
-        ).joinBlocking()
+        )
 
         store.waitUntilIdle()
 
@@ -180,7 +180,7 @@ class HomepageThumbnailsTest {
             TabListAction.AddTabAction(
                 createTab(homepageUrl, id = "1"),
             ),
-        ).joinBlocking()
+        )
 
         store.waitUntilIdle()
 

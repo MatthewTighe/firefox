@@ -8,7 +8,6 @@ import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -25,7 +24,7 @@ class LastAccessActionTest {
         val store = BrowserStore(state)
         val timestamp = System.currentTimeMillis()
 
-        store.dispatch(LastAccessAction.UpdateLastAccessAction(existingTab.id, timestamp)).joinBlocking()
+        store.dispatch(LastAccessAction.UpdateLastAccessAction(existingTab.id, timestamp))
 
         assertEquals(timestamp, store.state.selectedTab?.lastAccess)
     }

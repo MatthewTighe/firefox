@@ -10,9 +10,11 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import mozilla.components.browser.state.action.EngineAction
+import mozilla.components.browser.state.engine.EngineMiddleware
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
+import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.robolectric.testContext
@@ -45,6 +47,9 @@ class SaveToPDFMiddlewareTest {
 
     @get:Rule
     val mainCoroutineTestRule = MainCoroutineRule()
+
+    @get:Rule
+    val coroutinesTestRule = MainCoroutineRule()
 
     // Only ERROR_PRINT_SETTINGS_SERVICE_NOT_AVAILABLE is available for testing
     class MockGeckoPrintException : GeckoSession.GeckoPrintException()
@@ -231,8 +236,12 @@ class SaveToPDFMiddlewareTest {
                     firstArg<(Boolean) -> Unit>().invoke(false)
                 }
             }
+            val engineMiddleware = EngineMiddleware.create(
+                mockk<Engine>(),
+                coroutinesTestRule.scope,
+            )
             val browserStore = BrowserStore(
-                middleware = listOf(middleware),
+                middleware = listOf(middleware) + engineMiddleware,
                 initialState = BrowserState(
                     tabs = listOf(
                         createTab(
@@ -394,8 +403,12 @@ class SaveToPDFMiddlewareTest {
                 firstArg<(Boolean) -> Unit>().invoke(false)
             }
         }
+        val engineMiddleware = EngineMiddleware.create(
+            mockk<Engine>(),
+            coroutinesTestRule.scope,
+        )
         val browserStore = BrowserStore(
-            middleware = listOf(middleware),
+            middleware = listOf(middleware) + engineMiddleware,
             initialState = BrowserState(
                 tabs = listOf(
                     createTab(

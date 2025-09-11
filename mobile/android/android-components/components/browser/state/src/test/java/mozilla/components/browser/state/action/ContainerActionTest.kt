@@ -6,7 +6,6 @@ package mozilla.components.browser.state.action
 
 import mozilla.components.browser.state.state.ContainerState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -27,13 +26,13 @@ class ContainerActionTest {
             color = ContainerState.Color.GREEN,
             icon = ContainerState.Icon.CART,
         )
-        store.dispatch(ContainerAction.AddContainerAction(container)).joinBlocking()
+        store.dispatch(ContainerAction.AddContainerAction(container))
 
         assertFalse(store.state.containers.isEmpty())
         assertEquals(container, store.state.containers.values.first())
 
         val state = store.state
-        store.dispatch(ContainerAction.AddContainerAction(container)).joinBlocking()
+        store.dispatch(ContainerAction.AddContainerAction(container))
         assertSame(state, store.state)
     }
 
@@ -61,7 +60,7 @@ class ContainerActionTest {
             color = ContainerState.Color.BLUE,
             icon = ContainerState.Icon.BRIEFCASE,
         )
-        store.dispatch(ContainerAction.AddContainersAction(listOf(container1, container2))).joinBlocking()
+        store.dispatch(ContainerAction.AddContainersAction(listOf(container1, container2)))
 
         assertFalse(store.state.containers.isEmpty())
         assertEquals(container1, store.state.containers.values.first())
@@ -69,11 +68,11 @@ class ContainerActionTest {
 
         // Assert that the state remains the same if the existing containers are re-added.
         val state = store.state
-        store.dispatch(ContainerAction.AddContainersAction(listOf(container1, container2))).joinBlocking()
+        store.dispatch(ContainerAction.AddContainersAction(listOf(container1, container2)))
         assertSame(state, store.state)
 
         // Assert that only non-existing containers are added.
-        store.dispatch(ContainerAction.AddContainersAction(listOf(container1, container2, container3))).joinBlocking()
+        store.dispatch(ContainerAction.AddContainersAction(listOf(container1, container2, container3)))
         assertEquals(3, store.state.containers.size)
         assertEquals(container1, store.state.containers.values.first())
         assertEquals(container2, store.state.containers.values.elementAt(1))
@@ -98,14 +97,14 @@ class ContainerActionTest {
             color = ContainerState.Color.GREEN,
             icon = ContainerState.Icon.CIRCLE,
         )
-        store.dispatch(ContainerAction.AddContainerAction(container1)).joinBlocking()
-        store.dispatch(ContainerAction.AddContainerAction(container2)).joinBlocking()
+        store.dispatch(ContainerAction.AddContainerAction(container1))
+        store.dispatch(ContainerAction.AddContainerAction(container2))
 
         assertFalse(store.state.containers.isEmpty())
         assertEquals(container1, store.state.containers.values.first())
         assertEquals(container2, store.state.containers.values.last())
 
-        store.dispatch(ContainerAction.RemoveContainerAction(container1.contextId)).joinBlocking()
+        store.dispatch(ContainerAction.RemoveContainerAction(container1.contextId))
 
         assertEquals(1, store.state.containers.size)
         assertEquals(container2, store.state.containers.values.first())

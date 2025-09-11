@@ -6,7 +6,6 @@ package org.mozilla.fenix.components.appstate.search
 
 import io.mockk.mockk
 import mozilla.components.browser.state.search.SearchEngine
-import mozilla.components.support.test.ext.joinBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -22,7 +21,7 @@ class SearchStateReducerTest {
     fun `GIVEN no parameters provided WHEN the search is started THEN update the app state with default search related values`() {
         val appStore = AppStore()
 
-        appStore.dispatch(SearchStarted()).joinBlocking()
+        appStore.dispatch(SearchStarted())
 
         assertEquals(true, appStore.state.searchState.isSearchActive)
         assertNull(appStore.state.searchState.selectedSearchEngine)
@@ -36,7 +35,7 @@ class SearchStateReducerTest {
         val source = MetricsUtils.Source.SUGGESTION
         val appStore = AppStore()
 
-        appStore.dispatch(SearchStarted(sourceTabId, source)).joinBlocking()
+        appStore.dispatch(SearchStarted(sourceTabId, source))
 
         assertEquals(true, appStore.state.searchState.isSearchActive)
         assertNull(appStore.state.searchState.selectedSearchEngine)
@@ -57,7 +56,7 @@ class SearchStateReducerTest {
             ),
         )
 
-        appStore.dispatch(SearchEnded).joinBlocking()
+        appStore.dispatch(SearchEnded)
 
         assertEquals(SearchState.EMPTY, appStore.state.searchState)
     }
@@ -67,7 +66,7 @@ class SearchStateReducerTest {
         val searchEngine: SearchEngine = mockk()
         val appStore = AppStore()
 
-        appStore.dispatch(SearchEngineSelected(searchEngine, true)).joinBlocking()
+        appStore.dispatch(SearchEngineSelected(searchEngine, true))
 
         assertEquals(searchEngine, appStore.state.searchState.selectedSearchEngine?.searchEngine)
         assertEquals(true, appStore.state.searchState.selectedSearchEngine?.isUserSelected)

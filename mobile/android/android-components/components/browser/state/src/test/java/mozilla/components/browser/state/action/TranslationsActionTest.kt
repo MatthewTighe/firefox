@@ -25,7 +25,6 @@ import mozilla.components.concept.engine.translate.TranslationPageSettingOperati
 import mozilla.components.concept.engine.translate.TranslationPageSettings
 import mozilla.components.concept.engine.translate.TranslationPair
 import mozilla.components.concept.engine.translate.TranslationSupport
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.mock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -34,7 +33,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.lang.Exception
 
 class TranslationsActionTest {
     private lateinit var tab: TabSessionState
@@ -58,7 +56,6 @@ class TranslationsActionTest {
         assertEquals(false, tabState().translationsState.isExpectedTranslate)
 
         store.dispatch(TranslationsAction.TranslateExpectedAction(tabId = tab.id))
-            .joinBlocking()
 
         assertEquals(true, tabState().translationsState.isExpectedTranslate)
     }
@@ -68,12 +65,10 @@ class TranslationsActionTest {
         assertEquals(false, tabState().translationsState.isOfferTranslate)
 
         store.dispatch(TranslationsAction.TranslateOfferAction(tabId = tab.id, isOfferTranslate = true))
-            .joinBlocking()
 
         assertEquals(true, tabState().translationsState.isOfferTranslate)
 
         store.dispatch(TranslationsAction.TranslateOfferAction(tabId = tab.id, isOfferTranslate = false))
-            .joinBlocking()
 
         assertFalse(tabState().translationsState.isOfferTranslate)
     }
@@ -83,7 +78,6 @@ class TranslationsActionTest {
         assertEquals(null, tabState().translationsState.translationEngineState)
 
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, mock()))
-            .joinBlocking()
 
         assertEquals(true, tabState().translationsState.translationEngineState != null)
     }
@@ -97,7 +91,6 @@ class TranslationsActionTest {
 
         // Set an initial state for is translate processing via a translation request:
         store.dispatch(TranslationsAction.TranslateAction(tabId = tab.id, "en", "es", null))
-            .joinBlocking()
         assertTrue(tabState().translationsState.isTranslateProcessing)
 
         val translatedEngineState = TranslationEngineState(
@@ -109,7 +102,6 @@ class TranslationsActionTest {
         )
 
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, translationEngineState = translatedEngineState))
-            .joinBlocking()
 
         // Translated state
         assertEquals(translatedEngineState, tabState().translationsState.translationEngineState)
@@ -126,7 +118,6 @@ class TranslationsActionTest {
         )
 
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, nonTranslatedEngineState))
-            .joinBlocking()
 
         // Non-translated state
         assertEquals(nonTranslatedEngineState, tabState().translationsState.translationEngineState)
@@ -140,11 +131,11 @@ class TranslationsActionTest {
         assertFalse(tabState().translationsState.isOfferTranslate)
 
         // Initial Offer State
-        store.dispatch(TranslationsAction.TranslateOfferAction(tabId = tab.id, true)).joinBlocking()
+        store.dispatch(TranslationsAction.TranslateOfferAction(tabId = tab.id, true))
         assertTrue(tabState().translationsState.isOfferTranslate)
 
         // Action
-        store.dispatch(TranslationsAction.TranslateAction(tabId = tab.id, fromLanguage = "en", toLanguage = "en", options = null)).joinBlocking()
+        store.dispatch(TranslationsAction.TranslateAction(tabId = tab.id, fromLanguage = "en", toLanguage = "en", options = null))
 
         // Should revert to false
         assertFalse(tabState().translationsState.isOfferTranslate)
@@ -164,16 +155,13 @@ class TranslationsActionTest {
             requestedTranslationPair = TranslationPair(fromLanguage = "es", toLanguage = "en"),
         )
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, translationEngineState = translatedEngineState))
-            .joinBlocking()
         assertFalse(tabState().translationsState.isExpectedTranslate)
 
         // Engine is sending a translation expected action
         store.dispatch(TranslationsAction.TranslateExpectedAction(tabId = tab.id))
-            .joinBlocking()
 
         // Initial expected translation state
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, translationEngineState = translatedEngineState))
-            .joinBlocking()
         assertTrue(tabState().translationsState.isExpectedTranslate)
 
         // Not expected translation state, because it is no longer supported
@@ -185,7 +173,6 @@ class TranslationsActionTest {
         )
 
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, translationEngineState = translatedEngineState))
-            .joinBlocking()
         assertFalse(tabState().translationsState.isExpectedTranslate)
     }
 
@@ -203,16 +190,13 @@ class TranslationsActionTest {
             requestedTranslationPair = TranslationPair(fromLanguage = "es", toLanguage = "en"),
         )
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, translationEngineState = translatedEngineState))
-            .joinBlocking()
         assertFalse(tabState().translationsState.isOfferTranslate)
 
         // Engine is sending a translation offer action
         store.dispatch(TranslationsAction.TranslateOfferAction(tabId = tab.id, isOfferTranslate = true))
-            .joinBlocking()
 
         // Initial expected translation state
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, translationEngineState = translatedEngineState))
-            .joinBlocking()
         assertTrue(tabState().translationsState.isOfferTranslate)
 
         // Not in an offer translation state, because it is no longer supported
@@ -224,7 +208,6 @@ class TranslationsActionTest {
         )
 
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, translationEngineState = translatedEngineState))
-            .joinBlocking()
         assertFalse(tabState().translationsState.isOfferTranslate)
     }
 
@@ -242,7 +225,6 @@ class TranslationsActionTest {
             requestedTranslationPair = null,
         )
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, translationEngineState = noSupportedState))
-            .joinBlocking()
 
         // Response state
         assertEquals(noSupportedState, tabState().translationsState.translationEngineState)
@@ -256,7 +238,6 @@ class TranslationsActionTest {
             requestedTranslationPair = null,
         )
         store.dispatch(TranslationsAction.TranslateStateChangeAction(tabId = tab.id, translationEngineState = supportedState))
-            .joinBlocking()
 
         // Response state
         assertEquals(supportedState, tabState().translationsState.translationEngineState)
@@ -270,12 +251,10 @@ class TranslationsActionTest {
 
         // Action started
         store.dispatch(TranslationsAction.TranslateAction(tabId = tab.id, "en", "es", null))
-            .joinBlocking()
         assertEquals(true, tabState().translationsState.isTranslateProcessing)
 
         // Action success
         store.dispatch(TranslationsAction.TranslateSuccessAction(tabId = tab.id, operation = TranslationOperation.TRANSLATE))
-            .joinBlocking()
         assertEquals(null, tabState().translationsState.translationError)
     }
 
@@ -286,13 +265,11 @@ class TranslationsActionTest {
 
         // Action started
         store.dispatch(TranslationsAction.TranslateAction(tabId = tab.id, "en", "es", null))
-            .joinBlocking()
         assertEquals(true, tabState().translationsState.isTranslateProcessing)
 
         // Action failure
         val error = TranslationError.UnknownError(Exception())
         store.dispatch(TranslationsAction.TranslateExceptionAction(tabId = tab.id, operation = TranslationOperation.TRANSLATE, error))
-            .joinBlocking()
         assertEquals(false, tabState().translationsState.isTranslateProcessing)
         assertEquals(false, tabState().translationsState.isTranslated)
         assertEquals(error, tabState().translationsState.translationError)
@@ -305,12 +282,10 @@ class TranslationsActionTest {
 
         // Action started
         store.dispatch(TranslationsAction.TranslateRestoreAction(tabId = tab.id))
-            .joinBlocking()
         assertEquals(true, tabState().translationsState.isRestoreProcessing)
 
         // Action success
         store.dispatch(TranslationsAction.TranslateSuccessAction(tabId = tab.id, operation = TranslationOperation.RESTORE))
-            .joinBlocking()
         assertEquals(false, tabState().translationsState.isRestoreProcessing)
         assertEquals(false, tabState().translationsState.isTranslated)
         assertEquals(null, tabState().translationsState.translationError)
@@ -323,13 +298,11 @@ class TranslationsActionTest {
 
         // Action started
         store.dispatch(TranslationsAction.TranslateRestoreAction(tabId = tab.id))
-            .joinBlocking()
         assertEquals(true, tabState().translationsState.isRestoreProcessing)
 
         // Action failure
         val error = TranslationError.UnknownError(Exception())
         store.dispatch(TranslationsAction.TranslateExceptionAction(tabId = tab.id, operation = TranslationOperation.RESTORE, error))
-            .joinBlocking()
         assertEquals(false, tabState().translationsState.isRestoreProcessing)
         assertEquals(false, tabState().translationsState.isTranslated)
         assertEquals(error, tabState().translationsState.translationError)
@@ -349,7 +322,6 @@ class TranslationsActionTest {
                 supportedLanguages = supportedLanguages,
             ),
         )
-            .joinBlocking()
 
         // Action success
         assertEquals(supportedLanguages, store.state.translationEngine.supportedLanguages)
@@ -366,7 +338,7 @@ class TranslationsActionTest {
             TranslationsAction.SetNeverTranslateSitesAction(
                 neverTranslateSites = neverTranslateSites,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertEquals(neverTranslateSites, store.state.translationEngine.neverTranslateSites)
@@ -381,7 +353,7 @@ class TranslationsActionTest {
             TranslationsAction.SetNeverTranslateSitesAction(
                 neverTranslateSites = neverTranslateSites,
             ),
-        ).joinBlocking()
+        )
         assertEquals(neverTranslateSites, store.state.translationEngine.neverTranslateSites)
 
         // Action started
@@ -389,7 +361,7 @@ class TranslationsActionTest {
             TranslationsAction.RemoveNeverTranslateSiteAction(
                 origin = "google.com",
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertEquals(listOf<String>(), store.state.translationEngine.neverTranslateSites)
@@ -403,7 +375,6 @@ class TranslationsActionTest {
 
         // Set an initial state for is translate processing via a translation request:
         store.dispatch(TranslationsAction.TranslateAction(tabId = tab.id, "en", "es", null))
-            .joinBlocking()
         assertTrue(tabState().translationsState.isTranslateProcessing)
 
         // TRANSLATE usage
@@ -414,7 +385,7 @@ class TranslationsActionTest {
                 operation = TranslationOperation.TRANSLATE,
                 translationError = translateError,
             ),
-        ).joinBlocking()
+        )
         assertEquals(translateError, tabState().translationsState.translationError)
         // A translate error should clear this state
         assertFalse(tabState().translationsState.isTranslateProcessing)
@@ -427,7 +398,7 @@ class TranslationsActionTest {
                 operation = TranslationOperation.RESTORE,
                 translationError = restoreError,
             ),
-        ).joinBlocking()
+        )
         assertEquals(restoreError, tabState().translationsState.translationError)
 
         // FETCH_LANGUAGES usage
@@ -440,7 +411,7 @@ class TranslationsActionTest {
                 operation = TranslationOperation.FETCH_SUPPORTED_LANGUAGES,
                 translationError = fetchLanguagesError,
             ),
-        ).joinBlocking()
+        )
         assertEquals(fetchLanguagesError, tabState().translationsState.translationError)
 
         // Testing setting browser level error
@@ -448,7 +419,7 @@ class TranslationsActionTest {
             TranslationsAction.EngineExceptionAction(
                 error = fetchLanguagesError,
             ),
-        ).joinBlocking()
+        )
         assertEquals(fetchLanguagesError, store.state.translationEngine.engineError)
     }
 
@@ -465,7 +436,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 operation = TranslationOperation.TRANSLATE,
             ),
-        ).joinBlocking()
+        )
         assertEquals(null, tabState().translationsState.translationError)
         assertEquals(false, tabState().translationsState.isTranslateProcessing)
 
@@ -475,7 +446,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 operation = TranslationOperation.RESTORE,
             ),
-        ).joinBlocking()
+        )
         assertEquals(null, tabState().translationsState.translationError)
         assertEquals(false, tabState().translationsState.isTranslated)
         assertEquals(false, tabState().translationsState.isRestoreProcessing)
@@ -486,7 +457,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 operation = TranslationOperation.FETCH_SUPPORTED_LANGUAGES,
             ),
-        ).joinBlocking()
+        )
         assertEquals(null, tabState().translationsState.translationError)
         assertEquals(false, tabState().translationsState.isTranslated)
     }
@@ -508,7 +479,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 pageSettings = pageSettings,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertEquals(pageSettings, tabState().translationsState.pageSettings)
@@ -526,7 +497,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 isProcessing = isProcessing,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertEquals(isProcessing, tabState().translationsState.isTranslateProcessing)
@@ -549,7 +520,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 translationSize = translationSize,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertEquals(translationSize, tabState().translationsState.translationDownloadSize)
@@ -569,7 +540,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 translationSize = translationSize,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(translationSize, tabState().translationsState.translationDownloadSize)
 
@@ -580,7 +551,7 @@ class TranslationsActionTest {
                 fromLanguage = Language("en", "English"),
                 toLanguage = Language("fr", "French"),
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertNull(tabState().translationsState.translationDownloadSize)
@@ -603,7 +574,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 pageSettings = pageSettings,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(pageSettings, tabState().translationsState.pageSettings)
         assertNull(tabState().translationsState.settingsError)
@@ -614,7 +585,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 operation = TranslationOperation.FETCH_PAGE_SETTINGS,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertNull(tabState().translationsState.pageSettings)
@@ -634,7 +605,7 @@ class TranslationsActionTest {
             TranslationsAction.SetSupportedLanguagesAction(
                 supportedLanguages = supportLanguages,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(supportLanguages, store.state.translationEngine.supportedLanguages)
 
@@ -644,7 +615,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 operation = TranslationOperation.FETCH_SUPPORTED_LANGUAGES,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertNull(store.state.translationEngine.supportedLanguages)
@@ -662,7 +633,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_ALWAYS_OFFER_POPUP,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertTrue(tabState().translationsState.pageSettings?.alwaysOfferPopup!!)
@@ -681,7 +652,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_ALWAYS_TRANSLATE_LANGUAGE,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertTrue(tabState().translationsState.pageSettings?.alwaysTranslateLanguage!!)
@@ -701,7 +672,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_NEVER_TRANSLATE_LANGUAGE,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertTrue(tabState().translationsState.pageSettings?.neverTranslateLanguage!!)
@@ -720,7 +691,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_NEVER_TRANSLATE_SITE,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertTrue(tabState().translationsState.pageSettings?.neverTranslateSite!!)
@@ -739,7 +710,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_ALWAYS_TRANSLATE_LANGUAGE,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         // When always is true, never should be false
         assertTrue(tabState().translationsState.pageSettings?.alwaysTranslateLanguage!!)
@@ -752,7 +723,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_NEVER_TRANSLATE_LANGUAGE,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         // When never is true, always should be false
         assertFalse(tabState().translationsState.pageSettings?.alwaysTranslateLanguage!!)
@@ -765,7 +736,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_NEVER_TRANSLATE_LANGUAGE,
                 setting = false,
             ),
-        ).joinBlocking()
+        )
 
         // When never is false, always may also be false
         assertFalse(tabState().translationsState.pageSettings?.alwaysTranslateLanguage!!)
@@ -787,7 +758,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_ALWAYS_OFFER_POPUP,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             TranslationsAction.UpdatePageSettingAction(
@@ -795,7 +766,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_ALWAYS_TRANSLATE_LANGUAGE,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             TranslationsAction.UpdatePageSettingAction(
@@ -803,7 +774,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_NEVER_TRANSLATE_LANGUAGE,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             TranslationsAction.UpdatePageSettingAction(
@@ -811,7 +782,7 @@ class TranslationsActionTest {
                 operation = TranslationPageSettingOperation.UPDATE_NEVER_TRANSLATE_SITE,
                 setting = true,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertTrue(tabState().translationsState.pageSettings?.alwaysOfferPopup!!)
@@ -832,7 +803,7 @@ class TranslationsActionTest {
             TranslationsAction.SetLanguageSettingsAction(
                 languageSettings = languageSetting,
             ),
-        ).joinBlocking()
+        )
 
         // Final state
         assertEquals(store.state.translationEngine.languageSettings!!, languageSetting)
@@ -846,7 +817,7 @@ class TranslationsActionTest {
             TranslationsAction.SetLanguageSettingsAction(
                 languageSettings = languageSetting,
             ),
-        ).joinBlocking()
+        )
         assertEquals(store.state.translationEngine.languageSettings, languageSetting)
 
         // Action started
@@ -855,7 +826,7 @@ class TranslationsActionTest {
                 tabId = tab.id,
                 operation = TranslationOperation.FETCH_AUTOMATIC_LANGUAGE_SETTINGS,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertNull(store.state.translationEngine.languageSettings)
@@ -871,7 +842,7 @@ class TranslationsActionTest {
                 operation = TranslationOperation.FETCH_AUTOMATIC_LANGUAGE_SETTINGS,
                 translationError = error,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertEquals(error, tabState().translationsState.translationError)
@@ -887,7 +858,7 @@ class TranslationsActionTest {
             TranslationsAction.SetEngineSupportedAction(
                 isEngineSupported = true,
             ),
-        ).joinBlocking()
+        )
 
         // Final state
         assertTrue(store.state.translationEngine.isEngineSupported!!)
@@ -904,7 +875,7 @@ class TranslationsActionTest {
             TranslationsAction.EngineExceptionAction(
                 error = error,
             ),
-        ).joinBlocking()
+        )
 
         // Final state
         assertEquals(store.state.translationEngine.engineError!!, error)
@@ -928,7 +899,7 @@ class TranslationsActionTest {
             TranslationsAction.SetLanguageModelsAction(
                 languageModels = languageModels,
             ),
-        ).joinBlocking()
+        )
 
         // Final state
         assertEquals(languageModels, store.state.translationEngine.languageModels)
@@ -951,7 +922,7 @@ class TranslationsActionTest {
             TranslationsAction.ManageLanguageModelsAction(
                 options = options,
             ),
-        ).joinBlocking()
+        )
 
         // We don't have an initial state, so nothing should change.
         assertNull(store.state.translationEngine.languageModels)
@@ -968,14 +939,14 @@ class TranslationsActionTest {
             TranslationsAction.SetLanguageModelsAction(
                 languageModels = languageModels,
             ),
-        ).joinBlocking()
+        )
 
         // Dispatch a valid request
         store.dispatch(
             TranslationsAction.ManageLanguageModelsAction(
                 options = options,
             ),
-        ).joinBlocking()
+        )
 
         // Expectations based on operation
         val expectedLanguageModel = LanguageModel(language, ModelState.DOWNLOAD_IN_PROGRESS, size)
@@ -991,7 +962,7 @@ class TranslationsActionTest {
                     operationLevel = OperationLevel.LANGUAGE,
                 ),
             ),
-        ).joinBlocking()
+        )
 
         // Nothing should change, since it isn't a known option
         assertEquals(expectedLanguageModels, store.state.translationEngine.languageModels)
@@ -1007,7 +978,7 @@ class TranslationsActionTest {
             TranslationsAction.SetGlobalOfferTranslateSettingAction(
                 offerTranslation = false,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertFalse(store.state.translationEngine.offerTranslation!!)
@@ -1023,7 +994,7 @@ class TranslationsActionTest {
             TranslationsAction.UpdateGlobalOfferTranslateSettingAction(
                 offerTranslation = false,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertFalse(store.state.translationEngine.offerTranslation!!)
@@ -1040,7 +1011,7 @@ class TranslationsActionTest {
                 languageCode = "fr",
                 setting = LanguageSetting.ALWAYS,
             ),
-        ).joinBlocking()
+        )
 
         assertNull(store.state.translationEngine.languageSettings)
 
@@ -1055,7 +1026,7 @@ class TranslationsActionTest {
             TranslationsAction.SetLanguageSettingsAction(
                 languageSettings = languageSettings,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(languageSettings, store.state.translationEngine.languageSettings)
 
@@ -1065,7 +1036,7 @@ class TranslationsActionTest {
                 languageCode = "fr",
                 setting = LanguageSetting.ALWAYS,
             ),
-        ).joinBlocking()
+        )
 
         assertEquals(languageSettings, store.state.translationEngine.languageSettings)
 
@@ -1075,7 +1046,7 @@ class TranslationsActionTest {
                 languageCode = "es",
                 setting = LanguageSetting.ALWAYS,
             ),
-        ).joinBlocking()
+        )
 
         // Action success
         assertEquals(LanguageSetting.ALWAYS, store.state.translationEngine.languageSettings!!["es"])

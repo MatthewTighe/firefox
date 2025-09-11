@@ -35,7 +35,6 @@ import mozilla.components.concept.storage.BookmarkNodeType
 import mozilla.components.concept.storage.BookmarksStorage
 import mozilla.components.feature.accounts.push.CloseTabsUseCases
 import mozilla.components.feature.tabs.TabsUseCases
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.middleware.CaptureActionsMiddleware
 import mozilla.components.support.test.robolectric.testContext
@@ -1090,7 +1089,7 @@ class DefaultTabsTrayControllerTest {
 
         val controller = createController()
 
-        browserStore.dispatch(TabListAction.SelectTabAction(privateTab.id)).joinBlocking()
+        browserStore.dispatch(TabListAction.SelectTabAction(privateTab.id))
         controller.handleTabSelected(privateTab, null)
 
         assertEquals(privateTab.id, browserStore.state.selectedTabId)
@@ -1098,7 +1097,7 @@ class DefaultTabsTrayControllerTest {
         assertEquals(BrowsingMode.Private, appStateModeUpdate)
 
         controller.handleTabDeletion("privateTab")
-        browserStore.dispatch(TabListAction.SelectTabAction(normalTab.id)).joinBlocking()
+        browserStore.dispatch(TabListAction.SelectTabAction(normalTab.id))
         controller.handleTabSelected(normalTab, null)
 
         assertEquals(normalTab.id, browserStore.state.selectedTabId)

@@ -10,7 +10,6 @@ import mozilla.components.browser.state.state.MediaSessionState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.mediasession.MediaSession
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.mock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -35,7 +34,7 @@ class MediaSessionActionTest {
                 "test-tab",
                 mediaSessionController,
             ),
-        ).joinBlocking()
+        )
 
         val mediaSessionState: MediaSessionState? = store.state.findTab("test-tab")?.mediaSessionState
         assertNotNull(mediaSessionState)
@@ -59,13 +58,13 @@ class MediaSessionActionTest {
                 "test-tab",
                 mediaSessionController,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             MediaSessionAction.DeactivatedMediaSessionAction(
                 "test-tab",
             ),
-        ).joinBlocking()
+        )
 
         val mediaSessionState: MediaSessionState? = store.state.findTab("test-tab")?.mediaSessionState
         assertNull(mediaSessionState)
@@ -89,14 +88,14 @@ class MediaSessionActionTest {
                 "test-tab",
                 mediaSessionController,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             MediaSessionAction.UpdateMediaMetadataAction(
                 "test-tab",
                 metadata,
             ),
-        ).joinBlocking()
+        )
 
         val mediaSessionState: MediaSessionState? = store.state.findTab("test-tab")?.mediaSessionState
         assertNotNull(mediaSessionState)
@@ -122,14 +121,14 @@ class MediaSessionActionTest {
                 "test-tab",
                 mediaSessionController,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             MediaSessionAction.UpdateMediaPlaybackStateAction(
                 "test-tab",
                 playbackState,
             ),
-        ).joinBlocking()
+        )
 
         val mediaSessionState: MediaSessionState? = store.state.findTab("test-tab")?.mediaSessionState
         assertNotNull(mediaSessionState)
@@ -155,14 +154,14 @@ class MediaSessionActionTest {
                 "test-tab",
                 mediaSessionController,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             MediaSessionAction.UpdateMediaFeatureAction(
                 "test-tab",
                 features,
             ),
-        ).joinBlocking()
+        )
 
         val mediaSessionState: MediaSessionState? = store.state.findTab("test-tab")?.mediaSessionState
         assertNotNull(mediaSessionState)
@@ -188,14 +187,14 @@ class MediaSessionActionTest {
                 "test-tab",
                 mediaSessionController,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             MediaSessionAction.UpdateMediaPositionStateAction(
                 "test-tab",
                 positionState,
             ),
-        ).joinBlocking()
+        )
 
         val mediaSessionState: MediaSessionState? = store.state.findTab("test-tab")?.mediaSessionState
         assertNotNull(mediaSessionState)
@@ -220,14 +219,14 @@ class MediaSessionActionTest {
                 "test-tab",
                 mediaSessionController,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             MediaSessionAction.UpdateMediaMutedAction(
                 "test-tab",
                 true,
             ),
-        ).joinBlocking()
+        )
 
         val mediaSessionState: MediaSessionState? = store.state.findTab("test-tab")?.mediaSessionState
         assertNotNull(mediaSessionState)
@@ -253,7 +252,7 @@ class MediaSessionActionTest {
                 "test-tab",
                 mediaSessionController,
             ),
-        ).joinBlocking()
+        )
 
         store.dispatch(
             MediaSessionAction.UpdateMediaFullscreenAction(
@@ -261,7 +260,7 @@ class MediaSessionActionTest {
                 true,
                 elementMetadata,
             ),
-        ).joinBlocking()
+        )
 
         val mediaSessionState: MediaSessionState? = store.state.findTab("test-tab")?.mediaSessionState
         assertNotNull(mediaSessionState)
@@ -288,7 +287,7 @@ class MediaSessionActionTest {
                 true,
                 elementMetadata,
             ),
-        ).joinBlocking()
+        )
 
         val mediaSessionState: MediaSessionState? = store.state.findTab("test-tab")?.mediaSessionState
         assertNull(mediaSessionState)
@@ -298,7 +297,7 @@ class MediaSessionActionTest {
                 "test-tab",
                 true,
             ),
-        ).joinBlocking()
+        )
         assertNull(mediaSessionState)
     }
 }

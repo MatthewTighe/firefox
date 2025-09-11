@@ -20,7 +20,6 @@ import mozilla.components.browser.state.selector.privateTabs
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.rule.MainCoroutineRule
 import org.junit.Rule
@@ -58,7 +57,7 @@ class PrivateBrowsingLockFeatureTest {
 
         assertTrue(appStore.state.isPrivateScreenLocked)
 
-        browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction)
         appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -86,7 +85,7 @@ class PrivateBrowsingLockFeatureTest {
 
         assertFalse(appStore.state.isPrivateScreenLocked)
 
-        browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction)
         appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -112,7 +111,7 @@ class PrivateBrowsingLockFeatureTest {
 
         assertFalse(appStore.state.isPrivateScreenLocked)
 
-        browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction)
         appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -138,7 +137,7 @@ class PrivateBrowsingLockFeatureTest {
 
         assertFalse(appStore.state.isPrivateScreenLocked)
 
-        browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction).joinBlocking()
+        browserStore.dispatch(TabListAction.RemoveAllPrivateTabsAction)
         appStore.waitUntilIdle()
 
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -342,7 +341,7 @@ class PrivateBrowsingLockFeatureTest {
         appStore.waitUntilIdle()
 
         // imitate user passing auth
-        appStore.dispatch(AppAction.PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = false)).joinBlocking()
+        appStore.dispatch(AppAction.PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = false))
         appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == mode)
@@ -376,7 +375,7 @@ class PrivateBrowsingLockFeatureTest {
         appStore.waitUntilIdle()
 
         // imitate user passing auth
-        appStore.dispatch(AppAction.PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = false)).joinBlocking()
+        appStore.dispatch(AppAction.PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = false))
         appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == mode)
@@ -562,7 +561,7 @@ class PrivateBrowsingLockFeatureTest {
         val feature = createFeature(browserStore = browserStore, appStore = appStore, storage = createStorage(isFeatureEnabled = isFeatureEnabled))
         appStore.waitUntilIdle()
 
-        appStore.dispatch(AppAction.OpenInFirefoxStarted).joinBlocking()
+        appStore.dispatch(AppAction.OpenInFirefoxStarted)
         appStore.waitUntilIdle()
 
         val activity = mockk<AppCompatActivity>(relaxed = true)
@@ -615,7 +614,7 @@ class PrivateBrowsingLockFeatureTest {
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         // verify that going to normal mode doesn't lock private mode
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal)).joinBlocking()
+        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal))
 
         assertTrue(browserStore.state.privateTabs.isNotEmpty())
         assertFalse(appStore.state.isPrivateScreenLocked)
@@ -707,14 +706,14 @@ class PrivateBrowsingLockFeatureTest {
         assertTrue(appStore.state.isPrivateScreenLocked)
 
         // imitate user passing auth
-        appStore.dispatch(AppAction.PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = false)).joinBlocking()
+        appStore.dispatch(AppAction.PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(isLocked = false))
         appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == BrowsingMode.Private)
         assertFalse(appStore.state.isPrivateScreenLocked)
 
         // verify that going to normal mode doesn't lock private mode
-        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal)).joinBlocking()
+        appStore.dispatch(AppAction.BrowsingModeManagerModeChanged(mode = BrowsingMode.Normal))
         appStore.waitUntilIdle()
 
         assertTrue(appStore.state.mode == BrowsingMode.Normal)

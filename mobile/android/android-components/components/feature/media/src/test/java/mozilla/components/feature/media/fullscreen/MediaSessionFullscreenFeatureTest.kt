@@ -21,7 +21,6 @@ import mozilla.components.browser.state.state.createCustomTab
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.mediasession.MediaSession
-import mozilla.components.support.test.ext.joinBlocking
 import mozilla.components.support.test.libstate.ext.waitUntilIdle
 import mozilla.components.support.test.mock
 import mozilla.components.support.test.rule.MainCoroutineRule
@@ -360,7 +359,7 @@ class MediaSessionFullscreenFeatureTest {
             source = SessionState.Source.Internal.CustomTab,
             id = "tab2",
         )
-        store.dispatch(CustomTabListAction.AddCustomTabAction(customTab)).joinBlocking()
+        store.dispatch(CustomTabListAction.AddCustomTabAction(customTab))
         val externalActivity = Robolectric.buildActivity(Activity::class.java).setup().get()
         assertEquals(1, store.state.customTabs.size)
         store.waitUntilIdle()

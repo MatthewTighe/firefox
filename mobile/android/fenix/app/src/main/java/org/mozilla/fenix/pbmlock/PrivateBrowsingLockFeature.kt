@@ -13,16 +13,19 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.privateTabs
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.consumeFlow
 import mozilla.components.lib.state.ext.flowScoped
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingLocked
 import org.mozilla.fenix.R
@@ -267,8 +270,10 @@ fun Fragment.observePrivateModeLock(
     lockNormalMode: Boolean = false,
     onPrivateModeLocked: () -> Unit,
 ) {
-    consumeFlow(requireComponents.appStore) {
-        observePrivateModeLock(it, lockNormalMode, onPrivateModeLocked)
+    viewLifecycleOwner.lifecycleScope.launch {
+        val flow = requireComponents.appStore.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+        observePrivateModeLock(flow, lockNormalMode, onPrivateModeLocked)
     }
 }
 

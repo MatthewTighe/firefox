@@ -12,7 +12,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.CallSuper
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.toolbar.display.DisplayToolbar
 import mozilla.components.feature.downloads.DownloadsFeature
@@ -26,7 +30,6 @@ import mozilla.components.feature.sitepermissions.SitePermissionsFeature
 import mozilla.components.feature.sitepermissions.SitePermissionsRules
 import mozilla.components.feature.sitepermissions.SitePermissionsRules.AutoplayAction
 import mozilla.components.feature.toolbar.ToolbarFeature
-import mozilla.components.lib.state.ext.consumeFlow
 import mozilla.components.support.base.feature.ActivityResultHandler
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
@@ -252,8 +255,10 @@ abstract class BaseBrowserFragment : Fragment(), UserInteractionHandler, Activit
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        consumeFlow(components.store) { flow ->
-            flow.mapNotNull { state -> state.findCustomTabOrSelectedTab(sessionId) }
+        viewLifecycleOwner.lifecycleScope.launch {
+            components.store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .mapNotNull { state -> state.findCustomTabOrSelectedTab(sessionId) }
                 .ifAnyChanged { tab ->
                     arrayOf(
                         tab.content.loading,

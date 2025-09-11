@@ -13,16 +13,18 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.VisibleForTesting
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import mozilla.components.browser.state.selector.findTabOrCustomTab
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.consumeFlow
 import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
@@ -198,9 +200,10 @@ class QuickSettingsSheetDialogFragment : FenixDialogFragment() {
     internal fun provideTabId(): String = args.sessionId
 
     @VisibleForTesting
-    internal fun observeTrackersChange(store: BrowserStore) {
-        consumeFlow(store) { flow ->
-            flow.mapNotNull { state ->
+    internal fun observeTrackersChange(store: BrowserStore) = viewLifecycleOwner.lifecycleScope.launch {
+        store.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .mapNotNull { state ->
                 state.findTabOrCustomTab(provideTabId())
             }.ifAnyChanged { tab ->
                 arrayOf(
@@ -210,7 +213,6 @@ class QuickSettingsSheetDialogFragment : FenixDialogFragment() {
             }.collect {
                 updateTrackers(it)
             }
-        }
     }
 
     @VisibleForTesting

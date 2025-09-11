@@ -34,7 +34,9 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -60,7 +62,6 @@ import mozilla.components.concept.sync.OAuthAccount
 import mozilla.components.feature.accounts.push.SendTabUseCases
 import mozilla.components.feature.tab.collections.TabCollection
 import mozilla.components.feature.top.sites.TopSitesFeature
-import mozilla.components.lib.state.ext.consumeFlow
 import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.lib.state.ext.flow
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
@@ -76,6 +77,7 @@ import org.mozilla.fenix.biometricauthentication.BiometricAuthenticationManager
 import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.tabstrip.TabStrip
+import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.HomepageThumbnailIntegration
 import org.mozilla.fenix.components.QrScanFenixFeature
@@ -1089,15 +1091,16 @@ class HomeFragment : Fragment() {
      * Method used to listen to search engine name changes and trigger a top sites update accordingly
      */
     private fun observeSearchEngineNameChanges() {
-        consumeFlow(store) { flow ->
-            flow.map { state ->
-                when (state.search.selectedOrDefaultSearchEngine?.name) {
-                    AMAZON_SEARCH_ENGINE_NAME -> AMAZON_SPONSORED_TITLE
-                    EBAY_SPONSORED_TITLE -> EBAY_SPONSORED_TITLE
-                    else -> null
+        viewLifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .map { state ->
+                    when (state.search.selectedOrDefaultSearchEngine?.name) {
+                        AMAZON_SEARCH_ENGINE_NAME -> AMAZON_SPONSORED_TITLE
+                        EBAY_SPONSORED_TITLE -> EBAY_SPONSORED_TITLE
+                        else -> null
+                    }
                 }
-            }
-                .distinctUntilChanged()
                 .collect {
                     topSitesFeature.withFeature {
                         it.storage.notifyObservers { onStorageUpdated() }
@@ -1351,22 +1354,22 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun observeWallpaperUpdates() {
-        consumeFlow(requireComponents.appStore, viewLifecycleOwner) { flow ->
-            flow.filter { it.mode == BrowsingMode.Normal }
-                .map { it.wallpaperState.currentWallpaper }
-                .distinctUntilChanged()
-                .collect {
-                    if (it.name != lastAppliedWallpaperName) {
-                        applyWallpaper(
-                            wallpaperName = it.name,
-                            orientationChange = false,
-                            orientation = requireContext().resources.configuration.orientation,
-                        )
-                    }
+    private fun observeWallpaperUpdates() = viewLifecycleOwner.lifecycleScope.launch {
+        requireComponents.appStore.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .filter { it.mode == BrowsingMode.Normal }
+            .map { it.wallpaperState.currentWallpaper }
+            .distinctUntilChanged()
+            .collect {
+                if (it.name != lastAppliedWallpaperName) {
+                    applyWallpaper(
+                        wallpaperName = it.name,
+                        orientationChange = false,
+                        orientation = requireContext().resources.configuration.orientation,
+                    )
                 }
+            }
         }
-    }
 
     private fun initializeAwesomeBarComposable(
         toolbarStore: BrowserToolbarStore,
@@ -1388,22 +1391,21 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun observeReviewPromptState() {
-        consumeFlow(requireComponents.appStore) { appStates ->
-            observeReviewPromptState(
-                appStates = appStates,
-                dispatchAction = requireComponents.appStore::dispatch,
-                tryShowPlayStorePrompt = {
-                    requireComponents.playStoreReviewPromptController
-                        .tryPromptReview(requireActivity())
-                },
-                showCustomPrompt = {
-                    findNavController().navigate(
-                        NavGraphDirections.actionGlobalCustomReviewPromptDialogFragment(),
-                    )
-                },
-            )
-        }
+    private fun observeReviewPromptState() = viewLifecycleOwner.lifecycleScope.launch {
+        val appStore = requireComponents.appStore
+        observeReviewPromptState(
+            appStates =  appStore.stateFlow,
+            dispatchAction = appStore::dispatch,
+            tryShowPlayStorePrompt = {
+                requireComponents.playStoreReviewPromptController
+                    .tryPromptReview(requireActivity())
+            },
+            showCustomPrompt = {
+                findNavController().navigate(
+                    NavGraphDirections.actionGlobalCustomReviewPromptDialogFragment(),
+                )
+            },
+        )
     }
 
     @VisibleForTesting

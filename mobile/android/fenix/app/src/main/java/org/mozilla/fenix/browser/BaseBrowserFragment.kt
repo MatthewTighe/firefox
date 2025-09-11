@@ -35,6 +35,8 @@ import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -121,7 +123,6 @@ import mozilla.components.feature.sitepermissions.SitePermissionsFeature
 import mozilla.components.feature.sitepermissions.SitePermissionsLearnMoreUrlProvider
 import mozilla.components.feature.tabs.LastTabFeature
 import mozilla.components.feature.webauthn.WebAuthnFeature
-import mozilla.components.lib.state.ext.consumeFlow
 import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.service.sync.autofill.DefaultCreditCardValidationDelegate
@@ -319,7 +320,8 @@ abstract class BaseBrowserFragment :
     @VisibleForTesting
     internal val findInPageIntegration = ViewBoundFeatureWrapper<FindInPageIntegration>()
     private val toolbarIntegration = ViewBoundFeatureWrapper<ToolbarIntegration>()
-    private val bottomToolbarContainerIntegration = ViewBoundFeatureWrapper<BottomToolbarContainerIntegration>()
+    private val bottomToolbarContainerIntegration =
+        ViewBoundFeatureWrapper<BottomToolbarContainerIntegration>()
     private val sitePermissionsFeature = ViewBoundFeatureWrapper<SitePermissionsFeature>()
     private val fullScreenFeature = ViewBoundFeatureWrapper<FullScreenFeature>()
     private val swipeRefreshFeature = ViewBoundFeatureWrapper<SwipeRefreshFeature>()
@@ -332,14 +334,16 @@ abstract class BaseBrowserFragment :
     private val searchFeature = ViewBoundFeatureWrapper<SearchFeature>()
     private val webAuthnFeature = ViewBoundFeatureWrapper<WebAuthnFeature>()
     private val screenOrientationFeature = ViewBoundFeatureWrapper<ScreenOrientationFeature>()
-    private val browserPrefObserverIntegration = ViewBoundFeatureWrapper<BrowserPrefObserverIntegration>()
+    private val browserPrefObserverIntegration =
+        ViewBoundFeatureWrapper<BrowserPrefObserverIntegration>()
     private val biometricPromptFeature = ViewBoundFeatureWrapper<BiometricPromptFeature>()
     private val crashContentIntegration = ViewBoundFeatureWrapper<CrashContentIntegration>()
     private val readerViewBinding = ViewBoundFeatureWrapper<ReaderViewBinding>()
     private val openInFirefoxBinding = ViewBoundFeatureWrapper<OpenInFirefoxBinding>()
     private val findInPageBinding = ViewBoundFeatureWrapper<FindInPageBinding>()
     private val snackbarBinding = ViewBoundFeatureWrapper<SnackbarBinding>()
-    private val standardSnackbarErrorBinding = ViewBoundFeatureWrapper<StandardSnackbarErrorBinding>()
+    private val standardSnackbarErrorBinding =
+        ViewBoundFeatureWrapper<StandardSnackbarErrorBinding>()
 
     private val sitePermissionsLearnMoreUrlProvider: SitePermissionsLearnMoreUrlProvider by lazy {
         FenixSitePermissionLearnMoreUrlProvider()
@@ -446,7 +450,9 @@ abstract class BaseBrowserFragment :
                 store = requireComponents.core.store,
                 sessionId = customTabSessionId,
                 fragmentManager = parentFragmentManager,
-                launchInApp = { requireContext().settings().shouldOpenLinksInApp(customTabSessionId != null) },
+                launchInApp = {
+                    requireContext().settings().shouldOpenLinksInApp(customTabSessionId != null)
+                },
                 loadUrlUseCase = requireComponents.useCases.sessionUseCases.loadUrl,
                 shouldPrompt = { requireContext().settings().shouldPromptOpenLinksInApp() },
                 alwaysOpenCheckboxAction = {
@@ -565,7 +571,8 @@ abstract class BaseBrowserFragment :
                 onTabCounterClicked(activity.browsingModeManager.mode)
             },
             onCloseTab = { closedSession ->
-                val closedTab = store.state.findTab(closedSession.id) ?: return@DefaultBrowserToolbarController
+                val closedTab =
+                    store.state.findTab(closedSession.id) ?: return@DefaultBrowserToolbarController
                 showUndoSnackbar(context.tabClosedUndoMessage(closedTab.content.private))
             },
         )
@@ -935,7 +942,8 @@ abstract class BaseBrowserFragment :
 
         loginSelectBar = FenixAutocompletePrompt(
             viewProvider = {
-                view.findViewById(R.id.loginSelectBar) ?: (binding.loginSelectBarStub.inflate() as LoginSelectBar)
+                view.findViewById(R.id.loginSelectBar)
+                    ?: (binding.loginSelectBarStub.inflate() as LoginSelectBar)
             },
             toolbarPositionProvider = {
                 requireContext().settings().toolbarPosition
@@ -1312,7 +1320,7 @@ abstract class BaseBrowserFragment :
         val toolbarStore = buildToolbarStore(activity, readerModeController)
 
         browserNavigationBar =
-             BrowserNavigationBar(
+            BrowserNavigationBar(
                 context = activity,
                 container = binding.browserLayout,
                 toolbarStore = toolbarStore,
@@ -1333,7 +1341,11 @@ abstract class BaseBrowserFragment :
             customTabSession = customTabSessionId?.let { store.state.findCustomTab(it) },
             tabStripContent = buildTabStrip(activity),
             searchSuggestionsContent = { modifier ->
-                (awesomeBarComposable ?: buildAwesomeBar(activity, toolbarStore, modifier)).SearchSuggestions()
+                (awesomeBarComposable ?: buildAwesomeBar(
+                    activity,
+                    toolbarStore,
+                    modifier
+                )).SearchSuggestions()
             },
             navigationBarContent = browserNavigationBar?.asComposable(),
         )
@@ -1431,7 +1443,11 @@ abstract class BaseBrowserFragment :
         thumbnailsFeature = { thumbnailsFeature.get() },
         readerModeController = readerModeController,
         settings = activity.settings(),
-        customTabSession = customTabSessionId?.let { activity.components.core.store.state.findCustomTab(it) },
+        customTabSession = customTabSessionId?.let {
+            activity.components.core.store.state.findCustomTab(
+                it
+            )
+        },
     )
 
     private fun showUndoSnackbar(message: String) {
@@ -1531,11 +1547,13 @@ abstract class BaseBrowserFragment :
         context.settings().incrementSecureWarningCount()
     }
 
-    private fun closeFindInPageBarOnNavigation(store: BrowserStore) {
-        consumeFlow(store) { flow ->
-            flow.mapNotNull { state ->
-                state.findCustomTabOrSelectedTab(customTabSessionId)
-            }
+    private fun closeFindInPageBarOnNavigation(store: BrowserStore) =
+        viewLifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .mapNotNull { state ->
+                    state.findCustomTabOrSelectedTab(customTabSessionId)
+                }
                 .ifAnyChanged { tab ->
                     arrayOf(tab.content.url, tab.content.loadRequest)
                 }
@@ -1543,7 +1561,6 @@ abstract class BaseBrowserFragment :
                     findInPageIntegration.onBackPressed()
                 }
         }
-    }
 
     @VisibleForTesting
     internal fun shouldPullToRefreshBeEnabled(inFullScreen: Boolean): Boolean {
@@ -1768,39 +1785,39 @@ abstract class BaseBrowserFragment :
     ): List<ContextMenuCandidate>
 
     @VisibleForTesting
-    internal fun observeRestoreComplete(store: BrowserStore, navController: NavController) {
+    internal fun observeRestoreComplete(store: BrowserStore, navController: NavController) = viewLifecycleOwner.lifecycleScope.launch {
         val activity = activity as HomeActivity
-        consumeFlow(store) { flow ->
-            flow.map { state -> state.restoreComplete }
-                .distinctUntilChanged()
-                .collect { restored ->
-                    if (restored) {
-                        // Once tab restoration is complete, if there are no tabs to show in the browser, go home
-                        val tabs =
-                            store.state.getNormalOrPrivateTabs(
-                                activity.browsingModeManager.mode.isPrivate,
-                            )
-                        if (tabs.isEmpty() || store.state.selectedTabId == null) {
-                            navController.popBackStack(R.id.homeFragment, false)
-                        }
+        store.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .map { state -> state.restoreComplete }
+            .distinctUntilChanged()
+            .collect { restored ->
+                if (restored) {
+                    // Once tab restoration is complete, if there are no tabs to show in the browser, go home
+                    val tabs =
+                        store.state.getNormalOrPrivateTabs(
+                            activity.browsingModeManager.mode.isPrivate,
+                        )
+                    if (tabs.isEmpty() || store.state.selectedTabId == null) {
+                        navController.popBackStack(R.id.homeFragment, false)
                     }
                 }
-        }
+            }
     }
 
     @VisibleForTesting
-    internal fun observeTabSelection(store: BrowserStore, isCustomTabSession: Boolean) {
-        consumeFlow(store) { flow ->
-            flow.distinctUntilChangedBy {
+    internal fun observeTabSelection(store: BrowserStore, isCustomTabSession: Boolean) = viewLifecycleOwner.lifecycleScope.launch {
+        store.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .distinctUntilChangedBy {
                 it.selectedTabId
             }
-                .mapNotNull {
-                    it.selectedTab
-                }
-                .collect {
-                    dismissDownloadDialogs()
-                    handleTabSelected(it, isCustomTabSession)
+            .mapNotNull {
+                it.selectedTab
             }
+            .collect {
+                dismissDownloadDialogs()
+                handleTabSelected(it, isCustomTabSession)
         }
     }
 
@@ -1810,21 +1827,21 @@ abstract class BaseBrowserFragment :
 
     @VisibleForTesting
     @Suppress("ComplexCondition")
-    internal fun observeTabSource(store: BrowserStore) {
-        consumeFlow(store) { flow ->
-            flow.mapNotNull { state ->
+    internal fun observeTabSource(store: BrowserStore) = viewLifecycleOwner.lifecycleScope.launch {
+        store.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .mapNotNull { state ->
                 state.selectedTab
             }
-                .collect {
-                    if (!requireComponents.fenixOnboarding.userHasBeenOnboarded() &&
-                        it.content.loadRequest?.triggeredByRedirect != true &&
-                        it.source !is SessionState.Source.External &&
-                        it.content.url !in onboardingLinksList
-                    ) {
-                        requireComponents.fenixOnboarding.finish()
-                    }
+            .collect {
+                if (!requireComponents.fenixOnboarding.userHasBeenOnboarded() &&
+                    it.content.loadRequest?.triggeredByRedirect != true &&
+                    it.source !is SessionState.Source.External &&
+                    it.content.url !in onboardingLinksList
+                ) {
+                    requireComponents.fenixOnboarding.finish()
                 }
-        }
+            }
     }
 
     private fun handleTabSelected(selectedTab: TabSessionState, isCustomTabSession: Boolean) {

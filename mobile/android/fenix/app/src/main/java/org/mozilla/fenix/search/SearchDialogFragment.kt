@@ -41,6 +41,8 @@ import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph
@@ -60,7 +62,6 @@ import mozilla.components.concept.menu.candidate.DrawableMenuIcon
 import mozilla.components.concept.menu.candidate.TextMenuCandidate
 import mozilla.components.concept.toolbar.Toolbar
 import mozilla.components.feature.qr.QrFeature
-import mozilla.components.lib.state.ext.consumeFlow
 import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.support.base.coroutines.Dispatchers
 import mozilla.components.support.base.feature.UserInteractionHandler
@@ -375,8 +376,10 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
 
         val showUnifiedSearchFeature = requireContext().settings().showUnifiedSearchFeature
 
-        consumeFlow(requireComponents.core.store) { flow ->
-            flow.map { state -> state.search }
+        viewLifecycleOwner.lifecycleScope.launch {
+            requireComponents.core.store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .map { state -> state.search }
                 .distinctUntilChanged()
                 .collect { search ->
                     store.dispatch(
@@ -551,20 +554,22 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
         binding.linkIcon.isVisible = false
     }
 
-    private fun observeSuggestionProvidersState() = consumeFlow(store) { flow ->
-        flow
+    private fun observeSuggestionProvidersState() = viewLifecycleOwner.lifecycleScope.launch {
+        store.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
             .distinctUntilChangedBy { it.toSearchProviderState() }
             .collect { state -> awesomeBarView.updateSuggestionProvidersVisibility(state) }
     }
 
-    private fun observeAwesomeBarState() = consumeFlow(store) { flow ->
+    private fun observeAwesomeBarState() = viewLifecycleOwner.lifecycleScope.launch {
         /*
          * firstUpdate is used to make sure we keep the awesomebar hidden on the first run
          *  of the searchFragmentDialog. We only turn it false after the user has changed the
          *  query as consumeFrom may run several times on fragment start due to state updates.
          * */
-
-        flow.map { state -> state.url != state.query && state.query.isNotBlank() || state.showSearchShortcuts }
+        store.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .map { state -> state.url != state.query && state.query.isNotBlank() || state.showSearchShortcuts }
             .distinctUntilChanged()
             .collect { shouldShowAwesomebar ->
                 binding.awesomeBar.visibility = if (shouldShowAwesomebar) {
@@ -575,13 +580,15 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
             }
     }
 
-    private fun observeClipboardState() = consumeFlow(store) { flow ->
-        flow.map { state ->
-            val shouldShowView = state.showClipboardSuggestions &&
-                state.query.isEmpty() &&
-                state.clipboardHasUrl && !state.showSearchShortcuts
-            Pair(shouldShowView, state.clipboardHasUrl)
-        }
+    private fun observeClipboardState() = viewLifecycleOwner.lifecycleScope.launch {
+        store.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .map { state ->
+                val shouldShowView = state.showClipboardSuggestions &&
+                    state.query.isEmpty() &&
+                    state.clipboardHasUrl && !state.showSearchShortcuts
+                Pair(shouldShowView, state.clipboardHasUrl)
+            }
             .distinctUntilChanged()
             .collect { (shouldShowView) ->
                 updateClipboardSuggestion(shouldShowView)

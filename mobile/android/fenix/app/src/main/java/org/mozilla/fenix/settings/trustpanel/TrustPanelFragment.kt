@@ -34,17 +34,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.compose.content
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mozilla.components.browser.state.selector.findTabOrCustomTab
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.consumeFlow
 import mozilla.components.lib.state.ext.observeAsState
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.ktx.android.view.setNavigationBarColorCompat
@@ -367,13 +370,14 @@ class TrustPanelFragment : BottomSheetDialogFragment() {
         }
     }
 
-    private fun observeTrackersChange(store: BrowserStore, onChange: (SessionState) -> Unit) {
-        consumeFlow(store) { flow ->
-            flow.mapNotNull { state -> state.findTabOrCustomTab(args.sessionId) }
+    private fun observeTrackersChange(store: BrowserStore, onChange: (SessionState) -> Unit) =
+        viewLifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .mapNotNull { state -> state.findTabOrCustomTab(args.sessionId) }
                 .ifAnyChanged { tab -> arrayOf(tab.trackingProtection.blockedTrackers) }
                 .collect(onChange)
         }
-    }
 }
 
 /**

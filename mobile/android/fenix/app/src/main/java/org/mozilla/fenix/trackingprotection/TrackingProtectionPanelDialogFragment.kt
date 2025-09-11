@@ -19,6 +19,8 @@ import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.graphics.drawable.toDrawable
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.withStarted
 import androidx.navigation.fragment.findNavController
@@ -34,7 +36,6 @@ import mozilla.components.browser.state.selector.findTabOrCustomTab
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.feature.session.TrackingProtectionUseCases
-import mozilla.components.lib.state.ext.consumeFlow
 import mozilla.components.lib.state.ext.observe
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.log.logger.Logger
@@ -216,24 +217,25 @@ class TrackingProtectionPanelDialogFragment : AppCompatDialogFragment(), UserInt
     }
 
     @VisibleForTesting
-    internal fun observeUrlChange(store: BrowserStore) {
-        consumeFlow(store) { flow ->
-            flow.mapNotNull { state ->
+    internal fun observeUrlChange(store: BrowserStore) = viewLifecycleOwner.lifecycleScope.launch {
+        store.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .mapNotNull { state ->
                 state.findTabOrCustomTab(provideCurrentTabId())
             }.distinctUntilChangedBy { tab -> tab.content.url }
-                .collect {
-                    protectionsStore.dispatch(ProtectionsAction.UrlChange(it.content.url))
-                }
-        }
+            .collect {
+                protectionsStore.dispatch(ProtectionsAction.UrlChange(it.content.url))
+            }
     }
 
     @VisibleForTesting
     internal fun provideCurrentTabId(): String = args.sessionId
 
     @VisibleForTesting
-    internal fun observeTrackersChange(store: BrowserStore) {
-        consumeFlow(store) { flow ->
-            flow.mapNotNull { state ->
+    internal fun observeTrackersChange(store: BrowserStore) = viewLifecycleOwner.lifecycleScope.launch {
+        store.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .mapNotNull { state ->
                 state.findTabOrCustomTab(provideCurrentTabId())
             }.ifAnyChanged { tab ->
                 arrayOf(
@@ -243,7 +245,6 @@ class TrackingProtectionPanelDialogFragment : AppCompatDialogFragment(), UserInt
             }.collect {
                 updateTrackers(it)
             }
-        }
     }
 
     private fun getCurrentTab(): SessionState? {

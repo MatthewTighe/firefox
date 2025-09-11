@@ -62,7 +62,6 @@ import mozilla.components.concept.menu.candidate.DrawableMenuIcon
 import mozilla.components.concept.menu.candidate.TextMenuCandidate
 import mozilla.components.concept.toolbar.Toolbar
 import mozilla.components.feature.qr.QrFeature
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.support.base.coroutines.Dispatchers
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
@@ -407,18 +406,21 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
                     false
                 }
             }
+
             R.id.homeFragment -> {
                 binding.searchWrapper.setOnTouchListener { _, _ ->
                     binding.searchWrapper.hideKeyboard()
                     false
                 }
             }
+
             R.id.historyFragment, R.id.bookmarkFragment -> {
                 binding.searchWrapper.setOnTouchListener { _, _ ->
                     dismissAllowingStateLoss()
                     true
                 }
             }
+
             else -> {}
         }
 
@@ -499,7 +501,7 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
 
         val shouldShowSuggestions = store.state.run {
             (showTrendingSearches || showRecentSearches || showShortcutsSuggestions) &&
-                (query.isNotEmpty() || FxNimbus.features.searchSuggestionsOnHomepage.value().enabled)
+                    (query.isNotEmpty() || FxNimbus.features.searchSuggestionsOnHomepage.value().enabled)
         }
 
         if (shouldShowSuggestions) {
@@ -508,20 +510,24 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
             observeAwesomeBarState()
         }
 
-        consumeFrom(store) {
-            updateSearchSuggestionsHintVisibility(it)
-            updateToolbarContentDescription(
-                it.searchEngineSource.searchEngine,
-                it.searchEngineSource.searchEngine == it.defaultEngine,
-            )
-            toolbarView.update(it)
-            awesomeBarView.update(it)
+        viewLifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    updateSearchSuggestionsHintVisibility(it)
+                    updateToolbarContentDescription(
+                        it.searchEngineSource.searchEngine,
+                        it.searchEngineSource.searchEngine == it.defaultEngine,
+                    )
+                    toolbarView.update(it)
+                    awesomeBarView.update(it)
 
-            addSearchSelector()
-            if (it.showQrButton) {
-                updateQrButton(it)
-            }
-            updateVoiceSearchButton()
+                    addSearchSelector()
+                    if (it.showQrButton) {
+                        updateQrButton(it)
+                    }
+                    updateVoiceSearchButton()
+                }
         }
     }
 
@@ -565,7 +571,7 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
         /*
          * firstUpdate is used to make sure we keep the awesomebar hidden on the first run
          *  of the searchFragmentDialog. We only turn it false after the user has changed the
-         *  query as consumeFrom may run several times on fragment start due to state updates.
+         *  query as the flow may run several times on fragment start due to state updates.
          * */
         store.stateFlow
             .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)

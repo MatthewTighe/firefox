@@ -21,12 +21,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
-import mozilla.components.lib.state.ext.consumeFrom
+import kotlinx.coroutines.launch
 import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.ktx.kotlin.toShortUrl
@@ -131,9 +133,13 @@ class HistoryMetadataGroupFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         requireActivity().addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        consumeFrom(historyMetadataGroupStore) { state ->
-            historyMetadataGroupView.update(state)
-            activity?.invalidateOptionsMenu()
+        viewLifecycleOwner.lifecycleScope.launch {
+            historyMetadataGroupStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect { state ->
+                    historyMetadataGroupView.update(state)
+                    activity?.invalidateOptionsMenu()
+                }
         }
 
         requireContext().components.appStore.flowScoped(viewLifecycleOwner) { flow ->

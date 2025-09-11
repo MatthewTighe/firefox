@@ -51,6 +51,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDirections
 import androidx.navigation.NavOptions
@@ -79,7 +80,6 @@ import mozilla.components.compose.browser.toolbar.store.EnvironmentCleared
 import mozilla.components.compose.browser.toolbar.store.EnvironmentRehydrated
 import mozilla.components.compose.browser.toolbar.store.Mode
 import mozilla.components.concept.engine.prompt.ShareData
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.lib.state.ext.observeAsComposableState
 import mozilla.components.support.base.feature.UserInteractionHandler
@@ -282,9 +282,13 @@ class HistoryFragment : LibraryPageFragment<History>(), UserInteractionHandler, 
             )
         }
 
-        consumeFrom(historyStore) {
-            historyView.update(it)
-            updateDeleteMenuItemView(!it.isEmpty)
+        viewLifecycleOwner.lifecycleScope.launch {
+            historyStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    historyView.update(it)
+                    updateDeleteMenuItemView(!it.isEmpty)
+                }
         }
 
         requireContext().components.appStore.flowScoped(viewLifecycleOwner) { flow ->

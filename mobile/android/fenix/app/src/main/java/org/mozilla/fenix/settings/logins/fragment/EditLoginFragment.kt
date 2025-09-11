@@ -20,11 +20,12 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.textfield.TextInputLayout
-import mozilla.components.lib.state.ext.consumeFrom
+import kotlinx.coroutines.launch
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.Logins
@@ -121,9 +122,13 @@ class EditLoginFragment : Fragment(R.layout.fragment_edit_login), MenuProvider {
         togglePasswordReveal(binding.passwordText, binding.revealPasswordButton)
         findDuplicate()
 
-        consumeFrom(loginsFragmentStore) {
-            duplicateLogin = loginsFragmentStore.state.duplicateLogin
-            updateUsernameField()
+        viewLifecycleOwner.lifecycleScope.launch {
+            loginsFragmentStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    duplicateLogin = loginsFragmentStore.state.duplicateLogin
+                    updateUsernameField()
+                }
         }
     }
 

@@ -24,10 +24,11 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import mozilla.components.lib.state.ext.consumeFrom
+import kotlinx.coroutines.launch
 import mozilla.components.ui.widgets.withCenterAlignedButtons
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.BrowserDirection
@@ -117,15 +118,19 @@ class LoginDetailFragment : SecureFragment(R.layout.fragment_login_detail), Menu
 
         interactor.onFetchLoginList(args.savedLoginId)
 
-        consumeFrom(savedLoginsStore) {
-            loginDetailsBindingDelegate.update(it)
-            login = savedLoginsStore.state.currentItem
-            setUpCopyButtons()
-            showToolbar(
-                savedLoginsStore.state.currentItem?.origin?.simplifiedUrl()
-                    ?: "",
-            )
-            setUpPasswordReveal()
+        viewLifecycleOwner.lifecycleScope.launch {
+            savedLoginsStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    loginDetailsBindingDelegate.update(it)
+                    login = savedLoginsStore.state.currentItem
+                    setUpCopyButtons()
+                    showToolbar(
+                        savedLoginsStore.state.currentItem?.origin?.simplifiedUrl()
+                            ?: "",
+                    )
+                    setUpPasswordReveal()
+                }
         }
         togglePasswordReveal(binding.passwordText, binding.revealPasswordButton)
 

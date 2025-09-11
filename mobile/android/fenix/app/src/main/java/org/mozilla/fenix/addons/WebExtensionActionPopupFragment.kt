@@ -9,13 +9,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.WebExtensionAction
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineView
 import mozilla.components.feature.accounts.push.SendTabUseCases
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import org.mozilla.fenix.R
 import org.mozilla.fenix.databinding.FragmentAddOnInternalSettingsBinding
@@ -72,21 +75,25 @@ class WebExtensionActionPopupFragment : AddonPopupBaseFragment(), EngineSession.
             binding.addonSettingsEngineView.render(session)
             consumePopupSession()
         } else {
-            consumeFrom(coreComponents.store) { state ->
-                state.extensions[args.webExtensionId]?.let { extState ->
-                    val popupSession = extState.popupSession
-                    if (popupSession != null) {
-                        initializeSession(popupSession)
-                        binding.addonSettingsEngineView.render(popupSession)
-                        popupSession.register(this)
-                        consumePopupSession()
-                        engineSession = popupSession
-                    } else if (sessionConsumed) {
-                        // In case we can't retrieve the popup session lets close the fragment,
-                        // this can happen when Android recreates the activity.
-                        findNavController().popBackStack()
+            viewLifecycleOwner.lifecycleScope.launch {
+                coreComponents.store.stateFlow
+                    .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                    .collect { state ->
+                        state.extensions[args.webExtensionId]?.let { extState ->
+                            val popupSession = extState.popupSession
+                            if (popupSession != null) {
+                                initializeSession(popupSession)
+                                binding.addonSettingsEngineView.render(popupSession)
+                                popupSession.register(this@WebExtensionActionPopupFragment)
+                                consumePopupSession()
+                                engineSession = popupSession
+                            } else if (sessionConsumed) {
+                                // In case we can't retrieve the popup session lets close the fragment,
+                                // this can happen when Android recreates the activity.
+                                findNavController().popBackStack()
+                            }
+                        }
                     }
-                }
             }
         }
 

@@ -29,13 +29,14 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.fragment.findNavController
+import kotlinx.coroutines.launch
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.menu.MenuController
 import mozilla.components.concept.menu.Orientation
-import mozilla.components.lib.state.ext.consumeFrom
 import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
@@ -264,24 +265,29 @@ class SavedLoginsFragment : SecureFragment(), MenuProvider {
             removedLoginGuid = bundle.getString(LoginDetailFragment.LOGIN_BUNDLE_ARGS)
             deletedGuid.add(removedLoginGuid.toString())
         }
-        consumeFrom(savedLoginsStore) { loginsListState ->
-            if (!this::sortingStrategyMenu.isInitialized) {
-                sortingStrategyMenu =
-                    SavedLoginsSortingStrategyMenu(requireContext(), savedLoginsInteractor)
-            }
-            sortingStrategyMenu.updateMenu(savedLoginsStore.state.highlightedItem)
-            loginState = loginsListState
-            val currentList = loginState.filteredItems.toMutableList()
+        viewLifecycleOwner.lifecycleScope.launch {
+            savedLoginsStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect { loginsListState ->
 
-            if (removedLoginGuid != null) {
-                val newList = currentList.filter { !deletedGuid.contains(it.guid) }
+                    if (!this@SavedLoginsFragment::sortingStrategyMenu.isInitialized) {
+                        sortingStrategyMenu =
+                            SavedLoginsSortingStrategyMenu(requireContext(), savedLoginsInteractor)
+                    }
+                    sortingStrategyMenu.updateMenu(savedLoginsStore.state.highlightedItem)
+                    loginState = loginsListState
+                    val currentList = loginState.filteredItems.toMutableList()
 
-                loginState = loginState.copy(
-                    loginList = newList,
-                    filteredItems = newList,
-                )
-            }
-            savedLoginsListView.update(loginState)
+                    if (removedLoginGuid != null) {
+                        val newList = currentList.filter { !deletedGuid.contains(it.guid) }
+
+                        loginState = loginState.copy(
+                            loginList = newList,
+                            filteredItems = newList,
+                        )
+                    }
+                    savedLoginsListView.update(loginState)
+                }
         }
     }
 

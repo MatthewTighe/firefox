@@ -14,12 +14,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.state.recover.RecoverableTab
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.telemetry.glean.private.NoExtras
@@ -150,9 +151,13 @@ class RecentlyClosedFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         requireActivity().addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        consumeFrom(recentlyClosedFragmentStore) { state ->
-            recentlyClosedFragmentView.update(state)
-            activity?.invalidateOptionsMenu()
+        viewLifecycleOwner.lifecycleScope.launch {
+            recentlyClosedFragmentStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    recentlyClosedFragmentView.update(it)
+                    activity?.invalidateOptionsMenu()
+                }
         }
 
         requireComponents.core.store.flowScoped(viewLifecycleOwner) { flow ->

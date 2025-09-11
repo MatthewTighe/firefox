@@ -12,9 +12,11 @@ import android.view.ViewGroup
 import androidx.activity.ComponentDialog
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
-import mozilla.components.lib.state.ext.consumeFrom
+import kotlinx.coroutines.launch
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.StoreProvider
 import org.mozilla.fenix.databinding.FragmentCreateCollectionBinding
@@ -75,8 +77,12 @@ class CollectionCreationFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        consumeFrom(collectionCreationStore) { newState ->
-            collectionCreationView.update(newState)
+        viewLifecycleOwner.lifecycleScope.launch {
+            collectionCreationStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect { newState ->
+                    collectionCreationView.update(newState)
+                }
         }
     }
 

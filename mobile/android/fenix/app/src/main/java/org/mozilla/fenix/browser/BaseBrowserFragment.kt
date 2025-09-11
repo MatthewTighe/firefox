@@ -123,7 +123,6 @@ import mozilla.components.feature.sitepermissions.SitePermissionsFeature
 import mozilla.components.feature.sitepermissions.SitePermissionsLearnMoreUrlProvider
 import mozilla.components.feature.tabs.LastTabFeature
 import mozilla.components.feature.webauthn.WebAuthnFeature
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.service.sync.autofill.DefaultCreditCardValidationDelegate
 import mozilla.components.service.sync.logins.DefaultLoginValidationDelegate
@@ -1751,23 +1750,26 @@ abstract class BaseBrowserFragment :
     /**
      * Listens for the microsurvey message and initializes the microsurvey prompt if one is available.
      */
-    private fun listenForMicrosurveyMessage(context: Context) {
-        binding.root.consumeFrom(context.components.appStore, viewLifecycleOwner) { state ->
-            state.messaging.messageToShow[FenixMessageSurfaceId.MICROSURVEY]?.let { message ->
-                if (message.id != currentMicrosurvey?.id) {
-                    message.toMicrosurveyUIData()?.let { microsurvey ->
-                        context.components.settings.shouldShowMicrosurveyPrompt = true
-                        currentMicrosurvey = microsurvey
+    private fun listenForMicrosurveyMessage(context: Context) = viewLifecycleOwner.lifecycleScope.launch {
+        context.components.appStore.stateFlow
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .collect { state ->
+                state.messaging.messageToShow[FenixMessageSurfaceId.MICROSURVEY]?.let { message ->
+                    if (message.id != currentMicrosurvey?.id) {
+                        message.toMicrosurveyUIData()?.let { microsurvey ->
+                            context.components.settings.shouldShowMicrosurveyPrompt = true
+                            currentMicrosurvey = microsurvey
 
-                        _bottomToolbarContainerView?.toolbarContainerView.let {
-                            binding.browserLayout.removeView(it)
+                            _bottomToolbarContainerView?.toolbarContainerView.let {
+                                binding.browserLayout.removeView(it)
+                            }
+
+                            initializeMicrosurveyPrompt()
                         }
-
-                        initializeMicrosurveyPrompt()
                     }
                 }
             }
-        }
+
     }
 
     private fun shouldShowMicrosurveyPrompt(context: Context) =

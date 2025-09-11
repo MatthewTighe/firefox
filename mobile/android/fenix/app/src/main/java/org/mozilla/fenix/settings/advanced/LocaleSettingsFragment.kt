@@ -16,7 +16,9 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
-import mozilla.components.lib.state.ext.consumeFrom
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import mozilla.components.support.locale.LocaleUseCases
 import org.mozilla.fenix.R
@@ -105,8 +107,12 @@ class LocaleSettingsFragment : Fragment(), MenuProvider {
         super.onViewCreated(view, savedInstanceState)
         requireActivity().addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        consumeFrom(localeSettingsStore) {
-            localeView.update(it)
+        viewLifecycleOwner.lifecycleScope.launch {
+            localeSettingsStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    localeView.update(it)
+                }
         }
     }
 

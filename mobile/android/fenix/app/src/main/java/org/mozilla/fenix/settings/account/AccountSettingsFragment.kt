@@ -15,6 +15,8 @@ import android.text.format.DateUtils
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.edit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.CheckBoxPreference
@@ -28,7 +30,6 @@ import mozilla.appservices.syncmanager.SyncTelemetry
 import mozilla.components.concept.sync.AccountObserver
 import mozilla.components.concept.sync.ConstellationState
 import mozilla.components.concept.sync.DeviceConstellationObserver
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.service.fxa.SyncEngine
 import mozilla.components.service.fxa.manager.FxaAccountManager
 import mozilla.components.service.fxa.manager.SyncEnginesStorage
@@ -121,9 +122,13 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        consumeFrom(accountSettingsStore) {
-            updateLastSyncTimePref(it)
-            updateDeviceName(it)
+        viewLifecycleOwner.lifecycleScope.launch {
+            accountSettingsStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    updateLastSyncTimePref(it)
+                    updateDeviceName(it)
+                }
         }
 
         accountSettingsInteractor = AccountSettingsInteractor(

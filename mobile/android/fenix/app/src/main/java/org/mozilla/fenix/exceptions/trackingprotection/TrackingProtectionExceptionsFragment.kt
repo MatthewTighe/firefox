@@ -9,7 +9,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import mozilla.components.lib.state.ext.consumeFrom
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.StoreProvider
@@ -61,8 +64,12 @@ class TrackingProtectionExceptionsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        consumeFrom(exceptionsStore) {
-            exceptionsView.update(it.items)
+        viewLifecycleOwner.lifecycleScope.launch {
+            exceptionsStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    exceptionsView.update(it.items)
+                }
         }
     }
 }

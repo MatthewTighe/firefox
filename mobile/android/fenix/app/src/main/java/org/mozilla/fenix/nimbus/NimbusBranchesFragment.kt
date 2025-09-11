@@ -9,12 +9,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.support.base.log.logger.Logger
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.StoreProvider
@@ -67,8 +68,12 @@ class NimbusBranchesFragment : Fragment() {
 
         loadExperimentBranches()
 
-        consumeFrom(nimbusBranchesStore) { state ->
-            nimbusBranchesView.update(state)
+        viewLifecycleOwner.lifecycleScope.launch {
+            nimbusBranchesStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect { state ->
+                    nimbusBranchesView.update(state)
+                }
         }
     }
 

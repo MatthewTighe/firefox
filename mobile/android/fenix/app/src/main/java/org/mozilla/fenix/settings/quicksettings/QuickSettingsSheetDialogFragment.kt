@@ -25,7 +25,6 @@ import kotlinx.coroutines.plus
 import mozilla.components.browser.state.selector.findTabOrCustomTab
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
 import org.mozilla.fenix.BuildConfig
@@ -141,11 +140,15 @@ class QuickSettingsSheetDialogFragment : FenixDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         observeTrackersChange(requireComponents.core.store)
-        consumeFrom(quickSettingsStore) {
-            websiteInfoView.update(it.webInfoState)
-            websitePermissionsView.update(it.websitePermissionsState)
-            protectionsView.update(it.protectionsState)
-            clearSiteDataView.update(it.webInfoState)
+        viewLifecycleOwner.lifecycleScope.launch {
+            quickSettingsStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    websiteInfoView.update(it.webInfoState)
+                    websitePermissionsView.update(it.websitePermissionsState)
+                    protectionsView.update(it.protectionsState)
+                    clearSiteDataView.update(it.webInfoState)
+                }
         }
     }
 

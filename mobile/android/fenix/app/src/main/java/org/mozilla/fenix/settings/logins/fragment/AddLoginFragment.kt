@@ -21,9 +21,10 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import mozilla.components.lib.state.ext.consumeFrom
+import kotlinx.coroutines.launch
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import mozilla.components.support.ktx.android.view.showKeyboard
 import mozilla.components.support.ktx.util.URLStringUtils
@@ -106,9 +107,13 @@ class AddLoginFragment : Fragment(R.layout.fragment_add_login), MenuProvider {
         setUpTextListeners()
         findDuplicate()
 
-        consumeFrom(loginsFragmentStore) {
-            duplicateLogin = loginsFragmentStore.state.duplicateLogin
-            updateUsernameField()
+        viewLifecycleOwner.lifecycleScope.launch {
+            loginsFragmentStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    duplicateLogin = loginsFragmentStore.state.duplicateLogin
+                    updateUsernameField()
+                }
         }
     }
 

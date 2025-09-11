@@ -12,11 +12,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.WebExtensionAction
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineView
 import mozilla.components.concept.engine.window.WindowRequest
-import mozilla.components.lib.state.ext.consumeFrom
 import org.mozilla.samples.browser.R
 import org.mozilla.samples.browser.databinding.FragmentAddOnSettingsBinding
 import org.mozilla.samples.browser.ext.components
@@ -72,17 +75,21 @@ class WebExtensionActionPopupActivity : AppCompatActivity() {
                 session.register(this, view)
                 consumePopupSession()
             } else {
-                consumeFrom(requireContext().components.store) { state ->
-                    state.extensions[webExtensionId]?.let { extState ->
-                        extState.popupSession?.let {
-                            if (engineSession == null) {
-                                binding.addonSettingsEngineView.render(it)
-                                it.register(this, view)
-                                consumePopupSession()
-                                engineSession = it
+                viewLifecycleOwner.lifecycleScope.launch {
+                    requireContext().components.store.stateFlow
+                        .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                        .collect { state ->
+                            state.extensions[webExtensionId]?.let { extState ->
+                                extState.popupSession?.let {
+                                    if (engineSession == null) {
+                                        binding.addonSettingsEngineView.render(it)
+                                        it.register(this@WebExtensionActionPopupFragment, view)
+                                        consumePopupSession()
+                                        engineSession = it
+                                    }
+                                }
                             }
                         }
-                    }
                 }
             }
         }

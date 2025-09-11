@@ -15,6 +15,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -23,7 +25,6 @@ import androidx.preference.SwitchPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.service.fxa.SyncEngine
 import mozilla.components.service.sync.autofill.AutofillCreditCardsAddressesStorage
 import mozilla.components.ui.widgets.withCenterAlignedButtons
@@ -135,11 +136,18 @@ class AutofillSettingFragment : BiometricPromptPreferenceFragment() {
         requirePreference<SwitchPreference>(R.string.pref_key_credit_cards_save_and_autofill_cards).summary =
             getString(R.string.preferences_credit_cards_save_and_autofill_cards_summary_2, getString(R.string.app_name))
 
-        consumeFrom(store) { state ->
-            if (requireComponents.settings.addressFeature) {
-                updateAddressPreference(state.addresses.isNotEmpty(), findNavController())
-            }
-            updateCardManagementPreference(state.creditCards.isNotEmpty(), findNavController())
+        viewLifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect { state ->
+                    if (requireComponents.settings.addressFeature) {
+                        updateAddressPreference(state.addresses.isNotEmpty(), findNavController())
+                    }
+                    updateCardManagementPreference(
+                        state.creditCards.isNotEmpty(),
+                        findNavController()
+                    )
+                }
         }
 
         setBiometricPrompt(view, creditCardPreferences)

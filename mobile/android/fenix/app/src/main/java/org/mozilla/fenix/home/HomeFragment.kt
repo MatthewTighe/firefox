@@ -62,7 +62,6 @@ import mozilla.components.concept.sync.OAuthAccount
 import mozilla.components.feature.accounts.push.SendTabUseCases
 import mozilla.components.feature.tab.collections.TabCollection
 import mozilla.components.feature.top.sites.TopSitesFeature
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.lib.state.ext.flow
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.telemetry.glean.private.NoExtras
@@ -824,17 +823,21 @@ class HomeFragment : Fragment() {
      * Listens for the microsurvey message and initializes the microsurvey prompt if one is available.
      */
     private fun listenForMicrosurveyMessage(context: Context) {
-        binding.root.consumeFrom(context.components.appStore, viewLifecycleOwner) { state ->
-            state.messaging.messageToShow[FenixMessageSurfaceId.MICROSURVEY]?.let { message ->
-                if (message.id != currentMicrosurvey?.id) {
-                    message.toMicrosurveyUIData()?.let { microsurvey ->
-                        context.components.settings.shouldShowMicrosurveyPrompt = true
-                        currentMicrosurvey = microsurvey
+        viewLifecycleOwner.lifecycleScope.launch {
+            context.components.appStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect { state ->
+                    state.messaging.messageToShow[FenixMessageSurfaceId.MICROSURVEY]?.let { message ->
+                        if (message.id != currentMicrosurvey?.id) {
+                            message.toMicrosurveyUIData()?.let { microsurvey ->
+                                context.components.settings.shouldShowMicrosurveyPrompt = true
+                                currentMicrosurvey = microsurvey
 
-                        initializeMicrosurveyPrompt()
+                                initializeMicrosurveyPrompt()
+                            }
+                        }
                     }
                 }
-            }
         }
     }
 
@@ -893,8 +896,12 @@ class HomeFragment : Fragment() {
         val showDivider = requireContext().isToolbarAtBottom() || !requireContext().settings().enableHomepageSearchBar
         toolbarView.updateDividerVisibility(showDivider)
 
-        consumeFrom(requireComponents.core.store) {
-            toolbarView.updateTabCounter(it)
+        viewLifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
+                    toolbarView.updateTabCounter(it)
+                }
         }
 
         requireComponents.appStore.state.wasLastTabClosedPrivate?.also {

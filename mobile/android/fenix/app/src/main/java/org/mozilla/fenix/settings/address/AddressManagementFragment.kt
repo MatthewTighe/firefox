@@ -10,11 +10,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.compose.content
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import mozilla.components.lib.state.ext.consumeFrom
 import mozilla.components.lib.state.ext.observeAsComposableState
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.Addresses
@@ -76,11 +78,12 @@ class AddressManagementFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        consumeFrom(store) { state ->
-            if (!state.isLoading && state.addresses.isEmpty()) {
-                findNavController().popBackStack()
-                return@consumeFrom
-            }
+        viewLifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .first { state -> !state.isLoading && state.addresses.isEmpty() }
+
+            findNavController().popBackStack()
         }
     }
 

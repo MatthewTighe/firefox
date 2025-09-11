@@ -8,11 +8,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import mozilla.components.lib.state.ext.consumeFrom
 import org.mozilla.fenix.R
 import org.mozilla.fenix.SecureFragment
 import org.mozilla.fenix.components.StoreProvider
@@ -63,12 +65,12 @@ class CreditCardsManagementFragment : SecureFragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        consumeFrom(store) { state ->
-            if (!state.isLoading && state.creditCards.isEmpty()) {
-                findNavController().popBackStack()
-                return@consumeFrom
-            }
+        viewLifecycleOwner.lifecycleScope.launch {
+            val state = store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .first { state -> !state.isLoading && state.creditCards.isEmpty() }
 
+            findNavController().popBackStack()
             creditCardsView.update(state)
         }
     }

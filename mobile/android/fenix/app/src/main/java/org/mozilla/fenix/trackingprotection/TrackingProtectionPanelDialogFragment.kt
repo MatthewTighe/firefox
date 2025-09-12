@@ -36,7 +36,6 @@ import mozilla.components.browser.state.selector.findTabOrCustomTab
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.feature.session.TrackingProtectionUseCases
-import mozilla.components.lib.state.ext.observe
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
@@ -141,12 +140,13 @@ class TrackingProtectionPanelDialogFragment : AppCompatDialogFragment(), UserInt
 
         observeUrlChange(store)
         observeTrackersChange(store)
-        protectionsStore.observe(view) {
-            viewLifecycleOwner.lifecycleScope.launch {
-                withStarted {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            protectionsStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .collect {
                     trackingProtectionView.update(it)
                 }
-            }
         }
     }
 

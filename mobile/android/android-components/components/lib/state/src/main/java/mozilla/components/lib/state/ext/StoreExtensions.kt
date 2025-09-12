@@ -45,49 +45,6 @@ fun <S : State, A : Action> Store<S, A>.observe(
 }
 
 /**
- * Registers an [Observer] function that will be invoked whenever the state changes. The [Store.Subscription]
- * will be bound to the passed in [View]. Once the [View] gets detached the [Observer] will be unregistered
- * automatically.
- *
- * Note that inside a `Fragment` using [observe] with a `viewLifecycleOwner` may be a better option.
- * Only use this implementation if you have only access to a [View] - especially if it can exist
- * outside of a `Fragment`.
- *
- * The [Observer] will get invoked with the current [State] as soon as [View] is attached.
- *
- * Once the [View] gets detached the [Observer] will get unregistered. It will NOT get automatically
- * registered again if the same [View] gets attached again.
- */
-@MainThread
-fun <S : State, A : Action> Store<S, A>.observe(
-    view: View,
-    observer: Observer<S>,
-) {
-    val subscription = observeManually(observer)
-
-    subscription.binding = SubscriptionViewBinding(view, subscription).apply {
-        view.addOnAttachStateChangeListener(this)
-    }
-
-    if (view.isAttachedToWindow) {
-        // This View is already attached. We can resume immediately and do not need to wait for
-        // onViewAttachedToWindow() getting called.
-        subscription.resume()
-    }
-}
-
-/**
- * Registers an [Observer] function that will observe the store indefinitely.
- *
- * Right after registering the [Observer] will be invoked with the current [State].
- */
-fun <S : State, A : Action> Store<S, A>.observeForever(
-    observer: Observer<S>,
-) {
-    observeManually(observer).resume()
-}
-
-/**
  * GenericLifecycleObserver implementation to bind an observer to a Lifecycle.
  */
 private class SubscriptionLifecycleBinding<S : State, A : Action>(

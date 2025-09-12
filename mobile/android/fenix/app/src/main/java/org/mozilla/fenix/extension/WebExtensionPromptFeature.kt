@@ -15,9 +15,11 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.FragmentManager
 import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.WebExtensionAction
 import mozilla.components.browser.state.state.extension.WebExtensionPromptRequest
 import mozilla.components.browser.state.store.BrowserStore
@@ -28,7 +30,6 @@ import mozilla.components.feature.addons.AddonManager
 import mozilla.components.feature.addons.ui.AddonDialogFragment
 import mozilla.components.feature.addons.ui.AddonInstallationDialogFragment
 import mozilla.components.feature.addons.ui.PermissionsDialogFragment
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.android.content.appVersionName
 import mozilla.components.ui.widgets.withCenterAlignedButtons
@@ -71,21 +72,24 @@ class WebExtensionPromptFeature(
      * and opens / closes tabs as needed.
      */
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state ->
-                state.webExtensionPromptRequest
-            }.distinctUntilChanged().collect { promptRequest ->
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state ->
+                        state.webExtensionPromptRequest
+                    }.distinctUntilChanged().collect { promptRequest ->
 
-                when (promptRequest) {
-                    is WebExtensionPromptRequest.AfterInstallation -> {
-                        handleAfterInstallationRequest(promptRequest)
-                    }
+                        when (promptRequest) {
+                            is WebExtensionPromptRequest.AfterInstallation -> {
+                                handleAfterInstallationRequest(promptRequest)
+                            }
 
-                    is WebExtensionPromptRequest.BeforeInstallation.InstallationFailed -> {
-                        handleBeforeInstallationRequest(promptRequest)
-                        consumePromptRequest()
+                            is WebExtensionPromptRequest.BeforeInstallation.InstallationFailed -> {
+                                handleBeforeInstallationRequest(promptRequest)
+                                consumePromptRequest()
+                            }
+                        }
                     }
-                }
             }
         }
         tryToReAttachButtonHandlersToPreviousDialog()

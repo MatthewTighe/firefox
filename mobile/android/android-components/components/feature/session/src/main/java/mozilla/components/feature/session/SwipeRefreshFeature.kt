@@ -7,13 +7,14 @@ package mozilla.components.feature.session
 import android.view.View
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.ContentAction.UpdateRefreshCanceledStateAction
 import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineView
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
 
@@ -42,24 +43,27 @@ class SwipeRefreshFeature(
      * Start feature: Starts adding pull to refresh behavior for the active session.
      */
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.map { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
-                .ifAnyChanged {
-                    arrayOf(it?.content?.loading, it?.content?.refreshCanceled)
-                }
-                .collect { tab ->
-                    tab?.let {
-                        if (!tab.content.loading || tab.content.refreshCanceled) {
-                            swipeRefreshLayout.isRefreshing = false
-                            if (tab.content.refreshCanceled) {
-                                // In case the user tries to refresh again
-                                // we need to reset refreshCanceled, to be able to
-                                // get a subsequent event.
-                                store.dispatch(UpdateRefreshCanceledStateAction(tab.id, false))
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .map { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
+                    .ifAnyChanged {
+                        arrayOf(it?.content?.loading, it?.content?.refreshCanceled)
+                    }
+                    .collect { tab ->
+                        tab?.let {
+                            if (!tab.content.loading || tab.content.refreshCanceled) {
+                                swipeRefreshLayout.isRefreshing = false
+                                if (tab.content.refreshCanceled) {
+                                    // In case the user tries to refresh again
+                                    // we need to reset refreshCanceled, to be able to
+                                    // get a subsequent event.
+                                    store.dispatch(UpdateRefreshCanceledStateAction(tab.id, false))
+                                }
                             }
                         }
                     }
-                }
+            }
         }
     }
 

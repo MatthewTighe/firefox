@@ -8,6 +8,7 @@ import android.content.Context
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
@@ -18,7 +19,6 @@ import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
 import mozilla.components.browser.state.state.content.ShareResourceState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.fetch.Client
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.android.content.shareLocalPdf
 import mozilla.components.support.ktx.android.content.shareMedia
@@ -61,18 +61,21 @@ class ShareResourceFeature(
 ) {
 
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
-                .distinctUntilChangedBy { it.content.share }
-                .collect { state ->
-                    state.content.share?.let { shareState ->
-                        logger.debug("Starting the sharing process")
-                        startSharing(shareState)
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
+                    .distinctUntilChangedBy { it.content.share }
+                    .collect { state ->
+                        state.content.share?.let { shareState ->
+                            logger.debug("Starting the sharing process")
+                            startSharing(shareState)
 
-                        // This is a fire and forget action, not something that we want lingering the tab state.
-                        store.dispatch(ShareResourceAction.ConsumeShareAction(state.id))
+                            // This is a fire and forget action, not something that we want lingering the tab state.
+                            store.dispatch(ShareResourceAction.ConsumeShareAction(state.id))
+                        }
                     }
-                }
+            }
         }
     }
 

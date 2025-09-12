@@ -8,10 +8,12 @@ import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.CustomTabListAction
 import mozilla.components.browser.state.action.EngineAction
 import mozilla.components.browser.state.action.ExtensionsProcessAction
@@ -34,7 +36,6 @@ import mozilla.components.concept.engine.webextension.WebExtension
 import mozilla.components.concept.engine.webextension.WebExtensionDelegate
 import mozilla.components.concept.engine.webextension.WebExtensionInstallException
 import mozilla.components.concept.engine.webextension.WebExtensionRuntime
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.ktx.kotlin.isExtensionUrl
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.filterChanged
@@ -435,20 +436,27 @@ object WebExtensionSupport {
         // store (instead of querying it directly), as tabs can be restored asynchronously on
         // startup and might not be ready yet.
         var scope: CoroutineScope? = null
-        scope = store.flowScoped { flow ->
-            flow.map { state -> state.tabs.filter { it.restored }.size }
-                .distinctUntilChanged()
-                .collect { size ->
-                    if (size > 0) {
-                        store.state.tabs.forEach { tab ->
-                            val tabUrl = tab.content.url
-                            if (tabUrl.isExtensionUrl() && supportedUrls.none { tabUrl.startsWith(it) }) {
-                                closeTab(tab.id, false, store, onCloseTabOverride)
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .map { state -> state.tabs.filter { it.restored }.size }
+                    .distinctUntilChanged()
+                    .collect { size ->
+                        if (size > 0) {
+                            store.state.tabs.forEach { tab ->
+                                val tabUrl = tab.content.url
+                                if (tabUrl.isExtensionUrl() && supportedUrls.none {
+                                        tabUrl.startsWith(
+                                            it
+                                        )
+                                    }) {
+                                    closeTab(tab.id, false, store, onCloseTabOverride)
+                                }
                             }
+                            scope?.cancel()
                         }
-                        scope?.cancel()
                     }
-                }
+            }
         }
     }
 
@@ -474,18 +482,21 @@ object WebExtensionSupport {
     private fun registerHandlersForNewSessions(store: BrowserStore) {
         // We need to observe for the entire lifetime of the application,
         // as web extension support is not tied to any particular view.
-        store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.allTabs }
-                .filterChanged {
-                    it.engineState.engineSession
-                }
-                .collect { state ->
-                    state.engineState.engineSession?.let { session ->
-                        installedExtensions.values.forEach { extension ->
-                            registerSessionHandlers(extension, store, session, state.id)
+        MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.allTabs }
+                    .filterChanged {
+                        it.engineState.engineSession
+                    }
+                    .collect { state ->
+                        state.engineState.engineSession?.let { session ->
+                            installedExtensions.values.forEach { extension ->
+                                registerSessionHandlers(extension, store, session, state.id)
+                            }
                         }
                     }
-                }
+            }
         }
     }
 

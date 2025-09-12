@@ -7,12 +7,13 @@ package mozilla.components.feature.privatemode.notification
 import android.content.Context
 import android.content.Intent
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.privateTabs
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import kotlin.reflect.KClass
 
@@ -32,14 +33,21 @@ class PrivateNotificationFeature<T : AbstractPrivateNotificationService>(
     private var scope: CoroutineScope? = null
 
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.map { state -> state.privateTabs.isNotEmpty() }
-                .distinctUntilChanged()
-                .collect { hasPrivateTabs ->
-                    if (hasPrivateTabs) {
-                        applicationContext.startService(Intent(applicationContext, notificationServiceClass.java))
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow.map { state -> state.privateTabs.isNotEmpty() }
+                    .distinctUntilChanged()
+                    .collect { hasPrivateTabs ->
+                        if (hasPrivateTabs) {
+                            applicationContext.startService(
+                                Intent(
+                                    applicationContext,
+                                    notificationServiceClass.java
+                                )
+                            )
+                        }
                     }
-                }
+            }
         }
     }
 

@@ -10,9 +10,11 @@ import androidx.annotation.VisibleForTesting
 import androidx.core.net.toUri
 import androidx.fragment.app.FragmentManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.ContentAction
 import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
 import mozilla.components.browser.state.state.SessionState
@@ -23,7 +25,6 @@ import mozilla.components.concept.engine.EngineSession.LoadUrlFlags.Companion.LO
 import mozilla.components.feature.app.links.AppLinksUseCases.Companion.ENGINE_SUPPORTED_SCHEMES
 import mozilla.components.feature.app.links.RedirectDialogFragment.Companion.FRAGMENT_TAG
 import mozilla.components.feature.session.SessionUseCases
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.android.content.appName
 
@@ -73,23 +74,26 @@ class AppLinksFeature(
      * Starts observing app links on the selected session.
      */
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(sessionId) }
-                .distinctUntilChangedBy {
-                    it.content.appIntent
-                }
-                .collect { sessionState ->
-                    sessionState.content.appIntent?.let {
-                        handleAppIntent(
-                            sessionState = sessionState,
-                            url = it.url,
-                            appIntent = it.appIntent,
-                            fallbackUrl = it.fallbackUrl,
-                            appName = it.appName,
-                        )
-                        store.dispatch(ContentAction.ConsumeAppIntentAction(sessionState.id))
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(sessionId) }
+                    .distinctUntilChangedBy {
+                        it.content.appIntent
                     }
-                }
+                    .collect { sessionState ->
+                        sessionState.content.appIntent?.let {
+                            handleAppIntent(
+                                sessionState = sessionState,
+                                url = it.url,
+                                appIntent = it.appIntent,
+                                fallbackUrl = it.fallbackUrl,
+                                appName = it.appName,
+                            )
+                            store.dispatch(ContentAction.ConsumeAppIntentAction(sessionState.id))
+                        }
+                    }
+            }
         }
 
         findPreviousDialogFragment()?.let {

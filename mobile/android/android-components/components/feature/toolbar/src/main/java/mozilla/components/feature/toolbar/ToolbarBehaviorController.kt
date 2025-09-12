@@ -6,14 +6,15 @@ package mozilla.components.feature.toolbar
 
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.ContentAction
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.toolbar.ScrollableToolbar
-import mozilla.components.lib.state.ext.flowScoped
 
 /**
  * Controls how a dynamic toolbar should behave based on the current tab state.
@@ -33,24 +34,33 @@ class ToolbarBehaviorController(
      * Starts listening for changes in the current tab and updates how the toolbar should behave.
      */
     fun start() {
-        updatesScope = store.flowScoped { flow ->
-            flow.mapNotNull { state ->
-                state.findCustomTabOrSelectedTab(customTabId)
-            }.distinctUntilChangedBy {
-                arrayOf(it.content.loading, it.content.showToolbarAsExpanded)
-            }.collect { state ->
-                if (state.content.showToolbarAsExpanded) {
-                    expandToolbar()
-                    store.dispatch(ContentAction.UpdateExpandedToolbarStateAction(state.id, false))
-                    return@collect
-                }
+        updatesScope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state ->
+                        state.findCustomTabOrSelectedTab(customTabId)
+                    }.distinctUntilChangedBy {
+                        arrayOf(it.content.loading, it.content.showToolbarAsExpanded)
+                    }.collect { state ->
+                        if (state.content.showToolbarAsExpanded) {
+                            expandToolbar()
+                            store.dispatch(
+                                ContentAction.UpdateExpandedToolbarStateAction(
+                                    state.id,
+                                    false
+                                )
+                            )
+                            return@collect
+                        }
 
-                if (state.content.loading) {
-                    expandToolbar()
-                    disableScrolling()
-                } else if (!state.content.loading) {
-                    enableScrolling()
-                }
+                        if (state.content.loading) {
+                            expandToolbar()
+                            disableScrolling()
+                        } else if (!state.content.loading) {
+                            enableScrolling()
+                        }
+                    }
+
             }
         }
     }

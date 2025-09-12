@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import mozilla.components.browser.state.state.recover.RecoverableTab
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.BrowserDirection
@@ -160,8 +159,10 @@ class RecentlyClosedFragment :
                 }
         }
 
-        requireComponents.core.store.flowScoped(viewLifecycleOwner) { flow ->
-            flow.map { state -> state.closedTabs }
+        viewLifecycleOwner.lifecycleScope.launch {
+            requireComponents.core.store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .map { state -> state.closedTabs }
                 .distinctUntilChanged()
                 .collect { tabs ->
                     recentlyClosedFragmentStore.dispatch(

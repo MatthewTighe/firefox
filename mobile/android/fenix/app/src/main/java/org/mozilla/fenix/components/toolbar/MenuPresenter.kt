@@ -6,12 +6,13 @@ package org.mozilla.fenix.components.toolbar
 
 import android.view.View
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.toolbar.BrowserToolbar
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
 
 class MenuPresenter(
@@ -24,19 +25,22 @@ class MenuPresenter(
 
     fun start() {
         menuToolbar.addOnAttachStateChangeListener(this)
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabId) }
-                .ifAnyChanged { tab ->
-                    arrayOf(
-                        tab.content.loading,
-                        tab.content.canGoBack,
-                        tab.content.canGoForward,
-                        tab.content.webAppManifest,
-                    )
-                }
-                .collect {
-                    invalidateActions()
-                }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabId) }
+                    .ifAnyChanged { tab ->
+                        arrayOf(
+                            tab.content.loading,
+                            tab.content.canGoBack,
+                            tab.content.canGoForward,
+                            tab.content.webAppManifest,
+                        )
+                    }
+                    .collect {
+                        invalidateActions()
+                    }
+            }
         }
     }
 

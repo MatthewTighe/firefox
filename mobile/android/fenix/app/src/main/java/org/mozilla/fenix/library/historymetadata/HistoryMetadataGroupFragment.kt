@@ -29,7 +29,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.ktx.kotlin.toShortUrl
 import mozilla.components.ui.widgets.withCenterAlignedButtons
@@ -142,8 +141,10 @@ class HistoryMetadataGroupFragment :
                 }
         }
 
-        requireContext().components.appStore.flowScoped(viewLifecycleOwner) { flow ->
-            flow.map { state -> state.pendingDeletionHistoryItems }.collect { items ->
+        viewLifecycleOwner.lifecycleScope.launch {
+            requireContext().components.appStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .map { state -> state.pendingDeletionHistoryItems }.collect { items ->
                 historyMetadataGroupStore.dispatch(
                     HistoryMetadataGroupFragmentAction.UpdatePendingDeletionItems(
                         pendingDeletionItems = items,

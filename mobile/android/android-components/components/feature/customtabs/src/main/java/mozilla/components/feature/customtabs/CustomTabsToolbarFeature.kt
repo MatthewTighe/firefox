@@ -17,8 +17,10 @@ import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.graphics.scale
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.menu.BrowserMenuBuilder
 import mozilla.components.browser.state.selector.findCustomTab
 import mozilla.components.browser.state.state.CustomTabActionButtonConfig
@@ -30,7 +32,6 @@ import mozilla.components.concept.toolbar.Toolbar
 import mozilla.components.feature.customtabs.feature.CustomTabSessionTitleObserver
 import mozilla.components.feature.customtabs.menu.sendWithUrl
 import mozilla.components.feature.tabs.CustomTabsUseCases
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.ktx.android.content.share
@@ -104,11 +105,13 @@ class CustomTabsToolbarFeature(
         val tabId = sessionId ?: return
         val tab = store.state.findCustomTab(tabId) ?: return
 
-        scope = store.flowScoped { flow ->
-            flow
-                .mapNotNull { state -> state.findCustomTab(tabId) }
-                .ifAnyChanged { tab -> arrayOf(tab.content.title, tab.content.url) }
-                .collect { tab -> titleObserver.onTab(tab) }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.findCustomTab(tabId) }
+                    .ifAnyChanged { tab -> arrayOf(tab.content.title, tab.content.url) }
+                    .collect { tab -> titleObserver.onTab(tab) }
+            }
         }
 
         if (!initialized) {

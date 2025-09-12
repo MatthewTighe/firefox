@@ -11,10 +11,11 @@ import android.content.Intent
 import android.speech.RecognizerIntent
 import androidx.activity.result.ActivityResultLauncher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
-import mozilla.components.lib.state.ext.flowScoped
+import kotlinx.coroutines.launch
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.appstate.VoiceSearchAction.VoiceInputRequestCleared
@@ -47,15 +48,18 @@ class VoiceSearchFeature(
     }
 
     private fun observeVoiceSearchRequests() {
-        scope = appStore.flowScoped { flow ->
-            flow.map { state -> state.voiceSearchState }
-                .distinctUntilChangedBy { it.isRequestingVoiceInput }
-                .collect { voiceSearchState ->
-                    if (voiceSearchState.isRequestingVoiceInput) {
-                        appStore.dispatch(VoiceInputRequestCleared)
-                        launchVoiceSearch()
+        scope = MainScope().also {
+            it.launch {
+                appStore.stateFlow
+                    .map { state -> state.voiceSearchState }
+                    .distinctUntilChangedBy { it.isRequestingVoiceInput }
+                    .collect { voiceSearchState ->
+                        if (voiceSearchState.isRequestingVoiceInput) {
+                            appStore.dispatch(VoiceInputRequestCleared)
+                            launchVoiceSearch()
+                        }
                     }
-                }
+            }
         }
     }
 

@@ -7,8 +7,10 @@ package mozilla.components.feature.toolbar
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.VisibleForTesting.Companion.PRIVATE
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.SessionState
@@ -17,7 +19,6 @@ import mozilla.components.concept.toolbar.Toolbar
 import mozilla.components.concept.toolbar.Toolbar.Highlight
 import mozilla.components.concept.toolbar.Toolbar.SiteTrackingProtection
 import mozilla.components.feature.toolbar.internal.URLRenderer
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.ktx.kotlin.isContentUrl
 
 /**
@@ -42,11 +43,13 @@ class ToolbarPresenter(
     fun start() {
         renderer.start()
 
-        scope = store.flowScoped { flow ->
-            flow.distinctUntilChangedBy { it.findCustomTabOrSelectedTab(customTabId) }
-                .collect { state ->
-                    render(state)
-                }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow.distinctUntilChangedBy { it.findCustomTabOrSelectedTab(customTabId) }
+                    .collect { state ->
+                        render(state)
+                    }
+            }
         }
     }
 

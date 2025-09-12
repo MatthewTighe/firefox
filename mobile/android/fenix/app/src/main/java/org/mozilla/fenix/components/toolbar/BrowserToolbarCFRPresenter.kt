@@ -19,10 +19,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.getColor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.state.selector.selectedNormalTab
 import mozilla.components.browser.state.store.BrowserStore
@@ -32,7 +34,6 @@ import mozilla.components.compose.cfr.CFRPopup.PopupAlignment.BODY_TO_ANCHOR_CEN
 import mozilla.components.compose.cfr.CFRPopup.PopupAlignment.INDICATOR_CENTERED_IN_ANCHOR
 import mozilla.components.compose.cfr.CFRPopupProperties
 import mozilla.components.concept.engine.EngineSession.CookieBannerHandlingStatus
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.AddressToolbar
@@ -83,37 +84,42 @@ class BrowserToolbarCFRPresenter(
         if (!isPrivate && !settings.hasShownTabSwipeCFR &&
             !settings.isTabStripEnabled && settings.isSwipeToolbarToSwitchTabsEnabled
         ) {
-            scope = browserStore.flowScoped { flow ->
-                flow
-                    .distinctUntilChangedBy { it.selectedNormalTab?.id }
-                    .collect {
-                        if (settings.shouldShowTabSwipeCFR && !settings.hasShownTabSwipeCFR) {
-                            scope?.cancel()
-                            settings.shouldShowTabSwipeCFR = false
-                            settings.hasShownTabSwipeCFR = true
-                            showTabSwipeCFR()
+            scope = MainScope().also {
+                it.launch {
+                    browserStore.stateFlow
+                        .distinctUntilChangedBy { it.selectedNormalTab?.id }
+                        .collect {
+                            if (settings.shouldShowTabSwipeCFR && !settings.hasShownTabSwipeCFR) {
+                                scope?.cancel()
+                                settings.shouldShowTabSwipeCFR = false
+                                settings.hasShownTabSwipeCFR = true
+                                showTabSwipeCFR()
+                            }
                         }
-                    }
+                }
             }
         }
 
         when (getCFRToShow()) {
             ToolbarCFR.COOKIE_BANNERS -> {
-                scope = browserStore.flowScoped { flow ->
-                    flow.mapNotNull { it.findCustomTabOrSelectedTab(customTabId) }
-                        .ifAnyChanged { tab ->
-                            arrayOf(
-                                tab.cookieBanner,
-                            )
-                        }
-                        .filter {
-                            it.content.private && it.cookieBanner == CookieBannerHandlingStatus.HANDLED
-                        }
-                        .collect {
-                            scope?.cancel()
-                            settings.shouldShowCookieBannersCFR = false
-                            showCookieBannersCFR()
-                        }
+                scope = MainScope().also {
+                    it.launch {
+                        browserStore.stateFlow
+                            .mapNotNull { it.findCustomTabOrSelectedTab(customTabId) }
+                            .ifAnyChanged { tab ->
+                                arrayOf(
+                                    tab.cookieBanner,
+                                )
+                            }
+                            .filter {
+                                it.content.private && it.cookieBanner == CookieBannerHandlingStatus.HANDLED
+                            }
+                            .collect {
+                                scope?.cancel()
+                                settings.shouldShowCookieBannersCFR = false
+                                showCookieBannersCFR()
+                            }
+                    }
                 }
             }
 

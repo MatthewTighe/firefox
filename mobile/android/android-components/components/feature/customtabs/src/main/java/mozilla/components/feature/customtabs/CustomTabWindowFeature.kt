@@ -12,15 +12,16 @@ import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.ContentAction
 import mozilla.components.browser.state.selector.findCustomTab
 import mozilla.components.browser.state.state.CustomTabConfig
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.window.WindowRequest
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 const val SHORTCUT_CATEGORY = "mozilla.components.pwa.category.SHORTCUT"
@@ -73,28 +74,31 @@ class CustomTabWindowFeature(
      * Starts observing the configured session to listen for window requests.
      */
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findCustomTab(sessionId) }
-                .distinctUntilChangedBy {
-                    it.content.windowRequest
-                }
-                .collect { state ->
-                    val windowRequest = state.content.windowRequest
-                    if (windowRequest?.type == WindowRequest.Type.OPEN) {
-                        val intent = configToIntent(state.config)
-                        val uri = windowRequest.url.toUri()
-                        // This could only fail if the above intent is for our application
-                        // and we are not registered to handle its schemes.
-                        try {
-                            intent.launchUrl(activity, uri)
-                        } catch (e: ActivityNotFoundException) {
-                            // Workaround for unsupported schemes
-                            // See https://bugzilla.mozilla.org/show_bug.cgi?id=1878704
-                            state.engineState.engineSession?.loadUrl(windowRequest.url)
-                        }
-                        store.dispatch(ContentAction.ConsumeWindowRequestAction(sessionId))
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.findCustomTab(sessionId) }
+                    .distinctUntilChangedBy {
+                        it.content.windowRequest
                     }
-                }
+                    .collect { state ->
+                        val windowRequest = state.content.windowRequest
+                        if (windowRequest?.type == WindowRequest.Type.OPEN) {
+                            val intent = configToIntent(state.config)
+                            val uri = windowRequest.url.toUri()
+                            // This could only fail if the above intent is for our application
+                            // and we are not registered to handle its schemes.
+                            try {
+                                intent.launchUrl(activity, uri)
+                            } catch (e: ActivityNotFoundException) {
+                                // Workaround for unsupported schemes
+                                // See https://bugzilla.mozilla.org/show_bug.cgi?id=1878704
+                                state.engineState.engineSession?.loadUrl(windowRequest.url)
+                            }
+                            store.dispatch(ContentAction.ConsumeWindowRequestAction(sessionId))
+                        }
+                    }
+            }
         }
     }
 

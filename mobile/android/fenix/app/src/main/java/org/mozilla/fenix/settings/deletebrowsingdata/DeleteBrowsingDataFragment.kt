@@ -9,17 +9,19 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.ui.widgets.withCenterAlignedButtons
 import org.mozilla.fenix.R
 import org.mozilla.fenix.compose.snackbar.Snackbar
@@ -97,10 +99,14 @@ class DeleteBrowsingDataFragment : Fragment(R.layout.fragment_delete_browsing_da
     override fun onStart() {
         super.onStart()
 
-        scope = requireComponents.core.store.flowScoped(viewLifecycleOwner) { flow ->
-            flow.map { state -> state.tabs.size }
-                .distinctUntilChanged()
-                .collect { openTabs -> updateTabCount(openTabs) }
+        scope = viewLifecycleOwner.lifecycleScope.also {
+            it.launch {
+                requireComponents.core.store.stateFlow
+                    .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                    .map { state -> state.tabs.size }
+                    .distinctUntilChanged()
+                    .collect { openTabs -> updateTabCount(openTabs) }
+            }
         }
     }
 

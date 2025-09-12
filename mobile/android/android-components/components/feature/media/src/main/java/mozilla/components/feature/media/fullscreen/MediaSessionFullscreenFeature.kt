@@ -8,14 +8,15 @@ import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.view.WindowManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.mediasession.MediaSession
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 /**
@@ -30,25 +31,28 @@ class MediaSessionFullscreenFeature(
     private var scope: CoroutineScope? = null
 
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.map {
-                it.tabs + it.customTabs
-            }.map { tab ->
-                tab.firstOrNull { it.mediaSessionState?.fullscreen == true }
-            }.distinctUntilChanged { old, new ->
-                old.hasSameOrientationInformationAs(new)
-            }.collect { state ->
-                // There should only be one fullscreen session.
-                if (state == null) {
-                    activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
-                    activity.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                    return@collect
-                }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .map {
+                        it.tabs + it.customTabs
+                    }.map { tab ->
+                        tab.firstOrNull { it.mediaSessionState?.fullscreen == true }
+                    }.distinctUntilChanged { old, new ->
+                        old.hasSameOrientationInformationAs(new)
+                    }.collect { state ->
+                        // There should only be one fullscreen session.
+                        if (state == null) {
+                            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_USER
+                            activity.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                            return@collect
+                        }
 
-                if (store.state.findCustomTabOrSelectedTab(tabId)?.id == state.id) {
-                    setOrientationForTabState(state)
-                }
-                setDeviceSleepModeForTabState(state)
+                        if (store.state.findCustomTabOrSelectedTab(tabId)?.id == state.id) {
+                            setOrientationForTabState(state)
+                        }
+                        setDeviceSleepModeForTabState(state)
+                    }
             }
         }
     }

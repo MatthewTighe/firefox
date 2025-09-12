@@ -33,6 +33,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapNotNull
@@ -64,7 +65,6 @@ import mozilla.components.feature.toolbar.ToolbarFeature
 import mozilla.components.feature.top.sites.TopSitesConfig
 import mozilla.components.feature.top.sites.TopSitesFeature
 import mozilla.components.lib.crash.Crash
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.components.support.ktx.android.content.createChooserExcludingCurrentApp
@@ -245,23 +245,25 @@ class BrowserFragment :
     }
 
     private fun updateCookieBannerSiteToReportSnackBar() {
-        siteNotSupportedSnackBarScope = cookieBannerReducerStore.flowScoped { flow ->
-            flow.mapNotNull { state -> state.showSnackBarForSiteToReport }
-                .distinctUntilChanged()
-                .collect { showSnackBarForSiteToReport ->
-                    if (showSnackBarForSiteToReport) {
-                        ViewUtils.showBrandedSnackbar(
-                            view,
-                            R.string.cookie_banner_report_a_site_snackbar_label,
-                            0,
-                        )
-                        cookieBannerReducerStore.dispatch(
-                            CookieBannerReducerAction.ShowSnackBarForSiteToReport(
-                                false,
-                            ),
-                        )
+        siteNotSupportedSnackBarScope = MainScope().also {
+            it.launch {
+                cookieBannerReducerStore.stateFlow.mapNotNull { state -> state.showSnackBarForSiteToReport }
+                    .distinctUntilChanged()
+                    .collect { showSnackBarForSiteToReport ->
+                        if (showSnackBarForSiteToReport) {
+                            ViewUtils.showBrandedSnackbar(
+                                view,
+                                R.string.cookie_banner_report_a_site_snackbar_label,
+                                0,
+                            )
+                            cookieBannerReducerStore.dispatch(
+                                CookieBannerReducerAction.ShowSnackBarForSiteToReport(
+                                    false,
+                                ),
+                            )
+                        }
                     }
-                }
+            }
         }
     }
 

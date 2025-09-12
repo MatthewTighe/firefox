@@ -7,10 +7,12 @@ package mozilla.components.feature.syncedtabs.storage
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.browser.state.state.isActive
@@ -20,7 +22,6 @@ import mozilla.components.browser.storage.sync.SyncedDeviceTabs
 import mozilla.components.browser.storage.sync.Tab
 import mozilla.components.browser.storage.sync.TabEntry
 import mozilla.components.concept.sync.Device
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.service.fxa.SyncEngine
 import mozilla.components.service.fxa.manager.FxaAccountManager
 import mozilla.components.service.fxa.manager.ext.withConstellationIfExists
@@ -49,25 +50,30 @@ class SyncedTabsStorage(
      */
     @OptIn(FlowPreview::class)
     fun start() {
-        scope = store.flowScoped { flow ->
-            flow.distinctUntilChangedBy { it.toSyncTabState() }
-                .map { state ->
-                    // TO-DO: https://github.com/mozilla-mobile/android-components/issues/5179
-                    val iconUrl = null
-                    state.tabs.filter { !it.content.private && !it.content.loading }.map { tab ->
-                        val history = listOf(TabEntry(tab.content.title, tab.content.url, iconUrl))
-                        Tab(history, 0, tab.lastAccess, !tab.isActive(maxActiveTime))
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .distinctUntilChangedBy { it.toSyncTabState() }
+                    .map { state ->
+                        // TO-DO: https://github.com/mozilla-mobile/android-components/issues/5179
+                        val iconUrl = null
+                        state.tabs.filter { !it.content.private && !it.content.loading }
+                            .map { tab ->
+                                val history =
+                                    listOf(TabEntry(tab.content.title, tab.content.url, iconUrl))
+                                Tab(history, 0, tab.lastAccess, !tab.isActive(maxActiveTime))
+                            }
                     }
-                }
-                .debounce(debounceMillis)
-                .collect { tabs ->
-                    tabsStorage.store(tabs)
-                    accountManager.syncNow(
-                        reason = SyncReason.User,
-                        customEngineSubset = listOf(SyncEngine.Tabs),
-                        debounce = true,
-                    )
-                }
+                    .debounce(debounceMillis)
+                    .collect { tabs ->
+                        tabsStorage.store(tabs)
+                        accountManager.syncNow(
+                            reason = SyncReason.User,
+                            customEngineSubset = listOf(SyncEngine.Tabs),
+                            debounce = true,
+                        )
+                    }
+            }
         }
     }
 

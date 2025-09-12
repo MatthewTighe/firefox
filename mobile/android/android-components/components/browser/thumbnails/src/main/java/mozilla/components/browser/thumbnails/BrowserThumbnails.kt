@@ -7,15 +7,16 @@ package mozilla.components.browser.thumbnails
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.ContentAction
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.ContentState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineView
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.android.content.isOSOnLowMemory
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
@@ -41,14 +42,17 @@ class BrowserThumbnails(
      * Starts observing the selected session to listen for when a session finishes loading.
      */
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.map { it.selectedTab }
-                .ifAnyChanged { arrayOf(it?.content?.loading, it?.content?.firstContentfulPaint) }
-                .collect { state ->
-                    if (state?.content?.loading == false && state.content.firstContentfulPaint) {
-                        requestScreenshot()
+        scope = MainScope().also { scope ->
+            scope.launch {
+                store.stateFlow
+                    .map { it.selectedTab }
+                    .ifAnyChanged { arrayOf(it?.content?.loading, it?.content?.firstContentfulPaint) }
+                    .collect { state ->
+                        if (state?.content?.loading == false && state.content.firstContentfulPaint) {
+                            requestScreenshot()
+                        }
                     }
-                }
+            }
         }
     }
 

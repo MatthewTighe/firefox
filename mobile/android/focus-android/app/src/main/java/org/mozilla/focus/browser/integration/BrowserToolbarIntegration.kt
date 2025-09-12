@@ -25,6 +25,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findCustomTab
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.state.store.BrowserStore
@@ -40,7 +41,6 @@ import mozilla.components.feature.tabs.toolbar.TabCounterToolbarButton
 import mozilla.components.feature.toolbar.ToolbarBehaviorController
 import mozilla.components.feature.toolbar.ToolbarFeature
 import mozilla.components.feature.toolbar.ToolbarPresenter
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import mozilla.components.support.utils.ColorUtils.getReadableTextColor
@@ -251,15 +251,17 @@ class BrowserToolbarIntegration(
     }
 
     private fun setBrowserActionButtons() {
-        tabsCounterScope = store.flowScoped(coroutineScope = coroutineScope) { flow ->
-            flow.distinctUntilChangedBy { state -> state.tabs.size > 1 }
-                .collect { state ->
-                    if (state.tabs.size > 1) {
-                        toolbar.addBrowserAction(tabsAction)
-                    } else {
-                        toolbar.removeBrowserAction(tabsAction)
+        tabsCounterScope = coroutineScope.also {
+            it.launch {
+                store.stateFlow.distinctUntilChangedBy { state -> state.tabs.size > 1 }
+                    .collect { state ->
+                        if (state.tabs.size > 1) {
+                            toolbar.addBrowserAction(tabsAction)
+                        } else {
+                            toolbar.removeBrowserAction(tabsAction)
+                        }
                     }
-                }
+            }
         }
     }
 
@@ -287,49 +289,51 @@ class BrowserToolbarIntegration(
 
     @VisibleForTesting
     internal fun observeEraseCfr() {
-        eraseTabsCfrScope = fragment.components?.appStore?.flowScoped(coroutineScope = coroutineScope) { flow ->
-            flow.mapNotNull { state -> state.showEraseTabsCfr }
-                .distinctUntilChanged()
-                .collect { showEraseCfr ->
-                    if (showEraseCfr) {
-                        val eraseActionView =
-                            toolbar.findViewById<LinearLayout>(toolbarR.id.mozac_browser_toolbar_navigation_actions)
-                                .children
-                                .last()
-                        CFRPopup(
-                            anchor = eraseActionView,
-                            properties = CFRPopupProperties(
-                                popupWidth = 256.dp,
-                                popupAlignment = CFRPopup.PopupAlignment.INDICATOR_CENTERED_IN_ANCHOR,
-                                popupBodyColors = listOf(
-                                    ContextCompat.getColor(
-                                        fragment.requireContext(),
-                                        R.color.cfr_pop_up_shape_end_color,
+        eraseTabsCfrScope = coroutineScope.also {
+            it.launch {
+                fragment.components?.appStore?.stateFlow?.mapNotNull { state -> state.showEraseTabsCfr }
+                    ?.distinctUntilChanged()
+                    ?.collect { showEraseCfr ->
+                        if (showEraseCfr) {
+                            val eraseActionView =
+                                toolbar.findViewById<LinearLayout>(toolbarR.id.mozac_browser_toolbar_navigation_actions)
+                                    .children
+                                    .last()
+                            CFRPopup(
+                                anchor = eraseActionView,
+                                properties = CFRPopupProperties(
+                                    popupWidth = 256.dp,
+                                    popupAlignment = CFRPopup.PopupAlignment.INDICATOR_CENTERED_IN_ANCHOR,
+                                    popupBodyColors = listOf(
+                                        ContextCompat.getColor(
+                                            fragment.requireContext(),
+                                            R.color.cfr_pop_up_shape_end_color,
+                                        ),
+                                        ContextCompat.getColor(
+                                            fragment.requireContext(),
+                                            R.color.cfr_pop_up_shape_start_color,
+                                        ),
                                     ),
-                                    ContextCompat.getColor(
+                                    dismissButtonColor = ContextCompat.getColor(
                                         fragment.requireContext(),
-                                        R.color.cfr_pop_up_shape_start_color,
+                                        cardViewR.color.cardview_light_background,
                                     ),
+                                    popupVerticalOffset = 0.dp,
                                 ),
-                                dismissButtonColor = ContextCompat.getColor(
-                                    fragment.requireContext(),
-                                    cardViewR.color.cardview_light_background,
-                                ),
-                                popupVerticalOffset = 0.dp,
-                            ),
-                            onDismiss = { onDismissEraseTabsCfr() },
-                            text = {
-                                Text(
-                                    style = focusTypography.cfrTextStyle,
-                                    text = fragment.getString(R.string.cfr_for_toolbar_delete_icon2),
-                                    color = colorResource(R.color.cfr_text_color),
-                                )
-                            },
-                        ).apply {
-                            show()
+                                onDismiss = { onDismissEraseTabsCfr() },
+                                text = {
+                                    Text(
+                                        style = focusTypography.cfrTextStyle,
+                                        text = fragment.getString(R.string.cfr_for_toolbar_delete_icon2),
+                                        color = colorResource(R.color.cfr_text_color),
+                                    )
+                                },
+                            ).apply {
+                                show()
+                            }
                         }
                     }
-                }
+            }
         }
     }
 
@@ -339,114 +343,116 @@ class BrowserToolbarIntegration(
 
     @VisibleForTesting
     internal fun observeCookieBannerCfr() {
-        cookieBannerCfrScope =
-            fragment.components?.appStore?.flowScoped(coroutineScope = coroutineScope) { flow ->
-            flow.mapNotNull { state -> state.showCookieBannerCfr }
-                .distinctUntilChanged()
-                .collect { showCookieBannerCfr ->
-                    if (showCookieBannerCfr) {
-                        CFRPopup(
-                            anchor = toolbar.findViewById<AppCompatEditText>(
-                                toolbarR.id.mozac_browser_toolbar_background,
-                            ),
-                            properties = CFRPopupProperties(
-                                popupWidth = 256.dp,
-                                popupAlignment = CFRPopup.PopupAlignment.BODY_TO_ANCHOR_START,
-                                popupBodyColors = listOf(
-                                    ContextCompat.getColor(
-                                        fragment.requireContext(),
-                                        R.color.cfr_pop_up_shape_end_color,
-                                    ),
-                                    ContextCompat.getColor(
-                                        fragment.requireContext(),
-                                        R.color.cfr_pop_up_shape_start_color,
-                                    ),
+        cookieBannerCfrScope = coroutineScope.also {
+            it.launch {
+                fragment.components?.appStore?.stateFlow.mapNotNull { state -> state.showCookieBannerCfr }
+                    .distinctUntilChanged()
+                    .collect { showCookieBannerCfr ->
+                        if (showCookieBannerCfr) {
+                            CFRPopup(
+                                anchor = toolbar.findViewById<AppCompatEditText>(
+                                    toolbarR.id.mozac_browser_toolbar_background,
                                 ),
-                                dismissButtonColor = ContextCompat.getColor(
-                                    fragment.requireContext(),
-                                    cardViewR.color.cardview_light_background,
-                                ),
-                                popupVerticalOffset = 0.dp,
-                                indicatorArrowStartOffset = 10.dp,
-                            ),
-                            onDismiss = { onDismissCookieBannerCfr() },
-                            text = {
-                                val textCookieBannerCfr = stringResource(
-                                    id = R.string.cfr_cookie_banner,
-                                    LocalContext.current.getString(R.string.onboarding_short_app_name),
-                                    LocalContext.current.getString(R.string.cfr_cookie_banner_link),
-                                )
-                                ClickableSubstringLink(
-                                    text = textCookieBannerCfr,
-                                    style = focusTypography.cfrCookieBannerTextStyle,
-                                    linkTextDecoration = TextDecoration.Underline,
-                                    clickableStartIndex = textCookieBannerCfr.indexOf(
-                                        LocalContext.current.getString(
-                                            R.string.cfr_cookie_banner_link,
+                                properties = CFRPopupProperties(
+                                    popupWidth = 256.dp,
+                                    popupAlignment = CFRPopup.PopupAlignment.BODY_TO_ANCHOR_START,
+                                    popupBodyColors = listOf(
+                                        ContextCompat.getColor(
+                                            fragment.requireContext(),
+                                            R.color.cfr_pop_up_shape_end_color,
+                                        ),
+                                        ContextCompat.getColor(
+                                            fragment.requireContext(),
+                                            R.color.cfr_pop_up_shape_start_color,
                                         ),
                                     ),
-                                    clickableEndIndex = textCookieBannerCfr.length,
-                                    onClick = {
-                                        fragment.requireComponents.appStore.dispatch(
-                                            AppAction.OpenSettings(Screen.Settings.Page.CookieBanner),
-                                        )
-                                        onDismissCookieBannerCfr()
-                                    },
-                                )
-                            },
-                        ).apply {
-                            show()
-                            stopObserverCookieBannerCfrChanges()
+                                    dismissButtonColor = ContextCompat.getColor(
+                                        fragment.requireContext(),
+                                        cardViewR.color.cardview_light_background,
+                                    ),
+                                    popupVerticalOffset = 0.dp,
+                                    indicatorArrowStartOffset = 10.dp,
+                                ),
+                                onDismiss = { onDismissCookieBannerCfr() },
+                                text = {
+                                    val textCookieBannerCfr = stringResource(
+                                        id = R.string.cfr_cookie_banner,
+                                        LocalContext.current.getString(R.string.onboarding_short_app_name),
+                                        LocalContext.current.getString(R.string.cfr_cookie_banner_link),
+                                    )
+                                    ClickableSubstringLink(
+                                        text = textCookieBannerCfr,
+                                        style = focusTypography.cfrCookieBannerTextStyle,
+                                        linkTextDecoration = TextDecoration.Underline,
+                                        clickableStartIndex = textCookieBannerCfr.indexOf(
+                                            LocalContext.current.getString(
+                                                R.string.cfr_cookie_banner_link,
+                                            ),
+                                        ),
+                                        clickableEndIndex = textCookieBannerCfr.length,
+                                        onClick = {
+                                            fragment.requireComponents.appStore.dispatch(
+                                                AppAction.OpenSettings(Screen.Settings.Page.CookieBanner),
+                                            )
+                                            onDismissCookieBannerCfr()
+                                        },
+                                    )
+                                },
+                            ).apply {
+                                show()
+                                stopObserverCookieBannerCfrChanges()
+                            }
                         }
                     }
-                }
+            }
         }
     }
 
     @VisibleForTesting
     internal fun observeTrackingProtectionCfr() {
-        trackingProtectionCfrScope =
-            fragment.components?.appStore?.flowScoped(coroutineScope = coroutineScope) { flow ->
-            flow.mapNotNull { state -> state.showTrackingProtectionCfrForTab }
-                .distinctUntilChanged()
-                .collect { showTrackingProtectionCfrForTab ->
-                    if (showTrackingProtectionCfrForTab[store.state.selectedTabId] == true) {
-                        CFRPopup(
-                            anchor = toolbar.findViewById(
-                                toolbarR.id.mozac_browser_toolbar_tracking_protection_indicator,
-                            ),
-                            properties = CFRPopupProperties(
-                                popupWidth = 256.dp,
-                                popupAlignment = CFRPopup.PopupAlignment.INDICATOR_CENTERED_IN_ANCHOR,
-                                popupBodyColors = listOf(
-                                    ContextCompat.getColor(
-                                        fragment.requireContext(),
-                                        R.color.cfr_pop_up_shape_end_color,
-                                    ),
-                                    ContextCompat.getColor(
-                                        fragment.requireContext(),
-                                        R.color.cfr_pop_up_shape_start_color,
-                                    ),
+        trackingProtectionCfrScope =coroutineScope.also {
+            it.launch {
+                fragment.components?.appStore?.stateFlow?.mapNotNull { state -> state.showTrackingProtectionCfrForTab }
+                    ?.distinctUntilChanged()
+                    ?.collect { showTrackingProtectionCfrForTab ->
+                        if (showTrackingProtectionCfrForTab[store.state.selectedTabId] == true) {
+                            CFRPopup(
+                                anchor = toolbar.findViewById(
+                                    toolbarR.id.mozac_browser_toolbar_tracking_protection_indicator,
                                 ),
-                                dismissButtonColor = ContextCompat.getColor(
-                                    fragment.requireContext(),
-                                    cardViewR.color.cardview_light_background,
+                                properties = CFRPopupProperties(
+                                    popupWidth = 256.dp,
+                                    popupAlignment = CFRPopup.PopupAlignment.INDICATOR_CENTERED_IN_ANCHOR,
+                                    popupBodyColors = listOf(
+                                        ContextCompat.getColor(
+                                            fragment.requireContext(),
+                                            R.color.cfr_pop_up_shape_end_color,
+                                        ),
+                                        ContextCompat.getColor(
+                                            fragment.requireContext(),
+                                            R.color.cfr_pop_up_shape_start_color,
+                                        ),
+                                    ),
+                                    dismissButtonColor = ContextCompat.getColor(
+                                        fragment.requireContext(),
+                                        cardViewR.color.cardview_light_background,
+                                    ),
+                                    popupVerticalOffset = 0.dp,
                                 ),
-                                popupVerticalOffset = 0.dp,
-                            ),
-                            onDismiss = { onDismissTrackingProtectionCfr() },
-                            text = {
-                                Text(
-                                    style = focusTypography.cfrTextStyle,
-                                    text = fragment.getString(R.string.cfr_for_toolbar_shield_icon2),
-                                    color = colorResource(R.color.cfr_text_color),
-                                )
-                            },
-                        ).apply {
-                            show()
+                                onDismiss = { onDismissTrackingProtectionCfr() },
+                                text = {
+                                    Text(
+                                        style = focusTypography.cfrTextStyle,
+                                        text = fragment.getString(R.string.cfr_for_toolbar_shield_icon2),
+                                        color = colorResource(R.color.cfr_text_color),
+                                    )
+                                },
+                            ).apply {
+                                show()
+                            }
                         }
                     }
-                }
+            }
         }
     }
 
@@ -476,26 +482,30 @@ class BrowserToolbarIntegration(
 
     @VisibleForTesting
     internal fun observerSecurityIndicatorChanges() {
-        securityIndicatorScope = store.flowScoped(coroutineScope = coroutineScope) { flow ->
-            flow.mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabId) }
-                .distinctUntilChangedBy { tab -> tab.content.securityInfo }
-                .collect {
-                    val secure = it.content.securityInfo.secure
-                    val url = it.content.url.trim()
-                    when {
-                        secure && Indicators.SECURITY in toolbar.display.indicators -> {
-                            addTrackingProtectionIndicator()
-                        }
+        securityIndicatorScope = coroutineScope.also {
+            it.launch {
+                store.stateFlow.mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabId) }
+                    .distinctUntilChangedBy { tab -> tab.content.securityInfo }
+                    .collect {
+                        val secure = it.content.securityInfo.secure
+                        val url = it.content.url.trim()
+                        when {
+                            secure && Indicators.SECURITY in toolbar.display.indicators -> {
+                                addTrackingProtectionIndicator()
+                            }
 
-                        secure || Indicators.SECURITY in toolbar.display.indicators || url.startsWith("about:") -> {
-                            // do nothing
-                        }
+                            secure || Indicators.SECURITY in toolbar.display.indicators || url.startsWith(
+                                "about:"
+                            ) -> {
+                                // do nothing
+                            }
 
-                        else -> {
-                            addSecurityIndicator()
+                            else -> {
+                                addSecurityIndicator()
+                            }
                         }
                     }
-                }
+            }
         }
     }
 

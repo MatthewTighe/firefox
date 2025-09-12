@@ -7,13 +7,14 @@ package org.mozilla.focus.browser.integration
 import android.content.Context
 import androidx.appcompat.content.res.AppCompatResources
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.toolbar.BrowserToolbar
 import mozilla.components.feature.session.SessionUseCases
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
 import mozilla.components.support.utils.ColorUtils
@@ -102,16 +103,19 @@ class NavigationButtonsIntegration(
     }
 
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.map { state -> state.findCustomTabOrSelectedTab(customTabId) }
-                .ifAnyChanged { tab ->
-                    arrayOf(
-                        tab?.content?.canGoBack,
-                        tab?.content?.canGoForward,
-                        tab?.content?.loading,
-                    )
-                }
-                .collect { toolbar.invalidateActions() }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .map { state -> state.findCustomTabOrSelectedTab(customTabId) }
+                    .ifAnyChanged { tab ->
+                        arrayOf(
+                            tab?.content?.canGoBack,
+                            tab?.content?.canGoForward,
+                            tab?.content?.loading,
+                        )
+                    }
+                    .collect { toolbar.invalidateActions() }
+            }
         }
     }
 

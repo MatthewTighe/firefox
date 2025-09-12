@@ -18,6 +18,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -26,7 +27,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.privateTabs
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.flowScoped
 import org.mozilla.fenix.GleanMetrics.PrivateBrowsingLocked
 import org.mozilla.fenix.R
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
@@ -171,28 +171,33 @@ class PrivateBrowsingLockFeature(
     }
 
     private fun observePrivateTabsClosure() {
-        browserStoreScope = browserStore.flowScoped { flow ->
-            flow
-                .map { it.privateTabs.size }
-                .distinctUntilChanged()
-                .filter { it == 0 }
-                .collect {
-                    // When all private tabs are closed, we don't need to lock the private mode.
-                    appStore.dispatch(
-                        PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(
-                            isLocked = false,
-                        ),
-                    )
-                }
+        browserStoreScope = MainScope().also {
+            it.launch {
+                browserStore.stateFlow
+                    .map { it.privateTabs.size }
+                    .distinctUntilChanged()
+                    .filter { it == 0 }
+                    .collect {
+                        // When all private tabs are closed, we don't need to lock the private mode.
+                        appStore.dispatch(
+                            PrivateBrowsingLockAction.UpdatePrivateBrowsingLock(
+                                isLocked = false,
+                            ),
+                        )
+                    }
+            }
         }
     }
 
     private fun observeOpenInFirefoxRequest() {
-        appStoreScope = appStore.flowScoped { flow ->
-            flow.map { it.openInFirefoxRequested }
-                .distinctUntilChanged()
-                .filter { it }
-                .collect { openInFirefoxRequested = true }
+        appStoreScope = MainScope().also {
+            it.launch {
+                appStore.stateFlow
+                    .map { it.openInFirefoxRequested }
+                    .distinctUntilChanged()
+                    .filter { it }
+                    .collect { openInFirefoxRequested = true }
+            }
         }
     }
 

@@ -8,15 +8,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.EngineAction
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.ktx.android.content.getColorFromAttr
 import org.mozilla.fenix.R
 import org.mozilla.fenix.databinding.FragmentTabHistoryDialogBinding
@@ -66,8 +69,10 @@ class TabHistoryDialogFragment : BottomSheetDialogFragment() {
             )
         }
 
-        requireComponents.core.store.flowScoped(viewLifecycleOwner) { flow ->
-            flow.mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabSessionId)?.content?.history }
+        viewLifecycleOwner.lifecycleScope.launch {
+            requireComponents.core.store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabSessionId)?.content?.history }
                 .distinctUntilChanged()
                 .collect { historyState ->
                     tabHistoryView.updateState(historyState)

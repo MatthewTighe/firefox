@@ -9,7 +9,9 @@ import androidx.annotation.ColorRes
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.VisibleForTesting.Companion.PRIVATE
 import androidx.core.content.ContextCompat.getColor
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.distinctUntilChangedBy
@@ -32,7 +34,6 @@ import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.storage.BookmarksStorage
 import mozilla.components.feature.top.sites.PinnedSiteStorage
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.ktx.android.content.getColorFromAttr
 import mozilla.components.support.ktx.kotlin.isAboutUrl
 import mozilla.components.support.ktx.kotlin.isContentUrl
@@ -499,8 +500,10 @@ open class DefaultToolbarMenu(
 
     @VisibleForTesting
     internal fun registerForIsBookmarkedUpdates() {
-        store.flowScoped(lifecycleOwner) { flow ->
-            flow.mapNotNull { state -> state.selectedTab }
+        lifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .mapNotNull { state -> state.selectedTab }
                 .ifAnyChanged { tab ->
                     arrayOf(
                         tab.id,
@@ -528,8 +531,10 @@ open class DefaultToolbarMenu(
     }
 
     private fun registerForScreenReaderUpdates() {
-        store.flowScoped(lifecycleOwner) { flow ->
-            flow.mapNotNull { state -> state.selectedTab }
+        lifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .mapNotNull { state -> state.selectedTab }
                 .distinctUntilChangedBy { it.readerState }
                 .collect {
                     translationsItem.enabled = !it.readerState.active

@@ -5,10 +5,11 @@
 package mozilla.components.support.webextensions
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 /**
@@ -32,13 +33,16 @@ open class ExtensionsProcessDisabledPromptObserver(
 
     override fun start() {
         if (scope == null) {
-            scope = store.flowScoped { flow ->
-                flow.distinctUntilChangedBy { it.showExtensionsProcessDisabledPrompt }
-                    .collect { state ->
-                        if (state.showExtensionsProcessDisabledPrompt) {
-                            onShowExtensionsProcessDisabledPrompt()
+            scope = MainScope().also {
+                it.launch {
+                    store.stateFlow
+                        .distinctUntilChangedBy { it.showExtensionsProcessDisabledPrompt }
+                        .collect { state ->
+                            if (state.showExtensionsProcessDisabledPrompt) {
+                                onShowExtensionsProcessDisabledPrompt()
+                            }
                         }
-                    }
+                }
             }
         }
     }

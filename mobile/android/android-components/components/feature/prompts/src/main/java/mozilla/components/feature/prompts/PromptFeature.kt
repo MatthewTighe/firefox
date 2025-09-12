@@ -13,8 +13,10 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.ContentAction
 import mozilla.components.browser.state.selector.findTabOrCustomTab
 import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
@@ -104,7 +106,6 @@ import mozilla.components.feature.prompts.share.ShareDelegate
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.session.SessionUseCases.ExitFullScreenUseCase
 import mozilla.components.feature.tabs.TabsUseCases
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.ActivityResultHandler
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.base.feature.OnNeedToRequestPermissions
@@ -436,107 +437,113 @@ class PromptFeature private constructor(
     override fun start() {
         promptAbuserDetector.resetJSAlertAbuseState()
 
-        handlePromptScope = store.flowScoped { flow ->
-            flow.map { state -> state.findTabOrCustomTabOrSelectedTab(customTabId) }
-                .ifAnyChanged {
-                    arrayOf(it?.content?.promptRequests, it?.content?.loading)
-                }
-                .collect { state ->
-                    state?.content?.let { content ->
-                        if (content.promptRequests.lastOrNull() != activePromptRequest) {
-                            // Dismiss any active select login or credit card prompt if it does
-                            // not match the current prompt request for the session.
-                            when (activePromptRequest) {
-                                is SelectLoginPrompt -> {
-                                    loginPicker?.dismissCurrentLoginSelect(activePromptRequest as SelectLoginPrompt)
-                                    strongPasswordPromptViewListener?.dismissCurrentSuggestStrongPassword(
-                                        activePromptRequest as SelectLoginPrompt,
-                                    )
-                                }
+        handlePromptScope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .map { state -> state.findTabOrCustomTabOrSelectedTab(customTabId) }
+                    .ifAnyChanged {
+                        arrayOf(it?.content?.promptRequests, it?.content?.loading)
+                    }
+                    .collect { state ->
+                        state?.content?.let { content ->
+                            if (content.promptRequests.lastOrNull() != activePromptRequest) {
+                                // Dismiss any active select login or credit card prompt if it does
+                                // not match the current prompt request for the session.
+                                when (activePromptRequest) {
+                                    is SelectLoginPrompt -> {
+                                        loginPicker?.dismissCurrentLoginSelect(activePromptRequest as SelectLoginPrompt)
+                                        strongPasswordPromptViewListener?.dismissCurrentSuggestStrongPassword(
+                                            activePromptRequest as SelectLoginPrompt,
+                                        )
+                                    }
 
-                                is SaveLoginPrompt -> {
-                                    (activePrompt?.get() as? SaveLoginDialogFragment)?.dismissAllowingStateLoss()
-                                }
+                                    is SaveLoginPrompt -> {
+                                        (activePrompt?.get() as? SaveLoginDialogFragment)?.dismissAllowingStateLoss()
+                                    }
 
-                                is SaveCreditCard -> {
-                                    (activePrompt?.get() as? CreditCardSaveDialogFragment)?.dismissAllowingStateLoss()
-                                }
+                                    is SaveCreditCard -> {
+                                        (activePrompt?.get() as? CreditCardSaveDialogFragment)?.dismissAllowingStateLoss()
+                                    }
 
-                                is SelectCreditCard -> {
-                                    creditCardPicker?.dismissSelectCreditCardRequest(
-                                        activePromptRequest as SelectCreditCard,
-                                    )
-                                }
+                                    is SelectCreditCard -> {
+                                        creditCardPicker?.dismissSelectCreditCardRequest(
+                                            activePromptRequest as SelectCreditCard,
+                                        )
+                                    }
 
-                                is SelectAddress -> {
-                                    addressPicker?.dismissSelectAddressRequest(
-                                        activePromptRequest as SelectAddress,
-                                    )
-                                }
+                                    is SelectAddress -> {
+                                        addressPicker?.dismissSelectAddressRequest(
+                                            activePromptRequest as SelectAddress,
+                                        )
+                                    }
 
-                                is SingleChoice,
-                                is MultipleChoice,
-                                is MenuChoice,
-                                -> {
-                                    (activePrompt?.get() as? ChoiceDialogFragment)?.let { dialog ->
-                                        if (dialog.isStateSaved) {
-                                            dialog.dismissAllowingStateLoss()
-                                        } else {
-                                            activePromptsToDismiss.remove(dialog)
-                                            activePrompt?.clear()
+                                    is SingleChoice,
+                                    is MultipleChoice,
+                                    is MenuChoice,
+                                        -> {
+                                        (activePrompt?.get() as? ChoiceDialogFragment)?.let { dialog ->
+                                            if (dialog.isStateSaved) {
+                                                dialog.dismissAllowingStateLoss()
+                                            } else {
+                                                activePromptsToDismiss.remove(dialog)
+                                                activePrompt?.clear()
+                                            }
                                         }
+                                    }
+
+                                    else -> {
+                                        // no-op
                                     }
                                 }
 
-                                else -> {
-                                    // no-op
-                                }
+                                onPromptRequested(state)
+                            } else if (!content.loading) {
+                                promptAbuserDetector.resetJSAlertAbuseState()
+                            } else {
+                                dismissSelectPrompts()
                             }
 
-                            onPromptRequested(state)
-                        } else if (!content.loading) {
-                            promptAbuserDetector.resetJSAlertAbuseState()
-                        } else {
-                            dismissSelectPrompts()
+                            activePromptRequest = content.promptRequests.lastOrNull()
                         }
-
-                        activePromptRequest = content.promptRequests.lastOrNull()
                     }
-                }
+            }
         }
 
         // Dismiss all prompts when page host or session id changes. See Fenix#5326
-        dismissPromptScope = store.flowScoped { flow ->
-            flow.ifAnyChanged { state ->
-                arrayOf(
-                    state.selectedTabId,
-                    state.findTabOrCustomTabOrSelectedTab(customTabId)?.content?.url?.tryGetHostFromUrl(),
-                )
-            }.collect {
-                dismissSelectPrompts()
+        dismissPromptScope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .ifAnyChanged { state ->
+                        arrayOf(
+                            state.selectedTabId,
+                            state.findTabOrCustomTabOrSelectedTab(customTabId)?.content?.url?.tryGetHostFromUrl(),
+                        )
+                    }.collect {
+                        dismissSelectPrompts()
 
-                val prompt = activePrompt?.get()
-                // When showing folder upload confirm prompt, this is next of folder chooser prompt immediately.
-                store.consumeAllSessionPrompts(
-                    sessionId = prompt?.sessionId,
-                    activePrompt = activePrompt,
-                    predicate = {
-                        it.shouldDismissOnLoad && it !is File &&
-                            (it !is FolderUploadPrompt || previousPromptRequest !is Folder)
-                    },
-                    consume = {
-                        if (prompt?.isStateSaved == true) {
-                            prompt.dismiss()
+                        val prompt = activePrompt?.get()
+                        // When showing folder upload confirm prompt, this is next of folder chooser prompt immediately.
+                        store.consumeAllSessionPrompts(
+                            sessionId = prompt?.sessionId,
+                            activePrompt = activePrompt,
+                            predicate = {
+                                it.shouldDismissOnLoad && it !is File &&
+                                    (it !is FolderUploadPrompt || previousPromptRequest !is Folder)
+                            },
+                            consume = {
+                                if (prompt?.isStateSaved == true) {
+                                    prompt.dismiss()
+                                }
+                            },
+                        )
+
+                        // Let's make sure we do not leave anything behind.
+                        activePromptsToDismiss.forEach { fragment ->
+                            if (fragment.isStateSaved) {
+                                fragment.dismiss()
+                            }
                         }
-                    },
-                )
-
-                // Let's make sure we do not leave anything behind.
-                activePromptsToDismiss.forEach { fragment ->
-                    if (fragment.isStateSaved) {
-                        fragment.dismiss()
                     }
-                }
             }
         }
 

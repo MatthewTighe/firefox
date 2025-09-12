@@ -6,12 +6,13 @@ package mozilla.components.lib.state.helpers
 
 import androidx.annotation.CallSuper
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import mozilla.components.lib.state.Action
 import mozilla.components.lib.state.State
 import mozilla.components.lib.state.Store
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 /**
@@ -25,8 +26,10 @@ abstract class AbstractBinding<in S : State>(
 
     @CallSuper
     override fun start() {
-        scope = store.flowScoped { flow ->
-            onState(flow)
+        scope = MainScope().also {
+            it.launch {
+                onState(store.stateFlow)
+            }
         }
     }
 

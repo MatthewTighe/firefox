@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat.VISIBILITY_SECRET
 import androidx.core.app.NotificationManagerCompat.IMPORTANCE_LOW
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -29,7 +30,6 @@ import mozilla.components.browser.state.action.TabListAction
 import mozilla.components.browser.state.selector.privateTabs
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.feature.privatemode.R
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.android.NotificationsDelegate
 import mozilla.components.support.base.ids.SharedIdsHelper
 import mozilla.components.support.ktx.android.notification.ChannelData
@@ -136,20 +136,24 @@ abstract class AbstractPrivateNotificationService(
             }
         }
 
-        privateTabsScope = store.flowScoped { flow ->
-            flow.map { state -> state.privateTabs.isEmpty() }
-                .distinctUntilChanged()
-                .collect { noPrivateTabs ->
-                    if (noPrivateTabs) stopService()
-                }
+        privateTabsScope = MainScope().also {
+            it.launch {
+                store.stateFlow.map { state -> state.privateTabs.isEmpty() }
+                    .distinctUntilChanged()
+                    .collect { noPrivateTabs ->
+                        if (noPrivateTabs) stopService()
+                    }
+            }
         }
 
-        localeScope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.locale }
+        localeScope = MainScope().also {
+            it.launch {
+                store.stateFlow.mapNotNull { state -> state.locale }
                 .distinctUntilChanged()
                 .collect {
                     notifyLocaleChanged()
                 }
+            }
         }
     }
 

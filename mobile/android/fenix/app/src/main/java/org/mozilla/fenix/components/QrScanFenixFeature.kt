@@ -16,12 +16,13 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AlertDialog
 import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.feature.qr.QrScanActivity
 import mozilla.components.feature.qr.QrScanActivity.Companion.EXTRA_SCAN_RESULT_DATA
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.base.feature.OnNeedToRequestPermissions
 import mozilla.components.support.base.feature.PermissionsFeature
@@ -63,16 +64,18 @@ class QrScanFenixFeature(
     }
 
     private fun observeQrScanRequests() {
-        scope = appStore.flowScoped { flow ->
-            flow.map { state -> state.qrScannerState }
-                .distinctUntilChangedBy { it.isRequesting }
-                .collect { qrScannerState ->
-                    if (qrScannerState.isRequesting) {
-                        appStore.dispatch(QrScannerAction.QrScannerRequestConsumed)
-                        // launch qr scan
-                        launchQrScan()
+        scope = MainScope().also {
+            it.launch {
+                appStore.stateFlow.map { state -> state.qrScannerState }
+                    .distinctUntilChangedBy { it.isRequesting }
+                    .collect { qrScannerState ->
+                        if (qrScannerState.isRequesting) {
+                            appStore.dispatch(QrScannerAction.QrScannerRequestConsumed)
+                            // launch qr scan
+                            launchQrScan()
+                        }
                     }
-                }
+            }
         }
     }
 

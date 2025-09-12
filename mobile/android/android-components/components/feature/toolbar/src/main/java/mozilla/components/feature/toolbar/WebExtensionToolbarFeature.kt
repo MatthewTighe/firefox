@@ -10,9 +10,11 @@ import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.SessionState
@@ -20,7 +22,6 @@ import mozilla.components.browser.state.state.WebExtensionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.webextension.Action
 import mozilla.components.concept.toolbar.Toolbar
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
 
@@ -77,11 +78,14 @@ class WebExtensionToolbarFeature(
             }
 
         iconJobDispatcher = iconHandler.asCoroutineDispatcher("WebExtensionIconDispatcher")
-        scope = store.flowScoped { flow ->
-            flow.ifAnyChanged { arrayOf(it.selectedTab, it.extensions) }
-                .collect { state ->
-                    renderWebExtensionActions(state, state.selectedTab)
-                }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .ifAnyChanged { arrayOf(it.selectedTab, it.extensions) }
+                    .collect { state ->
+                        renderWebExtensionActions(state, state.selectedTab)
+                    }
+            }
         }
     }
 

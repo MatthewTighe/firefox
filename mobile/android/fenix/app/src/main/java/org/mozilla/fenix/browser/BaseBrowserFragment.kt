@@ -123,7 +123,6 @@ import mozilla.components.feature.sitepermissions.SitePermissionsFeature
 import mozilla.components.feature.sitepermissions.SitePermissionsLearnMoreUrlProvider
 import mozilla.components.feature.tabs.LastTabFeature
 import mozilla.components.feature.webauthn.WebAuthnFeature
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.service.sync.autofill.DefaultCreditCardValidationDelegate
 import mozilla.components.service.sync.logins.DefaultLoginValidationDelegate
 import mozilla.components.service.sync.logins.LoginsApiException
@@ -1251,8 +1250,10 @@ abstract class BaseBrowserFragment :
 
         closeFindInPageBarOnNavigation(store)
 
-        store.flowScoped(viewLifecycleOwner) { flow ->
-            flow.mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(customTabSessionId) }
+        viewLifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(customTabSessionId) }
                 .distinctUntilChangedBy { tab -> tab.content.pictureInPictureEnabled }
                 .collect { tab -> pipModeChanged(tab) }
         }

@@ -8,10 +8,15 @@ import android.view.HapticFeedbackConstants
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.VisibleForTesting.Companion.PRIVATE
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findTabOrCustomTab
 import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
 import mozilla.components.browser.state.state.SessionState
@@ -21,7 +26,6 @@ import mozilla.components.concept.engine.HitResult
 import mozilla.components.feature.contextmenu.facts.emitCancelMenuFact
 import mozilla.components.feature.contextmenu.facts.emitClickFact
 import mozilla.components.feature.contextmenu.facts.emitDisplayFact
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -60,17 +64,20 @@ class ContextMenuFeature(
      * Start observing the selected session and when needed show a context menu.
      */
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.map { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
-                .distinctUntilChangedBy { it?.content?.hitResult }
-                .collect { state ->
-                    val hitResult = state?.content?.hitResult
-                    if (hitResult != null) {
-                        showContextMenu(state, hitResult)
-                    } else {
-                        hideContextMenu()
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .map { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
+                    .distinctUntilChangedBy { it?.content?.hitResult }
+                    .collect { state ->
+                        val hitResult = state?.content?.hitResult
+                        if (hitResult != null) {
+                            showContextMenu(state, hitResult)
+                        } else {
+                            hideContextMenu()
+                        }
                     }
-                }
+            }
         }
     }
 

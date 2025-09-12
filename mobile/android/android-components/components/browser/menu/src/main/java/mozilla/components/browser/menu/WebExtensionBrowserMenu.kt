@@ -7,8 +7,10 @@ package mozilla.components.browser.menu
 import android.view.View
 import android.widget.PopupWindow
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.launch
 import mozilla.components.browser.menu.facts.emitOpenMenuItemFact
 import mozilla.components.browser.menu.item.WebExtensionBrowserMenuItem
 import mozilla.components.browser.state.selector.selectedTab
@@ -18,7 +20,6 @@ import mozilla.components.browser.state.state.WebExtensionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.webextension.Action
 import mozilla.components.concept.menu.MenuStyle
-import mozilla.components.lib.state.ext.flowScoped
 
 /**
  * A [BrowserMenu] capable of displaying browser and page actions from web extensions.
@@ -36,12 +37,15 @@ class WebExtensionBrowserMenu internal constructor(
         endOfMenuAlwaysVisible: Boolean,
         onDismiss: () -> Unit,
     ): PopupWindow {
-        scope = store.flowScoped { flow ->
-            flow.distinctUntilChangedBy { it.selectedTab }
-                .collect { state ->
-                    getOrUpdateWebExtensionMenuItems(state, state.selectedTab)
-                    invalidate()
-                }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .distinctUntilChangedBy { it.selectedTab }
+                    .collect { state ->
+                        getOrUpdateWebExtensionMenuItems(state, state.selectedTab)
+                        invalidate()
+                    }
+            }
         }
 
         return super.show(

@@ -11,14 +11,15 @@ import com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_
 import com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
 import com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineView
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 /**
@@ -39,11 +40,13 @@ class CoordinateScrollingFeature(
      * Start feature: Starts adding scrolling behavior for the indicated view.
      */
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.selectedTab }
-                .map { tab -> tab.content.loading }
-                .distinctUntilChanged()
-                .collect { onLoadingStateChanged() }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow.mapNotNull { state -> state.selectedTab }
+                    .map { tab -> tab.content.loading }
+                    .distinctUntilChanged()
+                    .collect { onLoadingStateChanged() }
+            }
         }
     }
 

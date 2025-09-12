@@ -7,6 +7,7 @@ package mozilla.components.feature.accounts
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.mapNotNull
@@ -21,7 +22,6 @@ import mozilla.components.concept.engine.webextension.Port
 import mozilla.components.concept.engine.webextension.WebExtensionRuntime
 import mozilla.components.concept.sync.AuthType
 import mozilla.components.concept.sync.UserData
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.service.fxa.FxaAuthData
 import mozilla.components.service.fxa.ServerConfig
 import mozilla.components.service.fxa.SyncEngine
@@ -83,14 +83,17 @@ class FxaWebChannelFeature(
 
         extensionController.install(runtime)
 
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabSessionId) }
-                .distinctUntilChangedBy { it.engineState.engineSession }
-                .collect {
-                    it.engineState.engineSession?.let { engineSession ->
-                        registerFxaContentMessageHandler(engineSession)
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabSessionId) }
+                    .distinctUntilChangedBy { it.engineState.engineSession }
+                    .collect {
+                        it.engineState.engineSession?.let { engineSession ->
+                            registerFxaContentMessageHandler(engineSession)
+                        }
                     }
-                }
+            }
         }
     }
 

@@ -5,13 +5,14 @@
 package mozilla.components.feature.tabs
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.ContentAction
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.window.WindowRequest
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.filterChanged
 
@@ -30,33 +31,39 @@ class WindowFeature(
      * and opens / closes tabs as needed.
      */
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.tabs }
-                .filterChanged {
-                    it.content.windowRequest
-                }
-                .collect { state ->
-                    val windowRequest = state.content.windowRequest
-                    when (windowRequest?.type) {
-                        WindowRequest.Type.CLOSE -> consumeWindowRequest(state.id) {
-                            store.state.tabs.find { it.engineState.engineSession === windowRequest.prepare() }?.let {
-                                tabsUseCases.removeTab(it.id)
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.tabs }
+                    .filterChanged {
+                        it.content.windowRequest
+                    }
+                    .collect { state ->
+                        val windowRequest = state.content.windowRequest
+                        when (windowRequest?.type) {
+                            WindowRequest.Type.CLOSE -> consumeWindowRequest(state.id) {
+                                store.state.tabs.find { it.engineState.engineSession === windowRequest.prepare() }
+                                    ?.let {
+                                        tabsUseCases.removeTab(it.id)
+                                    }
+                            }
+
+                            WindowRequest.Type.OPEN -> consumeWindowRequest(state.id) {
+                                tabsUseCases.addTab(
+                                    selectTab = true,
+                                    parentId = state.id,
+                                    engineSession = windowRequest.prepare(),
+                                    private = state.content.private,
+                                )
+                                windowRequest.start()
+                            }
+
+                            else -> {
+                                // no-op
                             }
                         }
-                        WindowRequest.Type.OPEN -> consumeWindowRequest(state.id) {
-                            tabsUseCases.addTab(
-                                selectTab = true,
-                                parentId = state.id,
-                                engineSession = windowRequest.prepare(),
-                                private = state.content.private,
-                            )
-                            windowRequest.start()
-                        }
-                        else -> {
-                            // no-op
-                        }
                     }
-                }
+            }
         }
     }
 

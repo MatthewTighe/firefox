@@ -8,6 +8,7 @@ import android.content.Context
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
@@ -19,7 +20,6 @@ import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
 import mozilla.components.browser.state.state.content.ShareResourceState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.fetch.Client
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.android.content.copyImage
 
@@ -59,18 +59,20 @@ class CopyDownloadFeature(
 ) {
 
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
-                .distinctUntilChangedBy { it.content.copy }
-                .collect { state ->
-                    state.content.copy?.let { copyState ->
-                        logger.debug("Starting the copying process")
-                        startCopy(copyState)
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow.mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
+                    .distinctUntilChangedBy { it.content.copy }
+                    .collect { state ->
+                        state.content.copy?.let { copyState ->
+                            logger.debug("Starting the copying process")
+                            startCopy(copyState)
 
-                        // This is a fire and forget action, not something that we want lingering the tab state.
-                        store.dispatch(CopyInternetResourceAction.ConsumeCopyAction(state.id))
+                            // This is a fire and forget action, not something that we want lingering the tab state.
+                            store.dispatch(CopyInternetResourceAction.ConsumeCopyAction(state.id))
+                        }
                     }
-                }
+            }
         }
     }
 

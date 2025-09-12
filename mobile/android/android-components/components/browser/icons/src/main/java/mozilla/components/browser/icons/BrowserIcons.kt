@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -61,7 +62,6 @@ import mozilla.components.concept.base.memory.MemoryConsumer
 import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.engine.webextension.WebExtension
 import mozilla.components.concept.fetch.Client
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.base.utils.NamedThreadFactory
 import mozilla.components.support.images.CancelOnDetach
@@ -201,7 +201,7 @@ class BrowserIcons constructor(
             onSuccess = { extension ->
                 Logger.debug("Installed browser-icons extension")
 
-                store.flowScoped { flow -> subscribeToUpdates(store, flow, extension) }
+                MainScope().launch { subscribeToUpdates(store, store.stateFlow, extension) }
             },
             onError = { throwable ->
                 Logger.error("Could not install browser-icons extension", throwable)

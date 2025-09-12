@@ -80,7 +80,6 @@ import mozilla.components.compose.browser.toolbar.store.EnvironmentCleared
 import mozilla.components.compose.browser.toolbar.store.EnvironmentRehydrated
 import mozilla.components.compose.browser.toolbar.store.Mode
 import mozilla.components.concept.engine.prompt.ShareData
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.lib.state.ext.observeAsComposableState
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
@@ -291,8 +290,10 @@ class HistoryFragment : LibraryPageFragment<History>(), UserInteractionHandler, 
                 }
         }
 
-        requireContext().components.appStore.flowScoped(viewLifecycleOwner) { flow ->
-            flow.mapNotNull { state -> state.pendingDeletionHistoryItems }.collect { items ->
+        viewLifecycleOwner.lifecycleScope.launch {
+            requireContext().components.appStore.stateFlow
+                .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .mapNotNull { state -> state.pendingDeletionHistoryItems }.collect { items ->
                 historyStore.dispatch(
                     HistoryFragmentAction.UpdatePendingDeletionItems(pendingDeletionItems = items),
                 )

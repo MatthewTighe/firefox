@@ -6,16 +6,17 @@ package mozilla.components.feature.session.engine
 
 import android.view.View
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.EngineAction
 import mozilla.components.browser.state.action.LastAccessAction
 import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.EngineView
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
 
 /**
@@ -32,18 +33,21 @@ internal class EngineViewPresenter(
      * Start presenter and display data in view.
      */
     fun start() {
-        scope = store.flowScoped { flow ->
-            flow.map { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
-                // Render if the tab itself changed and when an engine session is linked
-                .ifAnyChanged { tab ->
-                    arrayOf(
-                        tab?.id,
-                        tab?.engineState?.engineSession,
-                        tab?.engineState?.crashed,
-                        tab?.content?.firstContentfulPaint,
-                    )
-                }
-                .collect { tab -> onTabToRender(tab) }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .map { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
+                    // Render if the tab itself changed and when an engine session is linked
+                    .ifAnyChanged { tab ->
+                        arrayOf(
+                            tab?.id,
+                            tab?.engineState?.engineSession,
+                            tab?.engineState?.crashed,
+                            tab?.content?.firstContentfulPaint,
+                        )
+                    }
+                    .collect { tab -> onTabToRender(tab) }
+            }
         }
     }
 

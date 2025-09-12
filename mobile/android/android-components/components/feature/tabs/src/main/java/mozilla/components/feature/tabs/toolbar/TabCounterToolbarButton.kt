@@ -6,9 +6,13 @@ package mozilla.components.feature.tabs.toolbar
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.getNormalOrPrivateTabs
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.BrowserState
@@ -16,7 +20,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.toolbar.facts.ToolbarFacts
 import mozilla.components.concept.toolbar.Toolbar
 import mozilla.components.feature.tabs.R
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.Component
 import mozilla.components.support.base.facts.Action
 import mozilla.components.support.base.facts.Fact
@@ -43,8 +46,10 @@ open class TabCounterToolbarButton(
     private var reference = WeakReference<TabCounterView>(null)
 
     override fun createView(parent: ViewGroup): View {
-        store.flowScoped(lifecycleOwner) { flow ->
-            flow.map { state -> getTabCount(state) }
+        lifecycleOwner.lifecycleScope.launch {
+            store.stateFlow
+                .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                .map { state -> getTabCount(state) }
                 .distinctUntilChanged()
                 .collect { tabs ->
                     updateCount(tabs)

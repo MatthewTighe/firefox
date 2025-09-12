@@ -6,13 +6,14 @@ package org.mozilla.focus.session
 
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.privateTabs
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.base.crash.CrashReporting
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 /**
@@ -32,16 +33,22 @@ class PrivateNotificationFeature(
     private var scope: CoroutineScope? = null
 
     override fun start() {
-        scope = browserStore.flowScoped { flow ->
-            flow.map { state -> state.privateTabs.isNotEmpty() }
-                .distinctUntilChanged()
-                .collect { hasPrivateTabs ->
-                    if (hasPrivateTabs) {
-                        SessionNotificationService.start(applicationContext, permissionRequestHandler, crashReporter)
-                    } else {
-                        SessionNotificationService.stop(applicationContext)
+        scope = MainScope().also {
+            it.launch {
+                browserStore.stateFlow.map { state -> state.privateTabs.isNotEmpty() }
+                    .distinctUntilChanged()
+                    .collect { hasPrivateTabs ->
+                        if (hasPrivateTabs) {
+                            SessionNotificationService.start(
+                                applicationContext,
+                                permissionRequestHandler,
+                                crashReporter
+                            )
+                        } else {
+                            SessionNotificationService.stop(applicationContext)
+                        }
                     }
-                }
+            }
         }
     }
 

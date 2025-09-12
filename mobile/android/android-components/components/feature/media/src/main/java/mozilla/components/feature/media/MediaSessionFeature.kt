@@ -11,9 +11,11 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.mediasession.MediaSession.PlaybackState.PAUSED
@@ -21,7 +23,6 @@ import mozilla.components.concept.engine.mediasession.MediaSession.PlaybackState
 import mozilla.components.feature.media.ext.findActiveMediaTab
 import mozilla.components.feature.media.service.MediaServiceBinder
 import mozilla.components.feature.media.service.MediaSessionDelegate
-import mozilla.components.lib.state.ext.flowScoped
 
 /**
  * Feature implementation that handles MediaSession state changes and controls showing a notification
@@ -62,10 +63,12 @@ class MediaSessionFeature(
      * Starts the feature.
      */
     fun start() {
-        scope = store.flowScoped { flow ->
-            flow.map { state -> state.findActiveMediaTab() }
-                .distinctUntilChangedBy { tab -> tab?.mediaSessionState }
-                .collect { state -> showMediaStatus(state) }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow.map { state -> state.findActiveMediaTab() }
+                    .distinctUntilChangedBy { tab -> tab?.mediaSessionState }
+                    .collect { state -> showMediaStatus(state) }
+            }
         }
     }
 

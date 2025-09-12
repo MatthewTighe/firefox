@@ -5,11 +5,12 @@
 package org.mozilla.focus.navigation
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
-import mozilla.components.lib.state.ext.flowScoped
+import kotlinx.coroutines.launch
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import org.mozilla.focus.state.AppState
 import org.mozilla.focus.state.AppStore
@@ -26,7 +27,9 @@ class Navigator(
     private var scope: CoroutineScope? = null
 
     override fun start() {
-        scope = store.flowScoped { flow -> subscribe(flow) }
+        scope = MainScope().also {
+            it.launch { subscribe(store.stateFlow) }
+        }
     }
 
     override fun stop() {

@@ -6,14 +6,15 @@ package mozilla.components.feature.toolbar
 
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.toolbar.Toolbar
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 /**
@@ -32,11 +33,13 @@ class ContainerToolbarFeature(
     }
 
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.distinctUntilChangedBy { it.selectedTab }
-                .collect { state ->
-                    renderContainerAction(state, state.selectedTab)
-                }
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow.distinctUntilChangedBy { it.selectedTab }
+                    .collect { state ->
+                        renderContainerAction(state, state.selectedTab)
+                    }
+            }
         }
     }
 

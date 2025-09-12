@@ -7,9 +7,11 @@ package mozilla.components.feature.readerview
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.EngineAction
 import mozilla.components.browser.state.action.ReaderAction
 import mozilla.components.browser.state.selector.selectedTab
@@ -22,7 +24,6 @@ import mozilla.components.feature.readerview.internal.ReaderViewConfig
 import mozilla.components.feature.readerview.internal.ReaderViewControlsInteractor
 import mozilla.components.feature.readerview.internal.ReaderViewControlsPresenter
 import mozilla.components.feature.readerview.view.ReaderViewControlsView
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.base.feature.UserInteractionHandler
 import mozilla.components.support.base.log.logger.Logger
@@ -87,22 +88,28 @@ class ReaderViewFeature(
     override fun start() {
         ensureExtensionInstalled()
 
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.tabs }
-                .filterChanged {
-                    it.readerState
-                }
-                .collect { tab ->
-                    if (tab.readerState.connectRequired) {
-                        connectReaderViewContentScript(tab)
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.tabs }
+                    .filterChanged {
+                        it.readerState
                     }
-                    if (tab.readerState.checkRequired) {
-                        checkReaderState(tab)
+                    .collect { tab ->
+                        if (tab.readerState.connectRequired) {
+                            connectReaderViewContentScript(tab)
+                        }
+                        if (tab.readerState.checkRequired) {
+                            checkReaderState(tab)
+                        }
+                        if (tab.id == store.state.selectedTabId) {
+                            maybeNotifyReaderStatusChange(
+                                tab.readerState.readerable,
+                                tab.readerState.active
+                            )
+                        }
                     }
-                    if (tab.id == store.state.selectedTabId) {
-                        maybeNotifyReaderStatusChange(tab.readerState.readerable, tab.readerState.active)
-                    }
-                }
+            }
         }
 
         controlsInteractor.start()

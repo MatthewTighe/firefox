@@ -5,15 +5,16 @@
 package mozilla.components.feature.search.telemetry
 
 import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.webextension.MessageHandler
 import mozilla.components.concept.engine.webextension.WebExtension
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.Component
 import mozilla.components.support.base.facts.Action.INTERACTION
 import mozilla.components.support.base.facts.Fact
@@ -60,8 +61,8 @@ abstract class BaseSearchTelemetry {
             id = extensionInfo.id,
             url = extensionInfo.resourceUrl,
             onSuccess = { extension ->
-                store.flowScoped { flow ->
-                    subscribeToUpdates(flow, extension, extensionInfo)
+                MainScope().launch {
+                    subscribeToUpdates(store.stateFlow, extension, extensionInfo)
                 }
             },
             onError = { throwable ->

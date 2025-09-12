@@ -17,6 +17,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.fragment.app.FragmentManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.mapNotNull
@@ -65,7 +66,6 @@ import mozilla.components.concept.engine.permission.SitePermissions.Status.BLOCK
 import mozilla.components.concept.engine.permission.SitePermissionsStorage
 import mozilla.components.feature.session.SessionUseCases
 import mozilla.components.feature.tabs.TabsUseCases.SelectOrAddUseCase
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.base.feature.OnNeedToRequestPermissions
 import mozilla.components.support.base.feature.PermissionsFeature
@@ -170,42 +170,48 @@ class SitePermissionsFeature(
 
     @VisibleForTesting
     internal fun setupLoadingCollector() {
-        loadingScope = store.flowScoped { flow ->
-            flow.mapNotNull { state ->
-                state.findTabOrCustomTabOrSelectedTab(sessionId)
-            }.distinctUntilChangedBy { it.content.loading }.collect { tab ->
-                if (tab.content.loading) {
-                    // Clears stale permission indicators in the toolbar,
-                    // after the session starts loading.
-                    store.dispatch(UpdatePermissionHighlightsStateAction.Reset(tab.id))
-                    storage.clearTemporaryPermissions()
-                }
+        loadingScope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state ->
+                        state.findTabOrCustomTabOrSelectedTab(sessionId)
+                    }.distinctUntilChangedBy { it.content.loading }.collect { tab ->
+                        if (tab.content.loading) {
+                            // Clears stale permission indicators in the toolbar,
+                            // after the session starts loading.
+                            store.dispatch(UpdatePermissionHighlightsStateAction.Reset(tab.id))
+                            storage.clearTemporaryPermissions()
+                        }
+                    }
             }
         }
     }
 
     @VisibleForTesting
     internal fun setupAppPermissionRequestsCollector() {
-        appPermissionScope =
-            store.flowScoped { flow ->
-                flow.mapNotNull { state ->
-                    state.findTabOrCustomTabOrSelectedTab(sessionId)?.content?.appPermissionRequestsList
+        appPermissionScope = MainScope().also {
+                it.launch {
+                    store.stateFlow
+                        .mapNotNull { state ->
+                            state.findTabOrCustomTabOrSelectedTab(sessionId)?.content?.appPermissionRequestsList
+                        }
+                        .filterChanged { it }
+                        .collect { appPermissionRequest ->
+                            val permissions = appPermissionRequest.permissions.map { it.id ?: "" }
+                            onNeedToRequestPermissions(permissions.toTypedArray())
+                        }
                 }
-                    .filterChanged { it }
-                    .collect { appPermissionRequest ->
-                        val permissions = appPermissionRequest.permissions.map { it.id ?: "" }
-                        onNeedToRequestPermissions(permissions.toTypedArray())
-                    }
             }
     }
 
     @VisibleForTesting
     internal fun setupPermissionRequestsCollector() {
-        sitePermissionScope =
-            store.flowScoped { flow ->
-                flow.mapNotNull { state ->
-                    state.findTabOrCustomTabOrSelectedTab(sessionId)?.content?.permissionRequestsList
-                }
+        sitePermissionScope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state ->
+                        state.findTabOrCustomTabOrSelectedTab(sessionId)?.content?.permissionRequestsList
+                    }
                     .filterChanged { it }
                     .collect { permissionRequest ->
                         val origin: String = permissionRequest.uri?.getOrigin().orEmpty()
@@ -223,6 +229,7 @@ class SitePermissionsFeature(
                             }
                         }
                     }
+                }
             }
     }
 

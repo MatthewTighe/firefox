@@ -7,14 +7,15 @@ package mozilla.components.feature.privatemode.feature
 import android.view.Window
 import android.view.WindowManager.LayoutParams.FLAG_SECURE
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 /**
@@ -35,17 +36,20 @@ class SecureWindowFeature(
     private var scope: CoroutineScope? = null
 
     override fun start() {
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabId) }
-                .map { isSecure(it) }
-                .distinctUntilChanged()
-                .collect { isSecure ->
-                    if (isSecure) {
-                        window.addFlags(FLAG_SECURE)
-                    } else {
-                        window.clearFlags(FLAG_SECURE)
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabId) }
+                    .map { isSecure(it) }
+                    .distinctUntilChanged()
+                    .collect { isSecure ->
+                        if (isSecure) {
+                            window.addFlags(FLAG_SECURE)
+                        } else {
+                            window.clearFlags(FLAG_SECURE)
+                        }
                     }
-                }
+            }
         }
     }
 

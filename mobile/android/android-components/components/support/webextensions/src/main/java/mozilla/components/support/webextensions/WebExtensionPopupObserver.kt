@@ -5,13 +5,14 @@
 package mozilla.components.support.webextensions
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.state.WebExtensionState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 /**
@@ -29,16 +30,19 @@ class WebExtensionPopupObserver(
     private var popupScope: CoroutineScope? = null
 
     override fun start() {
-        popupScope = store.flowScoped { flow ->
-            flow.distinctUntilChangedBy { it.extensions }
-                .map { it.extensions.filterValues { extension -> extension.popupSession != null } }
-                .distinctUntilChanged()
-                .collect { extensionStates ->
-                    if (extensionStates.values.isNotEmpty()) {
-                        // We currently limit to one active popup session at a time
-                        onOpenPopup(extensionStates.values.first())
+        popupScope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .distinctUntilChangedBy { it.extensions }
+                    .map { it.extensions.filterValues { extension -> extension.popupSession != null } }
+                    .distinctUntilChanged()
+                    .collect { extensionStates ->
+                        if (extensionStates.values.isNotEmpty()) {
+                            // We currently limit to one active popup session at a time
+                            onOpenPopup(extensionStates.values.first())
+                        }
                     }
-                }
+            }
         }
     }
 

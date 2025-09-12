@@ -10,12 +10,13 @@ import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.feature.app.links.AppLinksUseCases
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.kotlin.tryGetHostFromUrl
 import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
@@ -47,26 +48,29 @@ class OpenInAppOnboardingObserver(
     internal var infoBanner: InfoBanner? = null
 
     override fun start() {
-        scope = store.flowScoped(lifecycleOwner) { flow ->
-            flow.mapNotNull { state ->
-                state.selectedTab
-            }
-                .ifAnyChanged { tab ->
-                    arrayOf(tab.content.url, tab.content.loading)
-                }
-                .collect { tab ->
-                    if (tab.content.url != currentUrl) {
-                        sessionDomainForDisplayedBanner?.let {
-                            if (tab.content.url.tryGetHostFromUrl() != it) {
-                                infoBanner?.dismiss()
-                            }
-                        }
-                        currentUrl = tab.content.url
-                    } else {
-                        // Loading state has changed
-                        maybeShowOpenInAppBanner(tab.content.url, tab.content.loading)
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state ->
+                        state.selectedTab
                     }
-                }
+                    .ifAnyChanged { tab ->
+                        arrayOf(tab.content.url, tab.content.loading)
+                    }
+                    .collect { tab ->
+                        if (tab.content.url != currentUrl) {
+                            sessionDomainForDisplayedBanner?.let {
+                                if (tab.content.url.tryGetHostFromUrl() != it) {
+                                    infoBanner?.dismiss()
+                                }
+                            }
+                            currentUrl = tab.content.url
+                        } else {
+                            // Loading state has changed
+                            maybeShowOpenInAppBanner(tab.content.url, tab.content.loading)
+                        }
+                    }
+            }
         }
     }
 

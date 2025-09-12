@@ -16,9 +16,11 @@ import androidx.annotation.VisibleForTesting.Companion.PRIVATE
 import androidx.core.net.toUri
 import androidx.fragment.app.FragmentManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
 import mozilla.components.browser.state.state.SessionState
 import mozilla.components.browser.state.state.content.DownloadState
@@ -34,7 +36,6 @@ import mozilla.components.feature.downloads.manager.noop
 import mozilla.components.feature.downloads.manager.onDownloadStopped
 import mozilla.components.feature.downloads.ui.DownloadAppChooserDialog
 import mozilla.components.feature.downloads.ui.DownloaderApp
-import mozilla.components.lib.state.ext.flowScoped
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.base.feature.OnNeedToRequestPermissions
 import mozilla.components.support.base.feature.PermissionsFeature
@@ -157,36 +158,42 @@ class DownloadsFeature(
     override fun start() {
         // Dismiss the previous prompts when the user navigates to another site.
         // This prevents prompts from the previous page from covering content.
-        dismissPromptScope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
-                .distinctUntilChangedBy { it.content.url }
-                .collect {
-                    val currentHost = previousTab?.content?.url
-                    val newHost = it.content.url
+        dismissPromptScope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
+                    .distinctUntilChangedBy { it.content.url }
+                    .collect {
+                        val currentHost = previousTab?.content?.url
+                        val newHost = it.content.url
 
-                    // The user is navigating to another site
-                    if (currentHost?.isSameOriginAs(newHost) == false) {
-                        previousTab?.let { tab ->
-                            // We have an old download request.
-                            tab.content.download?.let { download ->
-                                useCases.cancelDownloadRequest.invoke(tab.id, download.id)
-                                dismissAllDownloadDialogs()
-                                previousTab = null
+                        // The user is navigating to another site
+                        if (currentHost?.isSameOriginAs(newHost) == false) {
+                            previousTab?.let { tab ->
+                                // We have an old download request.
+                                tab.content.download?.let { download ->
+                                    useCases.cancelDownloadRequest.invoke(tab.id, download.id)
+                                    dismissAllDownloadDialogs()
+                                    previousTab = null
+                                }
                             }
                         }
                     }
-                }
+            }
         }
 
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
-                .distinctUntilChangedBy { it.content.download }
-                .collect { state ->
-                    state.content.download?.let { downloadState ->
-                        previousTab = state
-                        processDownload(state, downloadState)
+        scope = MainScope().also {
+            it.launch {
+                store.stateFlow
+                    .mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
+                    .distinctUntilChangedBy { it.content.download }
+                    .collect { state ->
+                        state.content.download?.let { downloadState ->
+                            previousTab = state
+                            processDownload(state, downloadState)
+                        }
                     }
-                }
+            }
         }
     }
 

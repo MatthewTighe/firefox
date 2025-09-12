@@ -10,15 +10,8 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.launch
 import mozilla.components.lib.state.Action
 import mozilla.components.lib.state.Observer
 import mozilla.components.lib.state.State
@@ -127,55 +120,6 @@ fun <S : State, A : Action> Store<S, A>.channel(
     channel.invokeOnClose { subscription.unsubscribe() }
 
     return channel
-}
-
-/**
- * Creates a [Flow] for observing [State] changes in the [Store].
- *
- * @param owner An optional [LifecycleOwner] that will be used to determine when to pause and resume
- * the store subscription. When the [Lifecycle] is in STOPPED state then no [State] will be received.
- * Once the [Lifecycle] switches back to at least STARTED state then the latest [State] and further
- * updates will be emitted.
- */
-@MainThread
-fun <S : State, A : Action> Store<S, A>.flow(
-    owner: LifecycleOwner? = null,
-): Flow<S> {
-    var destroyed = owner?.lifecycle?.currentState == Lifecycle.State.DESTROYED
-    val ownerDestroyedObserver = object : DefaultLifecycleObserver {
-        override fun onDestroy(owner: LifecycleOwner) {
-            destroyed = true
-        }
-    }
-    owner?.lifecycle?.addObserver(ownerDestroyedObserver)
-
-    return channelFlow {
-        // By the time this block executes the fragment or view could already be destroyed
-        // so we exit early to avoid creating an unnecessary subscription. This is important
-        // as otherwise we'd be leaking the owner via the subscription because we only
-        // unsubscribe on destroy which already happened.
-        if (destroyed) {
-            return@channelFlow
-        }
-
-        owner?.lifecycle?.removeObserver(ownerDestroyedObserver)
-
-        val subscription = observeManually { state ->
-            trySend(state)
-        }
-
-        if (owner == null) {
-            subscription.resume()
-        } else {
-            subscription.binding = SubscriptionLifecycleBinding(owner, subscription).apply {
-                owner.lifecycle.addObserver(this)
-            }
-        }
-
-        awaitClose {
-            subscription.unsubscribe()
-        }
-    }.buffer(Channel.CONFLATED)
 }
 
 /**

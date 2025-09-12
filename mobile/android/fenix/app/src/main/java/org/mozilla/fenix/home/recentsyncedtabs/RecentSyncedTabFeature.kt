@@ -14,7 +14,6 @@ import mozilla.components.concept.storage.HistoryStorage
 import mozilla.components.concept.sync.Device
 import mozilla.components.concept.sync.DeviceType
 import mozilla.components.feature.syncedtabs.storage.SyncedTabsStorage
-import mozilla.components.lib.state.ext.flow
 import mozilla.components.service.fxa.SyncEngine
 import mozilla.components.service.fxa.manager.FxaAccountManager
 import mozilla.components.service.fxa.manager.SyncEnginesStorage
@@ -63,7 +62,7 @@ class RecentSyncedTabFeature(
     override fun stop() = Unit
 
     private fun collectAccountUpdates() {
-        syncStore.flow()
+        syncStore.stateFlow
             .distinctUntilChangedBy { state ->
                 state.account != null
             }.onEach { state ->
@@ -82,7 +81,7 @@ class RecentSyncedTabFeature(
     }
 
     private fun collectStatusUpdates() {
-        syncStore.flow()
+        syncStore.stateFlow
             .distinctUntilChangedBy { state ->
                 state.status
             }.onEach { state ->

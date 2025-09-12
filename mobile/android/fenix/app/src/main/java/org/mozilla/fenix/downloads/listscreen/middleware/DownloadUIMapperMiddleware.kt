@@ -15,7 +15,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.MiddlewareContext
 import mozilla.components.lib.state.Store
-import mozilla.components.lib.state.ext.flow
 import org.mozilla.fenix.downloads.listscreen.store.DownloadUIAction
 import org.mozilla.fenix.downloads.listscreen.store.DownloadUIState
 import org.mozilla.fenix.downloads.listscreen.store.FileItem
@@ -59,7 +58,7 @@ class DownloadUIMapperMiddleware(
 
     private fun update(store: Store<DownloadUIState, DownloadUIAction>) {
         scope.launch {
-            browserStore.flow()
+            browserStore.stateFlow
                 .distinctUntilChangedBy { it.downloads }
                 .map { it.downloads.toFileItemsList() }
                 .collect {

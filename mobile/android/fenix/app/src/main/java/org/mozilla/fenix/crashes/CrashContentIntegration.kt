@@ -21,7 +21,6 @@ import mozilla.components.browser.state.state.EngineState
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.browser.toolbar.BrowserToolbar
 import mozilla.components.concept.toolbar.ScrollableToolbar
-import mozilla.components.lib.state.ext.flow
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
@@ -84,7 +83,7 @@ class CrashContentIntegration(
     override fun start() {
         scope = MainScope().apply {
             launch {
-                browserStore.flow()
+                browserStore.stateFlow
                     .mapNotNull { state -> state.findTabOrCustomTabOrSelectedTab(sessionId) }
                     .distinctUntilChangedBy { tab -> tab.engineState.crashed }
                     .collect { tab ->
@@ -116,7 +115,7 @@ class CrashContentIntegration(
             }
 
             launch {
-                appStore.flow()
+                appStore.stateFlow
                     .distinctUntilChangedBy { it.orientation }
                     .map { it.orientation }
                     .collect {

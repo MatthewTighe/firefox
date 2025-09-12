@@ -22,7 +22,6 @@ import mozilla.components.feature.customtabs.store.CustomTabsServiceState
 import mozilla.components.feature.customtabs.store.CustomTabsServiceStore
 import mozilla.components.feature.pwa.ext.getTrustedScope
 import mozilla.components.feature.pwa.ext.trustedOrigins
-import mozilla.components.lib.state.ext.flow
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.ktx.android.net.isInScope
 
@@ -67,10 +66,10 @@ class WebAppHideToolbarFeature(
                 // Since we subscribe to both store and customTabsStore,
                 // we don't extend another non-external-apps feature for hiding the toolbar
                 // as very little code would be shared.
-                val sessionFlow = store.flow()
+                val sessionFlow = store.stateFlow
                     .map { state -> state.findTabOrCustomTabOrSelectedTab(tabId) }
                     .distinctUntilChanged()
-                val customTabServiceMapFlow = customTabsStore.flow()
+                val customTabServiceMapFlow = customTabsStore.stateFlow
 
                 sessionFlow.combine(customTabServiceMapFlow) { tab, customTabServiceState ->
                     tab to customTabServiceState.getCustomTabStateForTab(tab)

@@ -25,7 +25,6 @@ import mozilla.components.browser.state.selector.normalTabs
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.flow
 import mozilla.components.support.base.log.logger.Logger
 import mozilla.components.support.base.utils.NamedThreadFactory
 import java.util.concurrent.Executors
@@ -95,7 +94,7 @@ class AutoSave(
     ): AutoSave {
         scope.launch {
             val monitoring = StateMonitoring(this@AutoSave)
-            monitoring.monitor(store.flow())
+            monitoring.monitor(store.stateFlow)
         }
         return this
     }

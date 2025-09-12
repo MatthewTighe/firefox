@@ -22,7 +22,6 @@ import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.MiddlewareContext
 import mozilla.components.lib.state.State
 import mozilla.components.lib.state.Store
-import mozilla.components.lib.state.ext.flow
 import org.mozilla.fenix.search.SearchFragmentAction.EnvironmentCleared
 import org.mozilla.fenix.search.SearchFragmentAction.EnvironmentRehydrated
 import org.mozilla.fenix.search.SearchFragmentAction.SearchStarted
@@ -118,7 +117,7 @@ class BrowserToolbarToFenixSearchMapperMiddleware(
     ): Job? = environment?.viewLifecycleOwner?.run {
         lifecycleScope.launch {
             repeatOnLifecycle(RESUMED) {
-                flow().observe()
+                stateFlow.observe()
             }
         }
     }

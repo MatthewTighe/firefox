@@ -22,7 +22,6 @@ import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.MiddlewareContext
 import mozilla.components.lib.state.State
 import mozilla.components.lib.state.Store
-import mozilla.components.lib.state.ext.flow
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.SearchAction.SearchEnded
 import org.mozilla.fenix.components.toolbar.BrowserToolbarEnvironment
@@ -78,7 +77,7 @@ class BrowserToolbarSearchStatusSyncMiddleware(
     ): Job? = environment?.viewLifecycleOwner?.run {
         lifecycleScope.launch {
             repeatOnLifecycle(RESUMED) {
-                flow().observe()
+                stateFlow.observe()
             }
         }
     }

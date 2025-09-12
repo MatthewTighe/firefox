@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 import mozilla.components.browser.state.selector.privateTabs
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.flow
 import org.mozilla.focus.state.AppAction
 import org.mozilla.focus.state.AppStore
 
@@ -27,8 +26,8 @@ class StoreLink(
 ) {
     fun start() {
         MainScope().also { scope ->
-            scope.launch { observeSelectionChanges(browserStore.flow()) }
-            scope.launch { observeTabsClosed(browserStore.flow()) }
+            scope.launch { observeSelectionChanges(browserStore.stateFlow) }
+            scope.launch { observeTabsClosed(browserStore.stateFlow) }
         }
     }
 

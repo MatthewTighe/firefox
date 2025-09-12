@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.onEach
 import mozilla.components.compose.browser.toolbar.store.BrowserToolbarStore
 import mozilla.components.lib.state.Middleware
 import mozilla.components.lib.state.MiddlewareContext
-import mozilla.components.lib.state.ext.flow
 
 /**
  * [BrowserToolbarStore] middleware that will synchronize bookmarks searches being ended
@@ -29,7 +28,7 @@ internal class BrowserToolbarSyncToBookmarksMiddleware(
         next(action)
 
         if (action is Init) {
-            toolbarStore.flow()
+            toolbarStore.stateFlow
                 .map { it.isEditMode() }
                 .onEach { isInEditMode ->
                     if (context.state.isSearching && !isInEditMode) {

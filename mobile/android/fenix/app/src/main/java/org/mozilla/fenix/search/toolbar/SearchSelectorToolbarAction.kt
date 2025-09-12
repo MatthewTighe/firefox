@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import mozilla.components.browser.state.search.SearchEngine
 import mozilla.components.concept.menu.Orientation
 import mozilla.components.concept.toolbar.Toolbar
-import mozilla.components.lib.state.ext.flow
 import mozilla.components.support.ktx.android.content.getColorFromAttr
 import mozilla.components.support.ktx.android.content.res.resolveAttribute
 import mozilla.components.support.ktx.android.view.toScope
@@ -90,7 +89,7 @@ class SearchSelectorToolbarAction(
         // Prevent launching new coroutines for every time this is binded and only update the icon once.
         if (updateIconJob?.isActive != true) {
             updateIconJob = (view as? SearchSelector)?.toScope()?.launch {
-                store.flow()
+                store.stateFlow
                     .map { state -> state.searchEngineSource.searchEngine }
                     .filterNotNull()
                     .distinctUntilChanged()

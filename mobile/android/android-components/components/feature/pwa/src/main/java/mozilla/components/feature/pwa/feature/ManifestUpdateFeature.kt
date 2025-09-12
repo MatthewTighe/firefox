@@ -19,7 +19,6 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.manifest.WebAppManifest
 import mozilla.components.feature.pwa.ManifestStorage
 import mozilla.components.feature.pwa.WebAppShortcutManager
-import mozilla.components.lib.state.ext.flow
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 
 /**
@@ -67,7 +66,7 @@ class ManifestUpdateFeature(
     }
 
     private fun observeManifestChanges(scope: CoroutineScope) = scope.launch {
-        store.flow()
+        store.stateFlow
             .mapNotNull { state -> state.findCustomTab(sessionId) }
             .map { tab -> tab.content.webAppManifest }
             .distinctUntilChanged()

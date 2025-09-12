@@ -62,7 +62,6 @@ import mozilla.components.concept.sync.OAuthAccount
 import mozilla.components.feature.accounts.push.SendTabUseCases
 import mozilla.components.feature.tab.collections.TabCollection
 import mozilla.components.feature.top.sites.TopSitesFeature
-import mozilla.components.lib.state.ext.flow
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.BrowserDirection
@@ -76,7 +75,6 @@ import org.mozilla.fenix.biometricauthentication.BiometricAuthenticationManager
 import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.tabstrip.TabStrip
-import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.HomepageThumbnailIntegration
 import org.mozilla.fenix.components.QrScanFenixFeature
@@ -985,7 +983,7 @@ class HomeFragment : Fragment() {
                             // This avoids unnecessary recompositions triggered by theme/browsing mode transitions,
                             // which are handled outside Compose via ThemeManager recreating the activity.
                             // Without this, transient states can cause visual glitches (e.g., incorrect theme/frame)
-                            flow().distinctUntilChanged { old, new -> old.mode != new.mode }
+                           stateFlow.distinctUntilChanged { old, new -> old.mode != new.mode }
                         }.collectAsState(state)
                     }
 

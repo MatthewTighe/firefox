@@ -27,7 +27,6 @@ import mozilla.components.browser.state.state.SearchState
 import mozilla.components.browser.state.state.searchEngines
 import mozilla.components.browser.state.state.selectedOrDefaultSearchEngine
 import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.lib.state.ext.flow
 import mozilla.components.support.ktx.android.view.toScope
 import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.R
@@ -58,7 +57,7 @@ class RadioSearchEngineListPreference @JvmOverloads constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun subscribeToSearchEngineUpdates(store: BrowserStore, view: View) = view.toScope().launch {
-        store.flow()
+        store.stateFlow
             .map { state -> state.search }
             .distinctUntilChanged()
             .collect { state -> refreshSearchEngineViews(view, state) }

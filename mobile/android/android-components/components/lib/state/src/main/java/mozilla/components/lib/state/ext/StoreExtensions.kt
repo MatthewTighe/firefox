@@ -88,41 +88,6 @@ fun <S : State, A : Action> Store<S, A>.observeForever(
 }
 
 /**
- * Creates a conflated [Channel] for observing [State] changes in the [Store].
- *
- * The advantage of a [Channel] is that [State] changes can be processed sequentially in order from
- * a single coroutine (e.g. on the main thread).
- *
- * @param owner A [LifecycleOwner] that will be used to determine when to pause and resume the store
- * subscription. When the [Lifecycle] is in STOPPED state then no [State] will be received. Once the
- * [Lifecycle] switches back to at least STARTED state then the latest [State] and further updates
- * will be received.
- */
-@MainThread
-fun <S : State, A : Action> Store<S, A>.channel(
-    owner: LifecycleOwner = ProcessLifecycleOwner.get(),
-): ReceiveChannel<S> {
-    // This owner is already destroyed. No need to register.
-    require(owner.lifecycle.currentState != Lifecycle.State.DESTROYED) {
-        "Lifecycle is already DESTROYED"
-    }
-
-    val channel = Channel<S>(Channel.CONFLATED)
-
-    val subscription = observeManually { state ->
-        channel.trySend(state)
-    }
-
-    subscription.binding = SubscriptionLifecycleBinding(owner, subscription).apply {
-        owner.lifecycle.addObserver(this)
-    }
-
-    channel.invokeOnClose { subscription.unsubscribe() }
-
-    return channel
-}
-
-/**
  * GenericLifecycleObserver implementation to bind an observer to a Lifecycle.
  */
 private class SubscriptionLifecycleBinding<S : State, A : Action>(

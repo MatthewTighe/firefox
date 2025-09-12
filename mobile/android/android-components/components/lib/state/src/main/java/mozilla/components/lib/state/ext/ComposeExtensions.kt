@@ -15,6 +15,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import mozilla.components.lib.state.Action
 import mozilla.components.lib.state.State
 import mozilla.components.lib.state.Store
@@ -35,10 +39,16 @@ fun <S : State, A : Action, R> Store<S, A>.observeAsComposableState(map: (S) -> 
     val state = remember { mutableStateOf(map(state)) }
 
     DisposableEffect(this, lifecycleOwner) {
-        val subscription = observe(lifecycleOwner) { browserState ->
-            state.value = map(browserState)
+        val subscriptionScope = lifecycleOwner.lifecycleScope.also {
+            it.launch {
+                this@observeAsComposableState.stateFlow
+                    .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                    .collect { browserState ->
+                        state.value = map(browserState)
+                    }
+            }
         }
-        onDispose { subscription?.unsubscribe() }
+        onDispose { subscriptionScope.cancel() }
     }
 
     return state
@@ -66,8 +76,11 @@ fun <S : State, A : Action, R> Store<S, A>.observeAsState(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     return produceState(initialValue = initialValue) {
-        observe(lifecycleOwner) { browserState ->
-            value = map(browserState)
+        lifecycleOwner.lifecycleScope.launch {
+            this@observeAsState.stateFlow.flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .collect { browserState ->
+                value = map(browserState)
+            }
         }
     }
 }
@@ -92,14 +105,20 @@ fun <S : State, A : Action, O, R> Store<S, A>.observeAsComposableState(
     val state = remember { mutableStateOf<R?>(map(state)) }
 
     DisposableEffect(this, lifecycleOwner) {
-        val subscription = observe(lifecycleOwner) { browserState ->
-            val newValue = observe(browserState)
-            if (newValue != lastValue) {
-                state.value = map(browserState)
-                lastValue = newValue
+        val subscriptionScope = lifecycleOwner.lifecycleScope.also {
+            it.launch {
+               this@observeAsComposableState.stateFlow
+                   .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+                   .collect { browserState ->
+                       val newValue = observe(browserState)
+                       if (newValue != lastValue) {
+                           state.value = map(browserState)
+                           lastValue = newValue
+                       }
+                   }
             }
         }
-        onDispose { subscription?.unsubscribe() }
+        onDispose { subscriptionScope.cancel() }
     }
 
     return state

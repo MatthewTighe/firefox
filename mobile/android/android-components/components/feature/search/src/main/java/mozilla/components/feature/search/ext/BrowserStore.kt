@@ -4,6 +4,10 @@
 
 package mozilla.components.feature.search.ext
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import mozilla.components.browser.state.action.BrowserAction
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.selectedOrDefaultSearchEngine
@@ -25,12 +29,8 @@ fun BrowserStore.waitForSelectedOrDefaultSearchEngine(
     }
 
     // Otherwise: Wait for the search state to be loaded and then invoke `block`.
-    var subscription: Store.Subscription<BrowserState, BrowserAction>? = null
-    subscription = observeManually { state ->
-        if (state.search.complete) {
-            block(state.search.selectedOrDefaultSearchEngine)
-            subscription!!.unsubscribe()
-        }
+    CoroutineScope(Dispatchers.Default).launch {
+        stateFlow.first { it.search.complete }
+        block(state.search.selectedOrDefaultSearchEngine)
     }
-    subscription.resume()
 }

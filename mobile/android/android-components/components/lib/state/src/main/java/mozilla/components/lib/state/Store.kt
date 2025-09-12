@@ -4,15 +4,9 @@
 
 package mozilla.components.lib.state
 
-import androidx.annotation.CheckResult
-import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import mozilla.components.lib.state.internal.ReducerChainBuilder
-import org.intellij.lang.annotations.Flow
-import java.lang.ref.WeakReference
-import java.util.Collections
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A generic store holding an immutable [State].
@@ -31,9 +25,6 @@ open class Store<S : State, A : Action>(
 ) {
     private val reducerChainBuilder = ReducerChainBuilder(reducer, middleware)
 
-    @VisibleForTesting
-    internal val subscriptions = Collections.newSetFromMap(ConcurrentHashMap<Subscription<S, A>, Boolean>())
-
     /**
      * The current [State].
      */
@@ -42,27 +33,6 @@ open class Store<S : State, A : Action>(
         get() = _state.value
 
     val stateFlow: StateFlow<S> = _state
-
-    /**
-     * Registers an [Observer] function that will be invoked whenever the [State] changes.
-     *
-     * It's the responsibility of the caller to keep track of the returned [Subscription] and call
-     * [Subscription.unsubscribe] to stop observing and avoid potentially leaking memory by keeping an unused [Observer]
-     * registered. It's is recommend to use one of the `observe` extension methods that unsubscribe automatically.
-     *
-     * The created [Subscription] is in paused state until explicitly resumed by calling [Subscription.resume].
-     * While paused the [Subscription] will not receive any state updates. Once resumed the [observer]
-     * will get invoked immediately with the latest state.
-     *
-     * @return A [Subscription] object that can be used to unsubscribe from further state changes.
-     */
-    @CheckResult(suggest = "observe")
-    fun observeManually(observer: Observer<S>): Subscription<S, A> {
-        val subscription = Subscription(observer, store = this)
-        subscriptions.add(subscription)
-
-        return subscription
-    }
 
     /**
      * Dispatch an [Action] to the store in order to trigger a [State] change.
@@ -80,75 +50,5 @@ open class Store<S : State, A : Action>(
         }
 
         _state.value = state
-        subscriptions.forEach { subscription -> subscription.dispatch(state) }
-    }
-
-    private fun removeSubscription(subscription: Subscription<S, A>) {
-        subscriptions.remove(subscription)
-    }
-
-    /**
-     * A [Subscription] is returned whenever an observer is registered via the [observeManually] method. Calling
-     * [unsubscribe] on the [Subscription] will unregister the observer.
-     */
-    class Subscription<S : State, A : Action> internal constructor(
-        internal val observer: Observer<S>,
-        store: Store<S, A>,
-    ) {
-        private val storeReference = WeakReference(store)
-        internal var binding: Binding? = null
-        private var active = false
-
-        /**
-         * Resumes the [Subscription]. The [Observer] will get notified for every state change.
-         * Additionally it will get invoked immediately with the latest state.
-         */
-        @Synchronized
-        fun resume() {
-            active = true
-
-            storeReference.get()?.state?.let(observer)
-        }
-
-        /**
-         * Pauses the [Subscription]. The [Observer] will not get notified when the state changes
-         * until [resume] is called.
-         */
-        @Synchronized
-        fun pause() {
-            active = false
-        }
-
-        /**
-         * Notifies this subscription's observer of a state change.
-         *
-         * @param state the updated state.
-         */
-        @Synchronized
-        internal fun dispatch(state: S) {
-            if (active) {
-                observer.invoke(state)
-            }
-        }
-
-        /**
-         * Unsubscribe from the [Store].
-         *
-         * Calling this method will clear all references and the subscription will not longer be
-         * active.
-         */
-        @Synchronized
-        fun unsubscribe() {
-            active = false
-
-            storeReference.get()?.removeSubscription(this)
-            storeReference.clear()
-
-            binding?.unbind()
-        }
-
-        interface Binding {
-            fun unbind()
-        }
     }
 }

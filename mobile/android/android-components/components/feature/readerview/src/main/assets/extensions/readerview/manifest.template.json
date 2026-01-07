@@ -11,6 +11,8 @@
     {
       "matches": ["<all_urls>"],
       "js": [
+        "readability/readability-0.4.2.js",
+        "readability/JSDOMParser-0.4.2.js",
         "readability/readability-readerable-0.4.2.js",
         "readerview-content.js"
       ],

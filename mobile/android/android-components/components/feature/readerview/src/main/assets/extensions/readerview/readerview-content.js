@@ -3,7 +3,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* eslint-env webextensions */
-/* import-globals-from readability/readability-readerable-0.4.2.js */
+/* import-globals-from readability/readability-0.4.2.js */
+/* import-globals-from readability/JSDOMParser-0.4.2.js */
 
 // This script is injected into content to determine whether or not a
 // page is readerable, and to open a reader view extension page via
@@ -49,6 +50,27 @@ function connectNativePort() {
   let port = browser.runtime.connectNative("mozacReaderview");
   port.onMessage.addListener(message => {
     switch (message.action) {
+          case "text": {
+              async function textAsync() {
+                console.log("text async");
+                try {
+                  let url = new URL(window.location.href);
+                  let serializedDoc = new XMLSerializer().serializeToString(document);
+                  let doc = new JSDOMParser().parse(serializedDoc, url);
+                  let text = new Readability(doc, { fontSize: 4, fontType: "sans-serif", colorScheme: "light" }).parse();
+                  console.log("posting message");
+                  console.log(text)
+                  port.postMessage({
+                        action: "readerText",
+                        text: text
+                  });
+                } catch (e) {
+                  // eslint-disable-next-line no-console
+                  console.log(e);
+                }
+              }
+              textAsync();
+          }
       case "cachePage": {
         let serializedDoc = new XMLSerializer().serializeToString(document);
         browser.runtime.sendMessage({

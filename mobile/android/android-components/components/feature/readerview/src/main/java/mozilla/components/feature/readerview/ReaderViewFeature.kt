@@ -127,28 +127,37 @@ class ReaderViewFeature(
         return false
     }
 
+    fun getText() {
+        val session = store.state.selectedTab?.engineState?.engineSession
+        val message = JSONObject().put(ACTION_MESSAGE_KEY, "text")
+        if (extensionController.portConnected(session, READER_VIEW_CONTENT_PORT)) {
+            extensionController.sendContentMessage(message, session, READER_VIEW_CONTENT_PORT)
+        }
+    }
+
     /**
      * Shows the reader view UI.
      */
     fun showReaderView(session: TabSessionState? = store.state.selectedTab) {
-        session?.let {
-            if (!it.readerState.active) {
-                val id = createUUID()
-                extensionController.sendContentMessage(
-                    createCachePageMessage(id),
-                    it.engineState.engineSession,
-                    READER_VIEW_CONTENT_PORT,
-                )
-
-                val readerUrl = extensionController.createReaderUrl(it.content.url, id) ?: run {
-                    Logger.error("FeatureReaderView unable to create ReaderUrl.")
-                    return@let
-                }
-
-                store.dispatch(EngineAction.LoadUrlAction(it.id, readerUrl))
-                store.dispatch(ReaderAction.UpdateReaderActiveAction(it.id, true))
-            }
-        }
+        getText()
+//        session?.let {
+//            if (!it.readerState.active) {
+//                val id = createUUID()
+//                extensionController.sendContentMessage(
+//                    createCachePageMessage(id),
+//                    it.engineState.engineSession,
+//                    READER_VIEW_CONTENT_PORT,
+//                )
+//
+//                val readerUrl = extensionController.createReaderUrl(it.content.url, id) ?: run {
+//                    Logger.error("FeatureReaderView unable to create ReaderUrl.")
+//                    return@let
+//                }
+//
+//                store.dispatch(EngineAction.LoadUrlAction(it.id, readerUrl))
+//                store.dispatch(ReaderAction.UpdateReaderActiveAction(it.id, true))
+//            }
+//        }
     }
 
     /**
@@ -261,6 +270,10 @@ class ReaderViewFeature(
             if (message is JSONObject) {
                 val readerable = message.optBoolean(READERABLE_RESPONSE_MESSAGE_KEY, false)
                 store.dispatch(ReaderAction.UpdateReaderableAction(sessionId, readerable))
+
+                val readerText = message.optString("text")
+                logger.info(readerText)
+                // store.dispatch()
             }
         }
     }

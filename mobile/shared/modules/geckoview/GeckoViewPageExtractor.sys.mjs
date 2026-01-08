@@ -5,7 +5,7 @@
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  PageExtractor: "resource://gre/actors/PageExtractorParent.sys.mjs",
+  PageExtractorParent: "resource://gre/actors/PageExtractorParent.sys.mjs",
 });
 
 import { GeckoViewModule } from "resource://gre/modules/GeckoViewModule.sys.mjs";
@@ -25,8 +25,15 @@ export class GeckoViewPageExtractor extends GeckoViewModule {
         // }
 
         try {
-          const text = lazy.PageExtractor.getText();
-          aCallback.onSuccess(text);
+          lazy.PageExtractorParent.getHeadlessExtractor(
+            aData.url,
+            pageExtractor => {
+              const result = pageExtractor.getText();
+              return { text: result };
+            }
+          );
+
+          aCallback.onSuccess("");
         } catch (error) {
           aCallback.onError(`Could not get language setting: ${error}`);
         }

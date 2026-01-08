@@ -1152,4 +1152,10 @@ abstract class EngineSession(
      * @param enabled True if the activity is in picture-in-picture mode.
      */
     open fun onPipModeChanged(enabled: Boolean) = Unit
+
+    open fun getPageTextContent(
+        url: String,
+        onResult: (String) -> Unit,
+        onException: (Throwable) -> Unit,
+    ) = Unit
 }

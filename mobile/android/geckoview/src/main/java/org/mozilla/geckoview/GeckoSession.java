@@ -162,6 +162,8 @@ public class GeckoSession {
   private TranslationsController.SessionTranslation mTranslations =
       new TranslationsController.SessionTranslation(this);
 
+  private PageExtractorController.SessionPageExtractor mPageExtractor;
+
   /** {@code SessionMagnifier} handles magnifying glass. */
   /* package */ interface SessionMagnifier {
     /**
@@ -3608,6 +3610,15 @@ public class GeckoSession {
   public @Nullable TranslationsController.SessionTranslation.Delegate
       getTranslationsSessionDelegate() {
     return mTranslationsHandler.getDelegate();
+  }
+
+  @AnyThread
+  @ExperimentalGeckoViewApi
+  public @Nullable PageExtractorController.SessionPageExtractor getSessionPageExtractor() {
+    if (mPageExtractor == null) {
+      mPageExtractor = new PageExtractorController.SessionPageExtractor(this);
+    }
+    return mPageExtractor;
   }
 
   /**

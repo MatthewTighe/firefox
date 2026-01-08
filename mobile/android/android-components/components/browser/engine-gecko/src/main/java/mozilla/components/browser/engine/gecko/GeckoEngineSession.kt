@@ -77,6 +77,7 @@ import org.mozilla.geckoview.GeckoSession.APP_LINK_LAUNCH_TYPE_WARM
 import org.mozilla.geckoview.GeckoSession.NavigationDelegate
 import org.mozilla.geckoview.GeckoSession.PermissionDelegate.ContentPermission
 import org.mozilla.geckoview.GeckoSessionSettings
+import org.mozilla.geckoview.PageExtractorController
 import org.mozilla.geckoview.WebRequestError
 import org.mozilla.geckoview.WebResponse
 import java.util.Locale
@@ -621,6 +622,27 @@ class GeckoEngineSession(
             WebAppManifest.DisplayMode.STANDALONE -> GeckoSessionSettings.DISPLAY_MODE_STANDALONE
             else -> GeckoSessionSettings.DISPLAY_MODE_BROWSER
         }
+    }
+
+    override fun getPageTextContent(url: String, onResult: (String) -> Unit, onException: (Throwable) -> Unit) {
+        geckoSession.sessionPageExtractor
+            ?.getPageContent(url)
+            ?.map { result ->
+                if (result == null) {
+                    logger.error("No result from GeckoView ")
+                }
+                result?.text ?: ""
+            }
+            ?.then(
+                {
+                    onResult(it ?: "")
+                    GeckoResult<Boolean>()
+                },
+                {
+                    onException(it)
+                    GeckoResult()
+                },
+            )
     }
 
     /**

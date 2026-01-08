@@ -16,6 +16,10 @@
         app:popUpToInclusive="true" />
 
     <action
+        android:id="@+id/action_shake_to_summarize"
+        app:destination="@id/shakeToSummarizeFragment" />
+
+    <action
         android:id="@+id/action_global_home"
         app:destination="@id/homeFragment"
         app:popUpTo="@id/homeFragment"
@@ -817,6 +821,9 @@
         android:id="@+id/profilerStopDialogFragment"
         android:name="org.mozilla.fenix.perf.ProfilerStopDialogFragment">
     </dialog>
+    <dialog
+        android:id="@+id/shakeToSummarizeFragment"
+        android:name="org.mozilla.fenix.shaketosummarize.ShakeToSummarizeFragment" />
     <fragment
         android:id="@+id/settingsSearchFragment"
         android:name="org.mozilla.fenix.settings.settingssearch.SettingsSearchFragment"

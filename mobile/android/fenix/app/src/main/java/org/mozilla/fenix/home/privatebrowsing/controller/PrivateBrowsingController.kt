@@ -12,6 +12,7 @@ import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.browser.browsingmode.BrowsingModeManager
 import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
+import org.mozilla.fenix.home.HomeFragmentDirections
 import org.mozilla.fenix.home.privatebrowsing.interactor.PrivateBrowsingInteractor
 import org.mozilla.fenix.settings.SupportUtils
 import org.mozilla.fenix.utils.Settings
@@ -55,24 +56,25 @@ class DefaultPrivateBrowsingController(
     }
 
     override fun handlePrivateModeButtonClicked(newMode: BrowsingMode) {
-        Homepage.privateModeIconTapped.record(NoExtras())
-
-        if (settings.enableHomepageAsNewTab) {
-            fenixBrowserUseCases.addNewHomepageTab(private = newMode.isPrivate)
-        }
-
-        browsingModeManager.mode = newMode
-
-        if (newMode == BrowsingMode.Private) {
-            settings.incrementNumTimesPrivateModeOpened()
-        }
-
-        if (navController.currentDestination?.id == R.id.searchDialogFragment) {
-            navController.navigate(
-                BrowserFragmentDirections.actionGlobalSearchDialog(
-                    sessionId = null,
-                ),
-            )
-        }
+        navController.navigate(HomeFragmentDirections.actionShakeToSummarize())
+//        Homepage.privateModeIconTapped.record(NoExtras())
+//
+//        if (settings.enableHomepageAsNewTab) {
+//            fenixBrowserUseCases.addNewHomepageTab(private = newMode.isPrivate)
+//        }
+//
+//        browsingModeManager.mode = newMode
+//
+//        if (newMode == BrowsingMode.Private) {
+//            settings.incrementNumTimesPrivateModeOpened()
+//        }
+//
+//        if (navController.currentDestination?.id == R.id.searchDialogFragment) {
+//            navController.navigate(
+//                BrowserFragmentDirections.actionGlobalSearchDialog(
+//                    sessionId = null,
+//                ),
+//            )
+//        }
     }
 }

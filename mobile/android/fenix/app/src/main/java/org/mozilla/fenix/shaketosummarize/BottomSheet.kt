@@ -742,6 +742,7 @@ import mozilla.components.concept.menu.candidate.TextStyle
 @Composable
 @ExperimentalMaterial3Api
 fun ModalBottomSheet(
+    isLoading: Boolean = false,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     sheetState: SheetState = rememberModalBottomSheetState(),
@@ -812,6 +813,7 @@ fun ModalBottomSheet(
                 dismissEnabled = properties.shouldDismissOnClickOutside,
             )
             ModalBottomSheetContent(
+                isLoading,
                 predictiveBackProgress,
                 scope,
                 onDismissRequest,
@@ -838,6 +840,7 @@ fun ModalBottomSheet(
 @Composable
 @ExperimentalMaterial3Api
 internal fun BoxScope.ModalBottomSheetContent(
+    isLoading: Boolean,
     predictiveBackProgress: Animatable<Float, AnimationVector1D>,
     scope: CoroutineScope,
     onDismissRequest: () -> Unit,
@@ -961,10 +964,10 @@ internal fun BoxScope.ModalBottomSheetContent(
                 // when it's applied with a bouncy motion. Note that the content inside the Surface
                 // is scaled back down to maintain its aspect ratio (see below).
                 .verticalScaleUp(sheetState)
-                .aiGlowBorder(shape = shape)
-                .aiBackground(shape = shape),
+                .aiGlowBorder(enabled = isLoading, shape = shape)
+                .aiBackground(enabled = isLoading, shape = shape),
         shape = shape,
-        color = Color.Transparent, //containerColor,
+        color = if (isLoading) Color.Transparent else containerColor,
         contentColor = contentColor,
         tonalElevation = tonalElevation,
     ) {

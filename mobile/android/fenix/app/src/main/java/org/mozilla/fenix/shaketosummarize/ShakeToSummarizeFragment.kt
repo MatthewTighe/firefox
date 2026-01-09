@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,9 +45,14 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.DialogFragment
+import kotlinx.coroutines.delay
 import org.mozilla.fenix.R
-import kotlinx.coroutines.launch
+import mozilla.components.browser.state.selector.selectedTab
+import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.theme.FirefoxTheme
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 class ShakeToSummarizeFragment: DialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,12 +66,37 @@ class ShakeToSummarizeFragment: DialogFragment() {
         savedInstanceState: Bundle?
     ): View = ComposeView(requireContext()).apply {
         setContent {
+            var textContent by remember { mutableStateOf("") }
+
+            LaunchedEffect(Unit) {
+                textContent = runCatching {
+                    // fake delay to simulate us loading the content.
+                    // all this dance would probably happen in a middleware somewhere
+                    delay(3000)
+                    getPageContent()
+                }.getOrNull() ?: ""
+            }
            ShakeToSummarizeScreen(
+               text = textContent,
                onDismiss = {
                    dismiss()
                },
            )
         }
+    }
+
+    private suspend fun getPageContent(): String = suspendCoroutine { continuation ->
+        val selectedTab =
+            requireContext().components.core.store.state.selectedTab ?: error("No selected tab")
+        selectedTab.engineState.engineSession?.getPageTextContent(
+            url = selectedTab.content.url,
+            onResult = {
+                continuation.resume(it)
+            },
+            onException = {
+                continuation.resumeWithException(it)
+            },
+        )
     }
 }
 
@@ -71,10 +104,11 @@ class ShakeToSummarizeFragment: DialogFragment() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShakeToSummarizeScreen(
+    text: String = "",
     onDismiss: () -> Unit,
 ) {
     FirefoxTheme {
-       ShakeToSummarizeBottomSheet {
+       ShakeToSummarizeBottomSheet(text = text) {
            onDismiss()
        }
     }
@@ -83,6 +117,7 @@ fun ShakeToSummarizeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShakeToSummarizeBottomSheet(
+    text: String = "",
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -107,6 +142,13 @@ fun ShakeToSummarizeBottomSheet(
             Spacer(modifier = Modifier.weight(1f))
             AiAnimatedText(text = "Summarizing...")
             Spacer(modifier = Modifier.weight(1f))
+        }
+
+        if (text.isNotBlank()) {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Text("This is just the page content", color = Color.Red)
+                Text(text)
+            }
         }
     }
 }

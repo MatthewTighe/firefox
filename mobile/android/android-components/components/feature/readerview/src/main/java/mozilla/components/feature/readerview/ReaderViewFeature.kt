@@ -5,7 +5,6 @@
 package mozilla.components.feature.readerview
 
 import android.content.Context
-import android.util.Log
 import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.mapNotNull
 import mozilla.components.browser.state.action.EngineAction
 import mozilla.components.browser.state.action.ReaderAction
-import mozilla.components.browser.state.ext.getUrl
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.browser.state.store.BrowserStore
@@ -134,32 +132,22 @@ class ReaderViewFeature(
      */
     fun showReaderView(session: TabSessionState? = store.state.selectedTab) {
         session?.let {
-            val url = session.getUrl()!!
-            session.engineState.engineSession?.getPageTextContent(
-                url = url,
-                onResult = {
-                    Log.d("Segun", "Text content")
-                },
-                onException = {
-                    Log.e("Segun", "Unable to get text content: ${it.message}")
+            if (!it.readerState.active) {
+                val id = createUUID()
+                extensionController.sendContentMessage(
+                    createCachePageMessage(id),
+                    it.engineState.engineSession,
+                    READER_VIEW_CONTENT_PORT,
+                )
+
+                val readerUrl = extensionController.createReaderUrl(it.content.url, id) ?: run {
+                    Logger.error("FeatureReaderView unable to create ReaderUrl.")
+                    return@let
                 }
-            )
-//            if (!it.readerState.active) {
-//                val id = createUUID()
-//                extensionController.sendContentMessage(
-//                    createCachePageMessage(id),
-//                    it.engineState.engineSession,
-//                    READER_VIEW_CONTENT_PORT,
-//                )
-//
-//                val readerUrl = extensionController.createReaderUrl(it.content.url, id) ?: run {
-//                    Logger.error("FeatureReaderView unable to create ReaderUrl.")
-//                    return@let
-//                }
-//
-//                store.dispatch(EngineAction.LoadUrlAction(it.id, readerUrl))
-//                store.dispatch(ReaderAction.UpdateReaderActiveAction(it.id, true))
-//            }
+
+                store.dispatch(EngineAction.LoadUrlAction(it.id, readerUrl))
+                store.dispatch(ReaderAction.UpdateReaderActiveAction(it.id, true))
+            }
         }
     }
 

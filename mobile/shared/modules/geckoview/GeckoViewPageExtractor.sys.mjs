@@ -20,23 +20,20 @@ export class GeckoViewPageExtractor extends GeckoViewModule {
     debug`onEvent: event=${aEvent}, data=${aData}`;
     switch (aEvent) {
       case "GeckoView:PageExtractor:GetText": {
-        // async function _getPageText() {
-        //   return lazy.PageExtractor.getText()
-        // }
-
-        try {
-          lazy.PageExtractorParent.getHeadlessExtractor(
-            aData.url,
-            pageExtractor => {
-              const result = pageExtractor.getText();
-              return { text: result };
+        this.getActor("PageExtractor")
+          .getText()
+          .then(
+            result => {
+              aCallback.onSuccess(
+                {
+                  "text": result
+                }
+              );
+            },
+            error => {
+              aCallback.onError(error);
             }
-          );
-
-          aCallback.onSuccess("");
-        } catch (error) {
-          aCallback.onError(`Could not get language setting: ${error}`);
-        }
+          )
         break;
       }
     }

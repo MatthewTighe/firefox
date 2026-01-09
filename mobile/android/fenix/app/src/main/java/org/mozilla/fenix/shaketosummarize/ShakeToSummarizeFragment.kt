@@ -1,6 +1,7 @@
 package org.mozilla.fenix.shaketosummarize
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +10,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
@@ -62,10 +64,19 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.DialogFragment
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import org.mozilla.fenix.R
 import mozilla.components.browser.state.selector.selectedTab
+import mozilla.components.concept.fetch.MutableHeaders
+import mozilla.components.concept.fetch.Request
+import org.json.JSONObject
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.theme.FirefoxTheme
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -74,7 +85,7 @@ import kotlin.coroutines.suspendCoroutine
 sealed class ShakeToSummarizeState {
     object Inert : ShakeToSummarizeState()
     object Loading : ShakeToSummarizeState()
-    data class Loaded(val text: String) : ShakeToSummarizeState()
+    data class Loaded(val text: AnnotatedString) : ShakeToSummarizeState()
 }
 
 class ShakeToSummarizeFragment: DialogFragment() {
@@ -88,19 +99,18 @@ class ShakeToSummarizeFragment: DialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View = ComposeView(requireContext()).apply {
-        setContent {
-            var textContent by remember { mutableStateOf("") }
+        val client = requireComponents.core.client
 
-            LaunchedEffect(Unit) {
-                textContent = runCatching {
-                    // fake delay to simulate us loading the content.
-                    // all this dance would probably happen in a middleware somewhere
-                    delay(3000)
-                    getPageContent()
-                }.getOrNull() ?: ""
-            }
+        setContent {
            ShakeToSummarizeScreen(
-               getSummarizedText = { getPageContent() },
+               getSummarizedText = {
+                   val pageContent = getPageContent()
+                   val body = withContext(Dispatchers.Default) {
+                       val response = client.fetch(generateRequest(pageContent))
+                       response.body.string(Charsets.UTF_8)
+                   }
+                   JSONObject(body).getContent()
+               },
                onDismiss = {
                    dismiss()
                },
@@ -123,6 +133,12 @@ class ShakeToSummarizeFragment: DialogFragment() {
     }
 }
 
+fun JSONObject.getContent(): String {
+    val choices = getJSONArray("choices")
+    val firstChoice = choices.getJSONObject(0)
+    val message = firstChoice.getJSONObject("message")
+    return message.getString("content")
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,14 +162,11 @@ fun ShakeToSummarizeBottomSheet(
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
     )
-    val scope = rememberCoroutineScope()
-    var showBottomSheet by remember { mutableStateOf(false) }
     var state by remember { mutableStateOf<ShakeToSummarizeState>(ShakeToSummarizeState.Loading) }
 
     LaunchedEffect(Unit) {
         val summarizedText = getSummarizedText()
-        delay(2000L)
-        state = ShakeToSummarizeState.Loaded(text = summarizedText)
+        state = ShakeToSummarizeState.Loaded(text = AnnotatedString(summarizedText))
     }
 
     ModalBottomSheet(
@@ -217,22 +230,42 @@ fun SummarizedPageView(state: ShakeToSummarizeState.Loaded) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AiGeneratedText(
-    text: String,
+    text: AnnotatedString,
     style: TextStyle = TextStyle.Default,
-    speedMillis: Long = 10L
+    speedMillis: Long = 30L // Slowed down slightly for better visual effect
 ) {
+    // 1. Split the AnnotatedString into a list of AnnotatedStrings
+    val words = remember(text) {
+        val list = mutableListOf<AnnotatedString>()
+        var start = 0
+        val pattern = Regex("\\s+")
+
+        // Find all whitespace matches to determine word boundaries
+        pattern.findAll(text.text).forEach { result ->
+            // Add the word plus the trailing whitespace
+            list.add(text.subSequence(start, result.range.last + 1))
+            start = result.range.last + 1
+        }
+
+        // Add the final word if there is one
+        if (start < text.length) {
+            list.add(text.subSequence(start, text.length))
+        }
+        list
+    }
+
     Box(modifier = Modifier.fillMaxWidth()) {
+        // Invisible text used to reserve the total space (prevents layout jumping)
         Text(
             text = text,
             style = style,
             modifier = Modifier.alpha(0f)
         )
 
-        val words = remember(text) { text.split(" ") }
         FlowRow {
-            words.forEachIndexed { index, word ->
+            words.forEachIndexed { index, annotatedWord ->
                 AnimatedWord(
-                    word = "$word ",
+                    annotatedWord = annotatedWord,
                     index = index,
                     delayStep = speedMillis,
                     style = style
@@ -244,34 +277,30 @@ fun AiGeneratedText(
 
 @Composable
 private fun AnimatedWord(
-    word: String,
+    annotatedWord: AnnotatedString,
     index: Int,
     delayStep: Long,
     style: TextStyle
 ) {
     val animatedProgress = remember { Animatable(0f) }
 
-    LaunchedEffect(key1 = word) {
-        // Stagger the start of each word based on its position
+    // Use the content as the key so it re-animates if the text changes
+    LaunchedEffect(annotatedWord) {
         delay(index * delayStep)
         animatedProgress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(
-                durationMillis = 400,
-                easing = LinearEasing
-            )
+            animationSpec = tween(durationMillis = 300, easing = LinearOutSlowInEasing)
         )
     }
 
     Text(
-        text = word,
+        text = annotatedWord,
         style = style,
         modifier = Modifier
             .graphicsLayer {
-                // Subtle upward slide
-                translationY = (1f - animatedProgress.value) * 15f
+                alpha = animatedProgress.value
+                translationY = (1f - animatedProgress.value) * 10f
             }
-            .alpha(animatedProgress.value)
     )
 }
 
@@ -380,3 +409,110 @@ private fun WaveGradientSheetSurface(
         )
     }
 }
+
+
+private val summarizedText12213 = """
+    # Vidit ripas ab flexisque
+
+    ## Damna visceraque memorant
+
+    Lorem markdownum non **est parvoque**: cinxisse secundo abstinuit et? Spoliata
+    **aetherias cornua** ab et possederat ad longo annis ex o Naxon: cum membra
+    revocare et.
+
+    Omnia [inque](#damna-visceraque-memorant) sustinuit tumidum
+    [iussis](#in-tenus-tamen): nullus vagus congelat genitoris. Urbs aut triformis,
+    ut iussos inutilior enim *indueret*: orba an hic redde avito. Nec quo, diruerent
+    clamore tamen ferroque et finxit in artus ocior infert greges. Glorior fortius
+    prior signisque regionibus adhuc, tacuit, mutat **consultaque**, putatur quae
+    fixurus corpora portenditur! Tumulo `errorCharacterBar` virides duos.
+
+    Paventem renovat fulvas hoc, omnia me dabat Zancle videt. Per marmore cuspide
+    sibi, non inque; somnus terras Lapithas pars caeli vipereas satis latus, nec
+    ardescunt caecis. Faciemque oscula sagitta iustius, sua supero prius sororis
+    admonitu convicia. Sic Aurora causa patiens tandem trementes, aetasque hominem
+    *vulnera*, Actorides indicium tendentem, ducit racemiferis deprendit potest
+    [iacentes](#vidit-ripas-ab-flexisque).
+
+    ## In tenus tamen
+
+    Nam est edere fine est carinae Ismenides seu sic fuit ego. Miseros *a eurus
+    lacus* verba per vulnera. Possim iter flectentem fugerat cecidere carmen dea
+    laetabile inanes, est deducit `character` domos, caelo! Prodibant Latinum hic
+    cruor arvaque *pallent et latere* collocat multorum legi. Veniensque pudore
+    leonem serius; [avus](#damna-visceraque-memorant) nec [frangit nuper
+    loquentis](#vidit-ripas-ab-flexisque).
+
+    > Felicia omni; nec maestae flumina nostri. Terebrata digitosque ferrum
+    > furialibus notior interritus arma possedit amplexaque; et ait sui
+    > `development` percussit nimium se inania mater. Crimina garrula minimo quoque,
+    > imas pro humili etiam vincla, mihi exiguo agant est, corpusque fecundus
+    > dumque?
+
+    Silentia venite, Placatus relictum circum Argolico, messes septem circumvolat et
+    possem in hominum nulla. Est dici tempore dextrae fecit nec: quique ne obvertit
+    iuvenem. Inpleratque procul leves, non istis Neptunus dixit, mihi retemptantem
+    haec Libys de pudici magni et adacta quereris hominis. Est vulnera mandabat
+    illo, vos est corpora cladis nec sunto a.
+
+    ## De uvis servato litora
+
+    Territus pater sequentia, nefando, canis in exitus at quoque alto minimae, enim
+    lugenti fuit, mea! Silvas paelice occiderat huc aede mulcendas vultus oscula
+    victoris pectora quantumque venerisque rapit. Cum mihi auras, femina potiuntur a
+    plausis [tectaque resupinus Titania](#damna-visceraque-memorant) fugiant pudoris
+    temptabat sucosque, sit trahit formae.
+
+    - Cum clamor ramos longa sine videtur
+    - Est nec
+    - Radiataque et opus si abdita Phinea regis
+    - Habet gentisque non
+    - Hortis dira ramis sinu operatus verbaque cruore
+    - Nimis Cyane proles
+""".trimIndent()
+
+
+fun generateRequest(content: String): Request {
+    return Request(
+        url = "https://mlpa-nonprod-stage-mozilla.global.ssl.fastly.net/v1/chat/completions",
+        method = Request.Method.POST,
+        headers = MutableHeaders(
+            "authorization" to authorizationToken,
+            "content-type" to "application/json",
+            "service-type" to "ai",
+        ),
+        body = requestBody(content)
+    )
+}
+
+@Serializable
+data class ChatRequest(
+    val model: String,
+    val messages: List<ChatMessage>,
+    val stream: Boolean = false
+)
+
+@Serializable
+data class ChatMessage(
+    val role: String,
+    val content: String
+)
+
+fun requestBody(content: String): Request.Body {
+    val prompt = "Summarize the following article in a single, dense paragraph. " +
+            "Remove any links from Markdown. The summary should be presented " +
+            "as a single block of text. Article: $content"
+
+    val requestObj = ChatRequest(
+        model = "mistral-small-2503",
+        messages = listOf(ChatMessage(role = "user", content = prompt))
+    )
+
+    // This will correctly escape all quotes and newlines within the content
+    val jsonString = Json.encodeToString(ChatRequest.serializer(), requestObj)
+
+    return Request.Body.fromString(jsonString)
+}
+
+
+val authorizationToken = "<token>"

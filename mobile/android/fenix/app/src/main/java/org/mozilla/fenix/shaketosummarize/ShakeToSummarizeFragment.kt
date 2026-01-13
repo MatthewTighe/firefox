@@ -1,5 +1,6 @@
 package org.mozilla.fenix.shaketosummarize
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -60,16 +61,21 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
+import com.google.mlkit.genai.common.DownloadStatus
+import com.google.mlkit.genai.common.FeatureStatus
+import com.google.mlkit.genai.prompt.Generation
+import com.google.mlkit.genai.prompt.GenerativeModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
 import org.mozilla.fenix.R
 import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.concept.fetch.MutableHeaders
@@ -105,11 +111,28 @@ class ShakeToSummarizeFragment: DialogFragment() {
            ShakeToSummarizeScreen(
                getSummarizedText = {
                    val pageContent = getPageContent()
-                   val body = withContext(Dispatchers.Default) {
-                       val response = client.fetch(generateRequest(pageContent))
-                       response.body.string(Charsets.UTF_8)
+                   val model = Generation.getClient()
+                   val status = model.checkStatus()
+                   if (status == FeatureStatus.AVAILABLE) {
+                       model.getPromptResponse(pageContent)
+                   } else {
+                       if (status == FeatureStatus.DOWNLOADABLE) {
+                           Log.d("tighe", "downloading")
+                            model.download().onEach { status ->
+                               Log.d("tighe", status.toString())
+                           }.first { status ->
+                             status == DownloadStatus.DownloadCompleted
+                           }
+                           model.getPromptResponse(pageContent)
+                       } else {
+                           val body = withContext(Dispatchers.Default) {
+                               val response = client.fetch(generateRequest(pageContent))
+                               response.body.string(Charsets.UTF_8)
+                           }
+                           JSONObject(body).getContent()
+                       }
                    }
-                   JSONObject(body).getContent()
+
                },
                onDismiss = {
                    dismiss()
@@ -130,6 +153,31 @@ class ShakeToSummarizeFragment: DialogFragment() {
                 continuation.resumeWithException(it)
             },
         )
+    }
+
+    private suspend fun GenerativeModel.getPromptResponse(pageContent: String): String {
+//        val prompt = """
+//                           You are an expert at creating mobile-optimized summaries. Process:
+//                           Step 1: Identify the type of content.
+//                           Step 2: Based on content type, prioritize:
+//                           Recipe - Servings, Total time, Ingredients list, Key steps, Tips.
+//                           News - What happened, when, where.
+//                           How-to - Total time, Materials, Key steps, Warnings.
+//                           Review - Bottom line rating, price.
+//                           Opinion - Main arguments, Key evidence.
+//                           Personal Blog - Author, main points.
+//                           Fiction - Author, summary of plot.
+//                           All other content types - Provide a brief summary of no more than 6 sentences.
+//                           Step 3: Format for mobile using concise language and paragraphs with 3 sentences maximum.
+//                           Bold critical details (numbers, warnings, key terms).
+//
+//                           Content to summarize: $pageContent
+//                       """.trimIndent()
+        val prompt = "Summarize the following article in a single, dense paragraph. " +
+                "Remove any links from Markdown. The summary should be presented " +
+                "as a single block of text. Article: $pageContent"
+        val response = generateContent(prompt)
+        return response.candidates[0].text
     }
 }
 

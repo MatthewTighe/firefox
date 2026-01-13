@@ -683,6 +683,7 @@ dependencies {
     implementation libs.protobuf.javalite
     implementation libs.sentry
     implementation libs.androidx.material3
+    implementation libs.mlkit.prompt
 
     debugImplementation libs.androidx.compose.ui.tooling
     debugImplementation libs.leakcanary

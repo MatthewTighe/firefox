@@ -13,6 +13,8 @@ import mozilla.appservices.places.BookmarkRoot
 import mozilla.components.browser.state.state.ReaderState
 import mozilla.components.browser.state.state.createTab
 import mozilla.components.concept.engine.webextension.InstallationMethod
+import mozilla.components.concept.storage.BookmarkNodeType
+import mozilla.components.concept.storage.BookmarksStorage
 import mozilla.components.feature.addons.Addon
 import mozilla.components.feature.addons.AddonManager
 import mozilla.components.feature.app.links.AppLinkRedirect
@@ -68,9 +70,8 @@ class MenuDialogMiddlewareTest {
     val coroutinesTestRule = MainCoroutineRule()
     private val scope = coroutinesTestRule.scope
 
-    private val bookmarksStorage = FakeBookmarksStorage()
-    private val addBookmarkUseCase: AddBookmarksUseCase =
-        spy(AddBookmarksUseCase(storage = bookmarksStorage))
+    private lateinit var bookmarksStorage: BookmarksStorage
+    private lateinit var addBookmarkUseCase: AddBookmarksUseCase
 
     private val addonManager: AddonManager = mock()
     private val onDeleteAndQuit: () -> Unit = mock()
@@ -101,6 +102,8 @@ class MenuDialogMiddlewareTest {
         tabsUseCases = mock()
         migratePrivateTabUseCase = mock()
         lastSavedFolderCache = mock()
+        bookmarksStorage = FakeBookmarksStorage()
+        addBookmarkUseCase = spy(AddBookmarksUseCase(storage = bookmarksStorage))
 
         settings = Settings(testContext)
 
@@ -263,6 +266,7 @@ class MenuDialogMiddlewareTest {
             onDismiss = { dismissWasCalled = true },
         )
 
+        (bookmarksStorage as FakeBookmarksStorage).addFakeItem(BookmarkRoot.Mobile.id, BookmarkNodeType.FOLDER, title ="Bookmarks")
         `when`(lastSavedFolderCache.getGuid()).thenReturn(null)
 
         store.dispatch(MenuAction.AddBookmark)
@@ -297,11 +301,47 @@ class MenuDialogMiddlewareTest {
             onDismiss = { dismissWasCalled = true },
         )
 
+        val cachedGuid = "cached"
+        (bookmarksStorage as FakeBookmarksStorage).addFakeItem(cachedGuid, BookmarkNodeType.FOLDER)
+        `when`(lastSavedFolderCache.getGuid()).thenReturn(cachedGuid)
+
+        store.dispatch(MenuAction.AddBookmark)
+
+        verify(addBookmarkUseCase).invoke(url = url, title = title, parentGuid = cachedGuid)
+
+        captureMiddleware.assertLastAction(BookmarkAction.BookmarkAdded::class) { action: BookmarkAction.BookmarkAdded ->
+            assertNotNull(action.guidToEdit)
+        }
+        assertTrue(dismissWasCalled)
+    }
+
+    @Test
+    fun `GIVEN last save folder cache has a stale value WHEN add bookmark action is dispatched for a selected tab THEN cached value is not used as parent`() = runTestOnMain {
+        val url = "https://www.mozilla.org"
+        val title = "Mozilla"
+        var dismissWasCalled = false
+
+        val browserMenuState = BrowserMenuState(
+            selectedTab = createTab(
+                url = url,
+                title = title,
+            ),
+        )
+        val captureMiddleware = CaptureActionsMiddleware<AppState, AppAction>()
+        val appStore = AppStore(middlewares = listOf(captureMiddleware))
+        val store = createStore(
+            appStore = appStore,
+            menuState = MenuState(
+                browserMenuState = browserMenuState,
+            ),
+            onDismiss = { dismissWasCalled = true },
+        )
+
         `when`(lastSavedFolderCache.getGuid()).thenReturn("cached-value")
 
         store.dispatch(MenuAction.AddBookmark)
 
-        verify(addBookmarkUseCase).invoke(url = url, title = title, parentGuid = "cached-value")
+        verify(addBookmarkUseCase).invoke(url = url, title = title, parentGuid = null)
 
         captureMiddleware.assertLastAction(BookmarkAction.BookmarkAdded::class) { action: BookmarkAction.BookmarkAdded ->
             assertNotNull(action.guidToEdit)
@@ -316,6 +356,7 @@ class MenuDialogMiddlewareTest {
 
         // Add a pre-existing item. This accounts for the null case, but that shouldn't actually be
         // possible because the mobile root is a subfolder of the synced root
+        (bookmarksStorage as FakeBookmarksStorage).addFakeItem(BookmarkRoot.Mobile.id, BookmarkNodeType.FOLDER, title ="Bookmarks")
         bookmarksStorage.addFolder(
             parentGuid = "",
             title = "title",

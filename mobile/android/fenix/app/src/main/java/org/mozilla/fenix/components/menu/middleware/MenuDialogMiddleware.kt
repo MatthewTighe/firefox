@@ -220,6 +220,8 @@ class MenuDialogMiddleware(
         val selectedTab = browserMenuState.selectedTab
         val url = selectedTab.getUrl() ?: return@launch
 
+        // Note: this cache can get stale, but addBookmarkUseCase falls back to the mobile root
+        // when provided a null parent guid
         val parentGuid = lastSavedFolderCache.getGuid() ?: BookmarkRoot.Mobile.id
 
         val parentNode = bookmarksStorage.getBookmark(parentGuid).getOrNull()
@@ -227,7 +229,7 @@ class MenuDialogMiddleware(
         val guidToEdit = addBookmarkUseCase(
             url = url,
             title = selectedTab.content.title,
-            parentGuid = parentGuid,
+            parentGuid = parentNode?.guid,
         )
 
         appStore.dispatch(

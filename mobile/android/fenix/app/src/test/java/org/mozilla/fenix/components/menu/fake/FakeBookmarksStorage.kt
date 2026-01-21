@@ -13,6 +13,20 @@ import java.util.UUID
 class FakeBookmarksStorage() : BookmarksStorage {
     private val bookmarkMap: HashMap<String, BookmarkNode> = hashMapOf()
 
+    fun addFakeItem(guid: String, type: BookmarkNodeType, title: String = "title", url: String = "url") {
+        bookmarkMap[guid] = BookmarkNode(
+            type = type,
+            guid = guid,
+            parentGuid = null,
+            position = 0u,
+            title = title,
+            url = url,
+            dateAdded = 1,
+            lastModified = 1,
+            children = listOf()
+        )
+    }
+
     override suspend fun warmUp() {
         throw NotImplementedError()
     }

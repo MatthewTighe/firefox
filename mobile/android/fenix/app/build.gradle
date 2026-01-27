@@ -684,6 +684,7 @@ dependencies {
     implementation libs.sentry
     implementation libs.androidx.material3
     implementation libs.mlkit.prompt
+    implementation libs.integrity
 
     debugImplementation libs.androidx.compose.ui.tooling
     debugImplementation libs.leakcanary

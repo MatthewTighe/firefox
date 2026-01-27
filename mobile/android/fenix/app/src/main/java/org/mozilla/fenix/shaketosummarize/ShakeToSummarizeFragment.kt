@@ -1,5 +1,7 @@
 package org.mozilla.fenix.shaketosummarize
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
@@ -34,6 +36,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
@@ -64,6 +67,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.play.core.integrity.StandardIntegrityManager
 import com.google.mlkit.genai.common.DownloadStatus
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.Generation
@@ -73,6 +77,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -107,31 +112,36 @@ class ShakeToSummarizeFragment: DialogFragment() {
     ): View = ComposeView(requireContext()).apply {
         val client = requireComponents.core.client
 
+        Log.i("tighe", "summarize me")
         setContent {
            ShakeToSummarizeScreen(
                getSummarizedText = {
-                   val pageContent = getPageContent()
-                   val model = Generation.getClient()
-                   val status = model.checkStatus()
-                   if (status == FeatureStatus.AVAILABLE) {
-                       model.getPromptResponse(pageContent)
-                   } else {
-                       if (status == FeatureStatus.DOWNLOADABLE) {
-                           Log.d("tighe", "downloading")
-                            model.download().onEach { status ->
-                               Log.d("tighe", status.toString())
-                           }.first { status ->
-                             status == DownloadStatus.DownloadCompleted
-                           }
-                           model.getPromptResponse(pageContent)
-                       } else {
-                           val body = withContext(Dispatchers.Default) {
-                               val response = client.fetch(generateRequest(pageContent))
-                               response.body.string(Charsets.UTF_8)
-                           }
-                           JSONObject(body).getContent()
-                       }
+                   requireComponents.integrityTokenProvider!!.integrityRequest().also {
+                       val clipboard = requireActivity().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                       clipboard.setPrimaryClip(ClipData.newPlainText("", it))
                    }
+//                   val pageContent = getPageContent()
+//                   val model = Generation.getClient()
+//                   val status = model.checkStatus()
+//                   if (status == FeatureStatus.AVAILABLE) {
+//                       model.getPromptResponse(pageContent)
+//                   } else {
+//                       if (status == FeatureStatus.DOWNLOADABLE) {
+//                           Log.d("tighe", "downloading")
+//                            model.download().onEach { status ->
+//                               Log.d("tighe", status.toString())
+//                           }.first { status ->
+//                             status == DownloadStatus.DownloadCompleted
+//                           }
+//                           model.getPromptResponse(pageContent)
+//                       } else {
+//                           val body = withContext(Dispatchers.Default) {
+//                               val response = client.fetch(generateRequest(pageContent))
+//                               response.body.string(Charsets.UTF_8)
+//                           }
+//                           JSONObject(body).getContent()
+//                       }
+//                   }
 
                },
                onDismiss = {
@@ -282,45 +292,48 @@ fun AiGeneratedText(
     style: TextStyle = TextStyle.Default,
     speedMillis: Long = 30L // Slowed down slightly for better visual effect
 ) {
-    // 1. Split the AnnotatedString into a list of AnnotatedStrings
-    val words = remember(text) {
-        val list = mutableListOf<AnnotatedString>()
-        var start = 0
-        val pattern = Regex("\\s+")
-
-        // Find all whitespace matches to determine word boundaries
-        pattern.findAll(text.text).forEach { result ->
-            // Add the word plus the trailing whitespace
-            list.add(text.subSequence(start, result.range.last + 1))
-            start = result.range.last + 1
-        }
-
-        // Add the final word if there is one
-        if (start < text.length) {
-            list.add(text.subSequence(start, text.length))
-        }
-        list
+    SelectionContainer {
+        Text(text)
     }
-
-    Box(modifier = Modifier.fillMaxWidth()) {
-        // Invisible text used to reserve the total space (prevents layout jumping)
-        Text(
-            text = text,
-            style = style,
-            modifier = Modifier.alpha(0f)
-        )
-
-        FlowRow {
-            words.forEachIndexed { index, annotatedWord ->
-                AnimatedWord(
-                    annotatedWord = annotatedWord,
-                    index = index,
-                    delayStep = speedMillis,
-                    style = style
-                )
-            }
-        }
-    }
+//    // 1. Split the AnnotatedString into a list of AnnotatedStrings
+//    val words = remember(text) {
+//        val list = mutableListOf<AnnotatedString>()
+//        var start = 0
+//        val pattern = Regex("\\s+")
+//
+//        // Find all whitespace matches to determine word boundaries
+//        pattern.findAll(text.text).forEach { result ->
+//            // Add the word plus the trailing whitespace
+//            list.add(text.subSequence(start, result.range.last + 1))
+//            start = result.range.last + 1
+//        }
+//
+//        // Add the final word if there is one
+//        if (start < text.length) {
+//            list.add(text.subSequence(start, text.length))
+//        }
+//        list
+//    }
+//
+//    Box(modifier = Modifier.fillMaxWidth()) {
+//        // Invisible text used to reserve the total space (prevents layout jumping)
+//        Text(
+//            text = text,
+//            style = style,
+//            modifier = Modifier.alpha(0f)
+//        )
+//
+//        FlowRow {
+//            words.forEachIndexed { index, annotatedWord ->
+//                AnimatedWord(
+//                    annotatedWord = annotatedWord,
+//                    index = index,
+//                    delayStep = speedMillis,
+//                    style = style
+//                )
+//            }
+//        }
+//    }
 }
 
 @Composable
@@ -519,6 +532,17 @@ private val summarizedText12213 = """
     - Nimis Cyane proles
 """.trimIndent()
 
+suspend fun StandardIntegrityManager.StandardIntegrityTokenProvider.integrityRequest(): String {
+    val requestHash = "testing"
+    Log.i("tighe", "making integrity request")
+    return request(
+        StandardIntegrityManager.StandardIntegrityTokenRequest.builder()
+            .setRequestHash(requestHash)
+            .build()
+    ).await().token().also {
+        Log.i("tighe", "integrity request success token: $it")
+    }
+}
 
 fun generateRequest(content: String): Request {
     return Request(

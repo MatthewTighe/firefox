@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationManagerCompat
+import com.google.android.play.core.integrity.IntegrityManagerFactory
+import com.google.android.play.core.integrity.StandardIntegrityManager
 import com.google.android.play.core.review.ReviewManagerFactory
 import mozilla.components.feature.addons.AddonManager
 import mozilla.components.feature.addons.amo.AMOAddonsProvider
@@ -90,6 +92,8 @@ private const val AMO_COLLECTION_MAX_CACHE_AGE = 2 * 24 * 60L // Two days in min
  * can be considered a building block of our app.
  */
 class Components(private val context: Context) {
+    var integrityTokenProvider: StandardIntegrityManager.StandardIntegrityTokenProvider? = null
+
     val backgroundServices by lazyMonitored {
         BackgroundServices(
             context,

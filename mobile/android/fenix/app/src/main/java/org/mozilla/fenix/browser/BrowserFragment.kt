@@ -182,6 +182,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
         }
 
         initZoomOutActivation()
+        findNavController().navigate(HomeFragmentDirections.actionShakeToSummarize())
     }
 
     private fun initZoomOutActivation() {
@@ -264,7 +265,7 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
 //            browserToolbarInteractor.onReaderModePressed(true)
 //            return true
 //        }
-        findNavController().navigate(HomeFragmentDirections.actionShakeToSummarize())
+//        findNavController().navigate(HomeFragmentDirections.actionShakeToSummarize())
         return true
     }
 

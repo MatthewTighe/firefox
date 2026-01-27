@@ -22,6 +22,8 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration.Builder
 import androidx.work.Configuration.Provider
+import com.google.android.play.core.integrity.IntegrityManagerFactory
+import com.google.android.play.core.integrity.StandardIntegrityManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -361,6 +363,16 @@ open class FenixApplication : LocaleAwareApplication(), Provider, ThemeProvider 
 
         CoroutineScope(IO).launch {
             components.useCases.wallpaperUseCases.fetchCurrentWallpaperUseCase.invoke()
+        }
+
+        IntegrityManagerFactory.createStandard(this).prepareIntegrityToken(
+            StandardIntegrityManager.PrepareIntegrityTokenRequest.builder()
+                .setCloudProjectNumber(973845059695L)
+                .build()
+        ).addOnSuccessListener {
+            components.integrityTokenProvider = it
+        }.addOnFailureListener {
+            logger.error("failed to init integrity : ${it.message}")
         }
     }
 

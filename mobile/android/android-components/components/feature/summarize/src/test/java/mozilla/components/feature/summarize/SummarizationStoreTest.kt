@@ -4,6 +4,7 @@
 
 package mozilla.components.feature.summarize
 
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -61,7 +62,7 @@ class SummarizationStoreTest {
         )
 
         assertEquals(expected, states)
-        assertTrue(settings.hasConsentedToShake())
+        assertTrue(settings.getHasConsentedToShake().first())
     }
 
     @Test
@@ -100,7 +101,7 @@ class SummarizationStoreTest {
         )
 
         assertEquals(expected, states)
-        assertFalse(settings.hasConsentedToShake())
+        assertFalse(settings.getHasConsentedToShake().first())
     }
 
     @Test
@@ -113,8 +114,8 @@ class SummarizationStoreTest {
             reducer = ::summarizationReducer,
             middleware = listOf(
                 SummarizationMiddleware(
-                    settings = SummarizationSettings.inMemory(hasConsentedToShakeInitial = true),
                     llmProvider = provider,
+                    settings = SummarizationSettings.inMemory(hasConsentedToShake = true),
                     pageContentExtractor = { Result.success(content) },
                     scope = backgroundScope,
                 ),
@@ -152,8 +153,8 @@ class SummarizationStoreTest {
             reducer = ::summarizationReducer,
             middleware = listOf(
                 SummarizationMiddleware(
-                    settings = SummarizationSettings.inMemory(hasConsentedToShakeInitial = true),
                     llmProvider = provider,
+                    settings = SummarizationSettings.inMemory(hasConsentedToShake = true),
                     pageContentExtractor = { Result.failure(failureThrowable) },
                     scope = backgroundScope,
                 ),

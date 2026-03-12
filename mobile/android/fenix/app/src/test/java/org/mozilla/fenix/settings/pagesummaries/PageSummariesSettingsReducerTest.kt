@@ -17,52 +17,52 @@ class PageSummariesSettingsReducerTest {
     @Test
     fun `WHEN summarize pages is toggled on THEN it is enabled in the state`() {
         val state = SummarizeSettingsState(
-            summarizePagesEnabled = false,
-            shakeToSummarizeEnabled = false,
+            isFeatureEnabled = false,
+            isGestureEnabled = false,
         )
         val result = summarizeSettingsReducer(state, SummarizePagesPreferenceToggled)
 
-        assertEquals(state.copy(summarizePagesEnabled = true), result)
+        assertEquals(state.copy(isFeatureEnabled = true), result)
     }
 
     @Test
     fun `WHEN summarize pages is toggled off THEN it is disabled in the state`() {
         val state = SummarizeSettingsState(
-            summarizePagesEnabled = true,
-            shakeToSummarizeEnabled = true,
+            isFeatureEnabled = true,
+            isGestureEnabled = true,
         )
         val result = summarizeSettingsReducer(state, SummarizePagesPreferenceToggled)
 
-        assertEquals(state.copy(summarizePagesEnabled = false), result)
+        assertEquals(state.copy(isFeatureEnabled = false), result)
     }
 
     @Test
     fun `WHEN shake to summarize is toggled on THEN it is enabled in the state`() {
         val state = SummarizeSettingsState(
-            summarizePagesEnabled = true,
-            shakeToSummarizeEnabled = false,
+            isFeatureEnabled = true,
+            isGestureEnabled = false,
         )
         val result = summarizeSettingsReducer(state, ShakeToSummarizePreferenceToggled)
 
-        assertEquals(state.copy(shakeToSummarizeEnabled = true), result)
+        assertEquals(state.copy(isGestureEnabled = true), result)
     }
 
     @Test
     fun `WHEN shake to summarize is toggled off THEN it is disabled in the state`() {
         val state = SummarizeSettingsState(
-            summarizePagesEnabled = true,
-            shakeToSummarizeEnabled = true,
+            isFeatureEnabled = true,
+            isGestureEnabled = true,
         )
         val result = summarizeSettingsReducer(state, ShakeToSummarizePreferenceToggled)
 
-        assertEquals(state.copy(shakeToSummarizeEnabled = false), result)
+        assertEquals(state.copy(isGestureEnabled = false), result)
     }
 
     @Test
     fun `WHEN learn more is clicked THEN state is unchanged`() {
         val state = SummarizeSettingsState(
-            summarizePagesEnabled = true,
-            shakeToSummarizeEnabled = true,
+            isFeatureEnabled = true,
+            isGestureEnabled = true,
         )
         val result = summarizeSettingsReducer(state, LearnMoreClicked)
 

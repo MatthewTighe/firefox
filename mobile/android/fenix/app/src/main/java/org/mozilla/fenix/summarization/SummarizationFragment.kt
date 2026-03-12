@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.viewModels
 import androidx.fragment.compose.content
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -24,7 +25,6 @@ import mozilla.components.feature.summarize.settings.SummarizeSettingsState
 import mozilla.components.feature.summarize.settings.SummarizeSettingsStore
 import mozilla.components.feature.summarize.settings.summarizeSettingsReducer
 import org.mozilla.fenix.R
-import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.theme.FirefoxTheme
 import kotlin.coroutines.resume
@@ -60,7 +60,7 @@ class SummarizationFragment : BottomSheetDialogFragment() {
         SummarizationStoreViewModel.factory(
             initializedFromShake = args.fromShake,
             llmProvider = provider,
-            settings = SummarizationSettings.sharedPrefs(requireContext()),
+            settings = SummarizationSettings.dataStore(requireContext()),
             pageContentExtractor = engineSession.asPageContentExtractor(),
         )
     }
@@ -78,17 +78,15 @@ class SummarizationFragment : BottomSheetDialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View = content {
-        val summarizeSettings = requireContext().components.core.summarizeFeatureSettings
+        val summarizeSettings = SummarizationSettings.dataStore(requireContext())
         val settingsStore = SummarizeSettingsStore(
-            initialState = SummarizeSettingsState(
-                summarizePagesEnabled = summarizeSettings.summarizePagesEnabled,
-                shakeToSummarizeEnabled = summarizeSettings.shakeToSummarizeEnabled,
-            ),
+            initialState = SummarizeSettingsState(),
             reducer = ::summarizeSettingsReducer,
             middleware = listOf(
                 SummarizeSettingsMiddleware(
                     settings = summarizeSettings,
                     onLearnMoreClicked = {},
+                    storeViewModel.viewModelScope,
                 ),
             ),
         )

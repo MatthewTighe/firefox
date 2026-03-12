@@ -180,12 +180,10 @@ class BrowserFragment : BaseBrowserFragment(), UserInteractionHandler {
     }
 
     private fun setupShakeDetection() {
-        if (
-            !(
-                requireComponents.core.summarizeFeatureSettings.canShowFeature &&
-                requireComponents.core.summarizeFeatureSettings.shakeToSummarizeEnabled
-            )
-        ) {
+        val shouldSetupShake = requireComponents.core.summarizeFeatureSettings.canShowFeature &&
+                requireComponents.core.summarizationSettings.isGestureEnabled.value &&
+                !requireComponents.core.summarizationSettings.isShakeGestureRejected.value
+        if (!shouldSetupShake) {
             return
         }
 

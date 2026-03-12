@@ -6,7 +6,6 @@ package org.mozilla.fenix.settings.summarize
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import mozilla.components.feature.summarize.settings.SummarizationFeatureSettings
 import org.mozilla.fenix.summarization.onboarding.SummarizationFeatureDiscoveryConfiguration
 import org.mozilla.fenix.summarization.onboarding.SummarizeDiscoveryEvent
 

@@ -13,13 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import mozilla.components.feature.summarize.SummarizationSettings
 import mozilla.components.feature.summarize.settings.SummarizeSettingsContent
 import mozilla.components.feature.summarize.settings.SummarizeSettingsMiddleware
 import mozilla.components.feature.summarize.settings.SummarizeSettingsState
 import mozilla.components.feature.summarize.settings.SummarizeSettingsStore
 import mozilla.components.feature.summarize.settings.summarizeSettingsReducer
 import org.mozilla.fenix.R
-import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.showToolbar
 import org.mozilla.fenix.theme.FirefoxTheme
 
@@ -41,17 +42,15 @@ class PageSummariesSettingsFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 FirefoxTheme {
-                    val summarizeSettings = requireComponents.core.summarizeFeatureSettings
+                    val summarizeSettings = SummarizationSettings.dataStore(requireContext())
                     val store = SummarizeSettingsStore(
-                        initialState = SummarizeSettingsState(
-                            summarizePagesEnabled = summarizeSettings.summarizePagesEnabled,
-                            shakeToSummarizeEnabled = summarizeSettings.shakeToSummarizeEnabled,
-                        ),
+                        initialState = SummarizeSettingsState(),
                         reducer = ::summarizeSettingsReducer,
                         middleware = listOf(
                             SummarizeSettingsMiddleware(
                                 settings = summarizeSettings,
                                 onLearnMoreClicked = {},
+                                scope = viewLifecycleOwner.lifecycleScope,
                             ),
                         ),
                     )

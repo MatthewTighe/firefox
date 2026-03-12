@@ -33,8 +33,8 @@ class PageSummariesSettingsMiddlewareTest {
         val middleware = buildMiddleware()
         val store = middleware.makeStore(
             initialState = SummarizeSettingsState(
-                summarizePagesEnabled = false,
-                shakeToSummarizeEnabled = false,
+                isFeatureEnabled = false,
+                isGestureEnabled = false,
             ),
         )
 
@@ -48,8 +48,8 @@ class PageSummariesSettingsMiddlewareTest {
         val middleware = buildMiddleware()
         val store = middleware.makeStore(
             initialState = SummarizeSettingsState(
-                summarizePagesEnabled = true,
-                shakeToSummarizeEnabled = true,
+                isFeatureEnabled = true,
+                isGestureEnabled = true,
             ),
         )
 
@@ -63,8 +63,8 @@ class PageSummariesSettingsMiddlewareTest {
         val middleware = buildMiddleware()
         val store = middleware.makeStore(
             initialState = SummarizeSettingsState(
-                summarizePagesEnabled = true,
-                shakeToSummarizeEnabled = false,
+                isFeatureEnabled = true,
+                isGestureEnabled = false,
             ),
         )
 
@@ -78,8 +78,8 @@ class PageSummariesSettingsMiddlewareTest {
         val middleware = buildMiddleware()
         val store = middleware.makeStore(
             initialState = SummarizeSettingsState(
-                summarizePagesEnabled = true,
-                shakeToSummarizeEnabled = true,
+                isFeatureEnabled = true,
+                isGestureEnabled = true,
             ),
         )
 
@@ -105,8 +105,8 @@ class PageSummariesSettingsMiddlewareTest {
 
     private fun SummarizeSettingsMiddleware.makeStore(
         initialState: SummarizeSettingsState = SummarizeSettingsState(
-            summarizePagesEnabled = false,
-            shakeToSummarizeEnabled = false,
+            isFeatureEnabled = false,
+            isGestureEnabled = false,
         ),
     ) = SummarizeSettingsStore(
         initialState = initialState,

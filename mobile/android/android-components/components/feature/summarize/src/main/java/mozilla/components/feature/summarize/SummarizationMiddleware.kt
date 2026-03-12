@@ -5,6 +5,7 @@
 package mozilla.components.feature.summarize
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import mozilla.components.concept.llm.CloudLlmProvider
@@ -33,6 +34,9 @@ class SummarizationMiddleware(
                 } else {
                     observeCloudLlmProvider(store, llmProvider)
                 }
+            }
+            OffDeviceSummarizationShakeConsentAction.CancelClicked -> scope.launch {
+                settings.incrementShakeConsentRejectedCount()
             }
             OffDeviceSummarizationShakeConsentAction.AllowClicked -> scope.launch {
                 settings.setHasConsentedToShake(true)
@@ -80,7 +84,7 @@ class SummarizationMiddleware(
     private suspend fun needsShakeConsent(state: SummarizationState): Boolean =
         state is SummarizationState.Inert &&
             state.initializedWithShake &&
-            !settings.hasConsentedToShake()
+            !settings.getHasConsentedToShake().first()
 
     private val systemPrompt = "This is the system prompt: "
 }

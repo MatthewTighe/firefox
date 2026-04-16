@@ -1,6 +1,6 @@
 # [Android Components](../../../README.md) > Concept > Storage
 
-The `concept-storage` component contains interfaces and abstract classes that describe a "core data" storage layer.
+The `concept-bookmarks-storage` component contains interfaces and abstract classes that describe a "core data" storage layer.
 
 This abstraction makes it possible to build components that work independently of the storage layer being used.
 

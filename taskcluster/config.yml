@@ -243,6 +243,7 @@ treeherder:
         'concept-integrity': 'concept-integrity'
         'concept-awesomebar': 'concept-awesomebar'
         'concept-base': 'concept-base'
+        'concept-bookmarks-storage': 'concept-bookmarks-storage'
         'compose-base': 'compose-base'
         'compose-cfr': 'compose-cfr'
         'concept-engine': 'concept-engine'

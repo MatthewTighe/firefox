@@ -68,6 +68,7 @@ class BookmarksStorageSuggestionProvider(
             return emptyList()
         }
 
+        // oh no
         bookmarksStorage.cancelReads(text)
         val suggestions = when (resultsUriFilter) {
             null -> getBookmarksSuggestions(text)

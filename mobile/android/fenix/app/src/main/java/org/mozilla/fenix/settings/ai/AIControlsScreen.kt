@@ -48,6 +48,7 @@ import mozilla.components.compose.base.PromoCard
 import mozilla.components.compose.base.annotation.FlexibleWindowPreview
 import mozilla.components.compose.base.button.TextButton
 import mozilla.components.concept.ai.controls.AIControllableFeature
+import mozilla.components.concept.ai.controls.AIFeatureMetadata
 import org.mozilla.fenix.R
 import org.mozilla.fenix.compose.list.IconListItem
 import org.mozilla.fenix.compose.list.SwitchListItem
@@ -65,6 +66,7 @@ private const val HEADER_ITEM_COUNT = 2
 
 @Composable
 internal fun AIControlsScreen(
+    featureEnabledState: Map<AIFeatureMetadata.FeatureId, Boolean>,
     registeredFeatures: List<AIControllableFeature> = emptyList(),
     showDialog: Boolean,
     isBlocked: Boolean,
@@ -90,6 +92,7 @@ internal fun AIControlsScreen(
         ScrollToItemEffect(itemToScrollTo, registeredFeatures, lazyListState)
 
         AIControlsList(
+            featureEnabledState = featureEnabledState,
             lazyListState = lazyListState,
             registeredFeatures = registeredFeatures,
             isBlocked = isBlocked,
@@ -122,6 +125,7 @@ private fun ScrollToItemEffect(
 
 @Composable
 private fun AIControlsList(
+    featureEnabledState: Map<AIFeatureMetadata.FeatureId, Boolean>,
     lazyListState: LazyListState,
     registeredFeatures: List<AIControllableFeature>,
     isBlocked: Boolean,
@@ -151,6 +155,7 @@ private fun AIControlsList(
             key = { it.id.value },
         ) { feature ->
             FeatureRow(
+                featureEnabledState = featureEnabledState,
                 feature = feature,
                 onFeatureToggle = onFeatureToggle,
                 onFeatureNavLinkClick = onFeatureNavLinkClick,
@@ -214,11 +219,12 @@ private fun AIFeaturesHeader() {
 
 @Composable
 private fun FeatureRow(
+    featureEnabledState: Map<AIFeatureMetadata.FeatureId, Boolean>,
     feature: AIControllableFeature,
     onFeatureToggle: (AIControllableFeature, Boolean) -> Unit,
     onFeatureNavLinkClick: (AIFeatureMetadataDestination, String) -> Unit,
 ) {
-    val isEnabled by feature.isEnabled.collectAsStateWithLifecycle(initialValue = true)
+    val isEnabled = featureEnabledState[feature.id] ?: false
 
     Column {
         SwitchListItem(
@@ -383,6 +389,7 @@ private fun AIControlsScreenPreview(
 ) {
     FirefoxTheme(theme) {
         AIControlsScreen(
+            mapOf(),
             showDialog = false,
             isBlocked = false,
             onDialogDismiss = {},

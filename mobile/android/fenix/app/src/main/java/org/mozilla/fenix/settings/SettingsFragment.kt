@@ -35,12 +35,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mozilla.components.browser.state.state.selectedOrDefaultSearchEngine
+import mozilla.components.concept.ai.controls.AIFeatureMetadata
+import mozilla.components.concept.ai.controls.AIFeatureRegistry
 import mozilla.components.concept.engine.Engine
 import mozilla.components.concept.sync.AccountObserver
 import mozilla.components.concept.sync.AuthType
 import mozilla.components.concept.sync.OAuthAccount
 import mozilla.components.concept.sync.Profile
 import mozilla.components.feature.addons.ui.AddonFilePicker
+import mozilla.components.lib.state.Action
+import mozilla.components.lib.state.State
+import mozilla.components.lib.state.Middleware
+import mozilla.components.lib.state.Store
+import mozilla.components.lib.state.helpers.StoreProvider.Companion.navBackStackStore
 import mozilla.components.service.fxrelay.eligibility.Eligible
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import mozilla.components.support.ktx.android.view.showKeyboard
@@ -60,6 +67,10 @@ import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.GleanMetrics.Translations
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
+import org.mozilla.fenix.bookmarks.BookmarksAction
+import org.mozilla.fenix.bookmarks.BookmarksState
+import org.mozilla.fenix.bookmarks.BookmarksStore
+import org.mozilla.fenix.bookmarks.Init
 import org.mozilla.fenix.components.Components
 import org.mozilla.fenix.components.accounts.FenixFxAEntryPoint
 import org.mozilla.fenix.databinding.AmoCollectionOverrideDialogBinding
@@ -73,19 +84,68 @@ import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.ext.showToolbar
 import org.mozilla.fenix.ext.showToolbarWithIconButton
+import org.mozilla.fenix.home.bookmarks.view.Bookmarks
 import org.mozilla.fenix.home.maybeNavigateToSystemSetToDefaultAction
 import org.mozilla.fenix.home.maybeRequestDefaultBrowserPrompt
 import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.fenix.perf.ProfilerViewModel
 import org.mozilla.fenix.perf.ProfilerViewModelFactory
+import org.mozilla.fenix.settings.SettingsAction.*
 import org.mozilla.fenix.settings.account.AccountUiView
 import org.mozilla.fenix.snackbar.FenixSnackbarDelegate
 import org.mozilla.fenix.snackbar.SnackbarBinding
 import org.mozilla.fenix.utils.Settings
 import java.lang.ref.WeakReference
+import kotlin.getValue
 import kotlin.system.exitProcess
 import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.GleanMetrics.Settings as SettingsMetrics
+
+
+data class AIControlsState(val featuresEnabled: Map<AIFeatureMetadata.FeatureId, Boolean> = mapOf())
+data class SettingsState(val aiControlsState: AIControlsState = AIControlsState()) : State
+sealed class SettingsAction : Action {
+    data object SettingsViewCreated : SettingsAction()
+    data class AIControlsFeatureStateLoaded(val enabled: Boolean, val id: AIFeatureMetadata.FeatureId) : SettingsAction()
+}
+
+class SettingsMiddleware(
+    val featureRegistry: AIFeatureRegistry,
+    val scope: CoroutineScope,
+) : Middleware<SettingsState, SettingsAction> {
+    override fun invoke(
+        store: Store<SettingsState, SettingsAction>,
+        next: (SettingsAction) -> Unit,
+        action: SettingsAction,
+    ) {
+        next(action)
+        when (action) {
+            is SettingsAction.SettingsViewCreated -> {
+                featureRegistry.getFeatures().forEach { feature ->
+                    scope.launch {
+                        feature.isEnabled.collect {
+                            store.dispatch(AIControlsFeatureStateLoaded(it, feature.id))
+                        }
+                    }
+                }
+            }
+
+            is SettingsAction.AIControlsFeatureStateLoaded -> Unit
+        }
+    }
+
+}
+
+typealias SettingsStore = Store<SettingsState, SettingsAction>
+
+fun settingsReducer(state: SettingsState, action: SettingsAction): SettingsState = when (action) {
+    is AIControlsFeatureStateLoaded -> state.copy(
+        aiControlsState =  state.aiControlsState.copy(
+            featuresEnabled =  state.aiControlsState.featuresEnabled + (action.id to action.enabled)
+        )
+    )
+    SettingsViewCreated -> state
+}
 
 /**
  * Main settings screen.
@@ -131,6 +191,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragment 
         super.onCreate(savedInstanceState)
 
         components = requireContext().components
+
+        val settingsStore: SettingsStore by findNavController().currentBackStackEntry!!.navBackStackStore(
+            initialState = SettingsState(),
+            factory = { SettingsStore(SettingsState(), ::settingsReducer, middleware = listOf(SettingsMiddleware(components.aiFeatureRegistry, lifecycleScope))) }
+        )
+        settingsStore.dispatch(SettingsAction.SettingsViewCreated)
 
         accountUiView = AccountUiView(
             fragment = this,

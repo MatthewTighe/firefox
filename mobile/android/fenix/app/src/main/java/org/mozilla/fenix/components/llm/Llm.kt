@@ -26,6 +26,7 @@ class Llm(
     private val fxaTokenProvider: FxaAccessTokenProvider,
     private val integrityClient: IntegrityClient,
     private val userIdProvider: UserIdProvider,
+    private val useAdkModel: () -> Boolean = { false },
 ) {
 
     val fenixMlpaService by lazyMonitored { FenixMlpaService(client) }
@@ -44,6 +45,7 @@ class Llm(
             ),
             storage = storage,
             mlpaService = fenixMlpaService,
+            useAdkModel = useAdkModel(),
         )
     }
 }

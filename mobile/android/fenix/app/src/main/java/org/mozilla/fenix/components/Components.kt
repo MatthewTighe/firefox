@@ -517,6 +517,7 @@ class Components(private val context: Context) {
             fxaTokenProvider = backgroundServices.accountManager.accessTokenProvider,
             integrityClient = integrityClient,
             userIdProvider = clientUUID,
+            useAdkModel = { settings.useAdkMlpaModel },
         )
     }
 

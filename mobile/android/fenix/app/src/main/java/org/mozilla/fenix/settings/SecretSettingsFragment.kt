@@ -355,6 +355,12 @@ class SecretSettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFra
             onPreferenceChangeListener = SharedPreferenceUpdater()
         }
 
+        requirePreference<SwitchPreferenceCompat>(R.string.pref_key_use_adk_mlpa_model).apply {
+            isVisible = Config.channel.isNightlyOrDebug
+            isChecked = context.settings().useAdkMlpaModel
+            onPreferenceChangeListener = SharedPreferenceUpdater()
+        }
+
         requirePreference<SwitchPreferenceCompat>(R.string.pref_key_enable_import_bookmarks).apply {
             isVisible = Config.channel.isDebug
             isChecked = context.settings().importBookmarksFeatureFlagEnabled

@@ -133,6 +133,8 @@
     <string name="preferences_debug_settings_microsurvey_feature" translatable="false">Enable Microsurvey Feature</string>
     <!-- Label for enabling shake to summarize -->
     <string name="preferences_key_enable_shake_to_summarize" translatable="false">Enable Shake to Summarize Feature Flag</string>
+    <!-- Label for routing MLPA summarization through the ADK-backed MlpaModel -->
+    <string name="preferences_key_use_adk_mlpa_model" translatable="false">Use ADK MlpaModel for summarization</string>
     <!-- Label for enabling Unified Trust Panel -->
     <string name="preferences_debug_settings_unified_trust_panel" translatable="false">Enable Unified Trust Panel</string>
     <!-- Label for enabling remote search configuration -->

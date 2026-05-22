@@ -2735,6 +2735,15 @@ class Settings(
         default = { FxNimbus.features.shakeToSummarize.value().enabled },
     )
 
+    /**
+     * Secret debug toggle: route MLPA traffic through the ADK-backed [MlpaModel]
+     * instead of the legacy [MlpaLlm].
+     */
+    var useAdkMlpaModel by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_use_adk_mlpa_model),
+        default = false,
+    )
+
     var aiControlsFeatureFlagEnabled by booleanPreference(
         key = appContext.getPreferenceKey(R.string.pref_key_enable_ai_controls),
         default = true,

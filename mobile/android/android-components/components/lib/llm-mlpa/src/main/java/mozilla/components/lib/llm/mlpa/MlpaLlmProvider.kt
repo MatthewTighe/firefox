@@ -4,14 +4,23 @@
 
 package mozilla.components.lib.llm.mlpa
 
+import com.google.adk.kt.models.LlmRequest
+import com.google.adk.kt.types.Content
+import com.google.adk.kt.types.GenerateContentConfig
+import com.google.adk.kt.types.Part
+import com.google.adk.kt.types.Role
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.mapNotNull
 import mozilla.components.concept.llm.CloudLlmProvider
 import mozilla.components.concept.llm.CloudLlmProvider.State
 import mozilla.components.concept.llm.ErrorCode
 import mozilla.components.concept.llm.Llm
 import mozilla.components.concept.llm.LlmProvider
+import mozilla.components.concept.llm.Prompt
+import mozilla.components.lib.llm.mlpa.service.AuthorizationToken
 import mozilla.components.lib.llm.mlpa.service.ChatService
 import mozilla.components.lib.llm.mlpa.service.ChatServiceError
 import mozilla.components.lib.llm.mlpa.service.MlpaService
@@ -36,6 +45,7 @@ class MlpaLlmProvider(
     val tokenProvider: MlpaTokenProvider,
     val storage: MlpaTokenStorage,
     val mlpaService: MlpaService,
+    val useAdkModel: Boolean = false,
 ) : CloudLlmProvider {
     override val info = LlmProvider.Info(nameRes = R.string.mlpa_llm_provider_name, iconRes = R.drawable.firefox_icon)
     private val _state = MutableStateFlow<State>(State.Available)
@@ -55,7 +65,7 @@ class MlpaLlmProvider(
      */
     override suspend fun prepare() {
         tokenProvider.fetchToken()
-            .onSuccess { _state.value = State.Ready(MlpaLlm(chatService, it)) }
+            .onSuccess { _state.value = State.Ready(buildLlm(it)) }
             .onFailure {
                 _state.value = State.Unavailable(
                 it as? Llm.Exception
@@ -86,6 +96,32 @@ class MlpaLlmProvider(
             }
     }
 
+    private fun buildLlm(token: AuthorizationToken): Llm = if (useAdkModel) {
+        AdkMlpaLlm(MlpaModel(chatService = chatService, authorizationToken = token))
+    } else {
+        MlpaLlm(chatService, token)
+    }
+
     private val unknownTokenProviderError = ErrorCode(1000)
     private val unknownChatServiceError = ErrorCode(1001)
+}
+
+private class AdkMlpaLlm(private val model: MlpaModel) : Llm {
+    override suspend fun prompt(prompt: Prompt): Flow<String> {
+        val request = LlmRequest(
+            contents = listOf(
+                Content(role = Role.USER, parts = listOf(Part(text = prompt.userPrompt))),
+            ),
+            config = GenerateContentConfig(
+                systemInstruction = prompt.systemPrompt?.let {
+                    Content(parts = listOf(Part(text = it)))
+                },
+            ),
+        )
+        return model.generateContent(request, stream = true)
+            .mapNotNull { response ->
+                if (!response.partial) return@mapNotNull null
+                response.content?.parts?.firstNotNullOfOrNull { it.text }
+            }
+    }
 }

@@ -4,6 +4,7 @@
 
 package mozilla.components.feature.summarize.content
 
+import kotlinx.coroutines.CancellationException
 import mozilla.components.concept.llm.ErrorCode
 import mozilla.components.concept.llm.Llm
 import mozilla.components.feature.summarize.ext.shouldUseReaderModeContent
@@ -53,7 +54,7 @@ fun interface ContentProvider {
             pageContentExtractor: PageContentExtractor,
             pageMetadataExtractor: PageMetadataExtractor,
         ) = ContentProvider {
-            runCatching {
+            try {
                 val metadata = pageMetadataExtractor
                     .getPageMetadata()
                     .getOrDefault(PageMetadata())
@@ -66,7 +67,11 @@ fun interface ContentProvider {
                     throw it as? Llm.Exception ?: Exception(it)
                 }
 
-                Content(metadata, content)
+                Result.success(Content(metadata, content))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Result.failure(e)
             }
         }
     }

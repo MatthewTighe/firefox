@@ -52,6 +52,7 @@ import mozilla.components.compose.base.annotation.FlexibleWindowLightDarkPreview
 import mozilla.components.compose.base.modifier.thenConditional
 import mozilla.components.compose.base.theme.AcornTheme
 import mozilla.components.concept.llm.LlmProvider
+import mozilla.components.concept.llm.RequestTooLarge
 import mozilla.components.feature.summarize.settings.SettingsAppBar
 import mozilla.components.feature.summarize.settings.SummarizeSettingsContent
 import mozilla.components.feature.summarize.settings.SummarizeSettingsState
@@ -73,35 +74,22 @@ import mozilla.components.ui.richtext.parsing.Parser
  */
 private const val DRAG_HANDLE_CORNER_RATIO = 50
 
-/**
- * How a [SummarizationError.SummarizationFailed] should be rendered.
- *
- * @property displayCode A numeric code shown to the user (e.g. on long-press of the error icon).
- * @property useContentTooLongLayout Whether the failure should render the content-too-long variant
- *  rather than the generic error UI.
- */
-data class ErrorPresentation(
-    val displayCode: Int,
-    val useContentTooLongLayout: Boolean = false,
-)
-
-private val DefaultErrorPresenter: (Throwable) -> ErrorPresentation = {
-    ErrorPresentation(displayCode = 9999)
-}
+private const val FALLBACK_ERROR_CODE = 9999
 
 /**
  * Composable function that renders the summarized text of a webpage.
  *
- * @param errorPresenter Resolves a thrown failure into an [ErrorPresentation]. The summarize
- *  feature has no knowledge of which underlying [mozilla.components.concept.llm.Llm.Exception]
- *  subtypes exist; the caller (app layer) supplies that mapping.
+ * @param errorCodeFor Resolves a thrown failure into a numeric code for display (long-press
+ *  reveal on the error icon, telemetry, support). The summarize feature has no knowledge of
+ *  which concrete [mozilla.components.concept.llm.Llm.Exception] subtypes exist; the caller
+ *  (app layer) supplies that mapping.
  **/
 @Composable
 fun SummarizationUi(
     productName: String,
     store: SummarizationStore,
     settingsStore: SummarizeSettingsStore? = null,
-    errorPresenter: (Throwable) -> ErrorPresentation = DefaultErrorPresenter,
+    errorCodeFor: (Throwable) -> Int = { FALLBACK_ERROR_CODE },
 ) {
     LaunchedEffect(Unit) {
         store.dispatch(ViewAppeared)
@@ -112,7 +100,7 @@ fun SummarizationUi(
             modifier = Modifier.fillMaxWidth(),
             store = store,
             settingsStore = settingsStore,
-            errorPresenter = errorPresenter,
+            errorCodeFor = errorCodeFor,
         )
     }
 }
@@ -126,7 +114,7 @@ private fun SummarizationScreen(
     modifier: Modifier = Modifier,
     store: SummarizationStore,
     settingsStore: SummarizeSettingsStore? = null,
-    errorPresenter: (Throwable) -> ErrorPresentation = DefaultErrorPresenter,
+    errorCodeFor: (Throwable) -> Int = { FALLBACK_ERROR_CODE },
 ) {
     val state by store.stateFlow.collectAsStateWithLifecycle()
 
@@ -145,7 +133,7 @@ private fun SummarizationScreen(
             .nestedScroll(rememberNestedScrollInteropConnection()),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 1f - loadingAlpha),
     ) {
-        SummarizationScreenContent(store, settingsStore, errorPresenter)
+        SummarizationScreenContent(store, settingsStore, errorCodeFor)
     }
 }
 
@@ -166,7 +154,7 @@ private fun Modifier.summaryLoadingGradientCompat(loadingAlpha: Float): Modifier
 private fun SummarizationScreenContent(
     store: SummarizationStore,
     settingsStore: SummarizeSettingsStore? = null,
-    errorPresenter: (Throwable) -> ErrorPresentation = DefaultErrorPresenter,
+    errorCodeFor: (Throwable) -> Int = { FALLBACK_ERROR_CODE },
 ) {
     val state by store.stateFlow.collectAsStateWithLifecycle()
 
@@ -219,20 +207,16 @@ private fun SummarizationScreenContent(
         }
 
         is SummarizationState.Error -> {
-            when (state.error) {
+            when (val error = state.error) {
                 is SummarizationError.DownloadFailed -> DownloadError()
-                is SummarizationError.SummarizationFailed -> {
-                    val presentation = errorPresenter(state.error.exception)
-                    if (presentation.useContentTooLongLayout) {
-                        ContentTooLongError(
-                            onDismiss = { store.dispatch(ErrorAction.ErrorDismissed) },
-                        )
-                    } else {
-                        InfoError(
-                            errorCode = presentation.displayCode,
-                            onDismiss = { store.dispatch(ErrorAction.ErrorDismissed) },
-                        )
-                    }
+                is SummarizationError.SummarizationFailed -> when (error.exception) {
+                    is RequestTooLarge -> ContentTooLongError(
+                        onDismiss = { store.dispatch(ErrorAction.ErrorDismissed) },
+                    )
+                    else -> InfoError(
+                        errorCode = errorCodeFor(error.exception),
+                        onDismiss = { store.dispatch(ErrorAction.ErrorDismissed) },
+                    )
                 }
             }
         }

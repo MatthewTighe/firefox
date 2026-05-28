@@ -5,8 +5,21 @@
 package org.mozilla.fenix.summarization
 
 import mozilla.components.concept.llm.Llm
-import mozilla.components.lib.llm.mlpa.service.ChatServiceError
+import mozilla.components.lib.llm.mlpa.service.BudgetExceeded
+import mozilla.components.lib.llm.mlpa.service.ChatNetworkError
 import mozilla.components.lib.llm.mlpa.service.IntegrityHandshakeFailure
+import mozilla.components.lib.llm.mlpa.service.InvalidToken
+import mozilla.components.lib.llm.mlpa.service.MlpaError
+import mozilla.components.lib.llm.mlpa.service.RateLimitResponseParseError
+import mozilla.components.lib.llm.mlpa.service.RateLimited
+import mozilla.components.lib.llm.mlpa.service.RequestTooLarge
+import mozilla.components.lib.llm.mlpa.service.ResponseParseError
+import mozilla.components.lib.llm.mlpa.service.ServerError
+import mozilla.components.lib.llm.mlpa.service.UpstreamError
+import mozilla.components.lib.llm.mlpa.service.UpstreamResponseParseError
+import mozilla.components.lib.llm.mlpa.service.UserBlocked
+import mozilla.components.lib.llm.mlpa.service.VerificationNetworkError
+import mozilla.components.lib.llm.mlpa.service.VerificationResponseParseError
 import mozilla.components.lib.llm.mlpa.service.VerificationServiceFailed
 
 /**
@@ -29,28 +42,41 @@ sealed class ErrorLookupResult {
 /**
  * Maps a [Throwable] to a stable numeric code for UI display and telemetry.
  *
- * Known [Llm.Exception] subtypes resolve to their assigned code; everything else
- * resolves to [ErrorLookupResult.FALLBACK_CODE]. Codes are app-level concerns and
- * intentionally live outside of [Llm.Exception] itself.
+ * Branching is tiered: concrete impl subtypes first (most specific), then the impl marker
+ * for unenumerated impl errors, then a global fallback. Code ranges are reserved per impl
+ * module so reports tell us which provider an error came from at a glance.
+ *
+ * Code ranges:
+ *  - 1000-1099: MLPA (lib/llm-mlpa)
+ *  - 1100-1199: reserved for the next cloud provider
+ *  - 9999:      global fallback for unrecognized errors
  */
 object ErrorCodeLookup {
     fun lookup(throwable: Throwable): ErrorLookupResult = when (throwable) {
+        // MLPA — codes 1000-1099
         is IntegrityHandshakeFailure -> ErrorLookupResult.Known(throwable, 1002)
         is VerificationServiceFailed -> ErrorLookupResult.Known(throwable, 1003)
-        is ChatServiceError.InvalidToken -> ErrorLookupResult.Known(throwable, 1004)
-        is ChatServiceError.UserBlocked -> ErrorLookupResult.Known(throwable, 1005)
-        is ChatServiceError.RequestTooLarge -> ErrorLookupResult.Known(throwable, 1006)
-        is ChatServiceError.BudgetExceeded -> ErrorLookupResult.Known(throwable, 1007)
-        is ChatServiceError.RateLimited -> ErrorLookupResult.Known(throwable, 1008)
-        is ChatServiceError.UpstreamError -> ErrorLookupResult.Known(throwable, 1009)
-        is ChatServiceError.ServerError -> ErrorLookupResult.Known(throwable, 1010)
-        is ChatServiceError.ChatNetworkError -> ErrorLookupResult.Known(throwable, 1011)
-        is ChatServiceError.ResponseParseError -> ErrorLookupResult.Known(throwable, 1012)
-        is ChatServiceError.RateLimitResponseParseError -> ErrorLookupResult.Known(throwable, 1013)
-        is ChatServiceError.UpstreamResponseParseError -> ErrorLookupResult.Known(throwable, 1014)
-        is ChatServiceError.VerificationResponseParseError -> ErrorLookupResult.Known(throwable, 1017)
-        is ChatServiceError.VerificationNetworkError -> ErrorLookupResult.Known(throwable, 1018)
+        is InvalidToken -> ErrorLookupResult.Known(throwable, 1004)
+        is UserBlocked -> ErrorLookupResult.Known(throwable, 1005)
+        is RequestTooLarge -> ErrorLookupResult.Known(throwable, 1006)
+        is BudgetExceeded -> ErrorLookupResult.Known(throwable, 1007)
+        is RateLimited -> ErrorLookupResult.Known(throwable, 1008)
+        is UpstreamError -> ErrorLookupResult.Known(throwable, 1009)
+        is ServerError -> ErrorLookupResult.Known(throwable, 1010)
+        is ChatNetworkError -> ErrorLookupResult.Known(throwable, 1011)
+        is ResponseParseError -> ErrorLookupResult.Known(throwable, 1012)
+        is RateLimitResponseParseError -> ErrorLookupResult.Known(throwable, 1013)
+        is UpstreamResponseParseError -> ErrorLookupResult.Known(throwable, 1014)
+        is VerificationResponseParseError -> ErrorLookupResult.Known(throwable, 1017)
+        is VerificationNetworkError -> ErrorLookupResult.Known(throwable, 1018)
+
+        // Impl-generic fallback: MLPA error we haven't enumerated.
+        is MlpaError -> ErrorLookupResult.Known(throwable as Llm.Exception, 1099)
+
+        // Llm.Exception we don't know about (some other impl or a bare Llm.Exception).
         is Llm.Exception -> ErrorLookupResult.Known(throwable, ErrorLookupResult.FALLBACK_CODE)
+
+        // Truly unknown — a raw Throwable that escaped wrapping entirely.
         else -> ErrorLookupResult.Unknown(throwable)
     }
 }

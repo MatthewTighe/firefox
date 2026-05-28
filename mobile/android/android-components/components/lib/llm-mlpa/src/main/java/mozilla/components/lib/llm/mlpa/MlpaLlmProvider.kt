@@ -12,7 +12,7 @@ import mozilla.components.concept.llm.CloudLlmProvider.State
 import mozilla.components.concept.llm.Llm
 import mozilla.components.concept.llm.LlmProvider
 import mozilla.components.lib.llm.mlpa.service.ChatService
-import mozilla.components.lib.llm.mlpa.service.ChatServiceError
+import mozilla.components.lib.llm.mlpa.service.InvalidToken
 import mozilla.components.lib.llm.mlpa.service.MlpaService
 
 internal val LlmProvider.ModelID.Companion.mozSummarization
@@ -86,7 +86,7 @@ class MlpaLlmProvider(
                         message = throwable.message ?: "missing chat service error",
                         cause = throwable,
                     )
-                if (throwable is ChatServiceError.InvalidToken) {
+                if (throwable is InvalidToken) {
                     storage.clear()
                     _state.value = State.Available
                 }

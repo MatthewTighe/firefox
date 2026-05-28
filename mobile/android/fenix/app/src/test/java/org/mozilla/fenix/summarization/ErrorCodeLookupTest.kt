@@ -5,8 +5,9 @@
 package org.mozilla.fenix.summarization
 
 import mozilla.components.concept.llm.Llm
-import mozilla.components.lib.llm.mlpa.service.ChatServiceError
 import mozilla.components.lib.llm.mlpa.service.IntegrityHandshakeFailure
+import mozilla.components.lib.llm.mlpa.service.RateLimited
+import mozilla.components.lib.llm.mlpa.service.RequestTooLarge
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import kotlin.test.assertIs
@@ -15,7 +16,7 @@ class ErrorCodeLookupTest {
 
     @Test
     fun `lookup of a known MLPA subtype returns the assigned code`() {
-        val result = ErrorCodeLookup.lookup(ChatServiceError.RateLimited(retryAfter = 60L))
+        val result = ErrorCodeLookup.lookup(RateLimited(retryAfter = 60L))
 
         assertIs<ErrorLookupResult.Known>(result)
         assertEquals(1008, result.code)
@@ -23,7 +24,7 @@ class ErrorCodeLookupTest {
 
     @Test
     fun `RequestTooLarge resolves to the content-too-long code`() {
-        val result = ErrorCodeLookup.lookup(ChatServiceError.RequestTooLarge())
+        val result = ErrorCodeLookup.lookup(RequestTooLarge())
 
         assertIs<ErrorLookupResult.Known>(result)
         assertEquals(1006, result.code)
@@ -37,8 +38,13 @@ class ErrorCodeLookupTest {
         assertEquals(1002, result.code)
     }
 
+    // The "is MlpaError" fallback (1099) cannot be exercised from outside the lib-llm-mlpa
+    // module since MlpaError is a sealed interface restricted to that module. Adding a new
+    // MlpaError subtype that's not in the lookup is necessarily a same-PR change to both
+    // lib-llm-mlpa and this lookup.
+
     @Test
-    fun `unrecognized Llm Exception falls back but is still Known`() {
+    fun `unrecognized Llm Exception falls back to global fallback but is still Known`() {
         val result = ErrorCodeLookup.lookup(Llm.Exception("not in the table"))
 
         assertIs<ErrorLookupResult.Known>(result)

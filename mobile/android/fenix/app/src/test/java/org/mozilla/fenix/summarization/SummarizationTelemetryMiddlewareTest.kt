@@ -8,7 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import mozilla.components.concept.llm.Llm
 import mozilla.components.concept.llm.LlmProvider
-import mozilla.components.lib.llm.mlpa.service.ChatServiceError
+import mozilla.components.lib.llm.mlpa.service.RateLimited
 import mozilla.components.feature.summarize.ContentExtracted
 import mozilla.components.feature.summarize.OffDeviceSummarizationShakeConsentAction
 import mozilla.components.feature.summarize.SummarizationAction
@@ -138,15 +138,15 @@ class SummarizationTelemetryMiddlewareTest {
     }
 
     @Test
-    fun `WHEN SummarizationFailed with a known Llm subtype THEN error_code is the looked-up value`() {
+    fun `WHEN SummarizationFailed with a known Llm subtype THEN error_code is the looked-up value and error_type carries provider attribution`() {
         assertNull(AiSummarize.completed.testGetValue())
 
         setupFullSession()
-        invokeMiddleware(SummarizationFailed(ChatServiceError.RateLimited(retryAfter = 60L)))
+        invokeMiddleware(SummarizationFailed(RateLimited(retryAfter = 60L)))
 
         val extras = AiSummarize.completed.testGetValue()!!.first().extra!!
         assertEquals("false", extras["success"])
-        assertEquals("RateLimited", extras["error_type"])
+        assertEquals("mozilla.components.lib.llm.mlpa.service.RateLimited", extras["error_type"])
         assertEquals("1008", extras["error_code"])
     }
 

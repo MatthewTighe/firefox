@@ -29,9 +29,11 @@ import mozilla.components.browser.state.selector.selectedTab
 import mozilla.components.browser.state.state.TabSessionState
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.pageextraction.ContentParams
+import mozilla.components.feature.summarize.ErrorPresentation
 import mozilla.components.feature.summarize.SummarizationState
 import mozilla.components.feature.summarize.SummarizationUi
 import mozilla.components.feature.summarize.ViewDismissed
+import mozilla.components.lib.llm.mlpa.service.ChatServiceError
 import mozilla.components.feature.summarize.content.PageContentExtractor
 import mozilla.components.feature.summarize.content.PageMetadata
 import mozilla.components.feature.summarize.content.PageMetadataExtractor
@@ -67,7 +69,7 @@ private fun EngineSession?.asPageContentExtractor(): PageContentExtractor = { op
                     continuation.resume(content)
                 },
                 onException = { error ->
-                    continuation.resumeWithException(PageContentExtractor.Exception(error))
+                    continuation.resumeWithException(error)
                 },
             )
         }
@@ -89,7 +91,7 @@ private fun EngineSession?.asPageMetadataExtractor(): PageMetadataExtractor = {
                     )
                 },
                 onException = { error ->
-                    continuation.resumeWithException(PageMetadataExtractor.Exception(error))
+                    continuation.resumeWithException(error)
                 },
             )
         }
@@ -211,6 +213,12 @@ class SummarizationFragment : BottomSheetDialogFragment() {
                 productName = getString(R.string.app_name),
                 store = storeViewModel.store,
                 settingsStore = settingsStore,
+                errorPresenter = { throwable ->
+                    ErrorPresentation(
+                        displayCode = ErrorCodeLookup.lookup(throwable).code,
+                        useContentTooLongLayout = throwable is ChatServiceError.RequestTooLarge,
+                    )
+                },
             )
         }
     }

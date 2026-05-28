@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import mozilla.components.concept.llm.CloudLlmProvider
 import mozilla.components.concept.llm.CloudLlmProvider.State
-import mozilla.components.concept.llm.ErrorCode
 import mozilla.components.concept.llm.Llm
 import mozilla.components.concept.llm.LlmProvider
 import mozilla.components.lib.llm.mlpa.service.ChatService
@@ -67,11 +66,11 @@ class MlpaLlmProvider(
             .onSuccess { _state.value = State.Ready(MlpaLlm(chatService, it, modelID)) }
             .onFailure {
                 _state.value = State.Unavailable(
-                it as? Llm.Exception
-                    ?: Llm.Exception(
-                        message = it.message ?: "missing token provider error",
-                        errorCode = unknownTokenProviderError,
-                    ),
+                    it as? Llm.Exception
+                        ?: Llm.Exception(
+                            message = it.message ?: "missing token provider error",
+                            cause = it,
+                        ),
                 )
             }
     }
@@ -85,7 +84,7 @@ class MlpaLlmProvider(
                 val error = throwable as? Llm.Exception
                     ?: Llm.Exception(
                         message = throwable.message ?: "missing chat service error",
-                        errorCode = unknownChatServiceError,
+                        cause = throwable,
                     )
                 if (throwable is ChatServiceError.InvalidToken) {
                     storage.clear()
@@ -94,7 +93,4 @@ class MlpaLlmProvider(
                 throw error
             }
     }
-
-    private val unknownTokenProviderError = ErrorCode(1000)
-    private val unknownChatServiceError = ErrorCode(1001)
 }

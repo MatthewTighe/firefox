@@ -14,30 +14,13 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import mozilla.components.concept.integrity.IntegrityToken
-import mozilla.components.concept.llm.ErrorCode
 import mozilla.components.concept.llm.Llm
 import mozilla.components.concept.llm.LlmProvider
-
-private val INTEGRITY_HANDSHAKE_FAILURE = ErrorCode(1002)
-private val VERIFICATION_SERVICE_FAILED = ErrorCode(1003)
-private val INVALID_TOKEN = ErrorCode(1004)
-private val USER_BLOCKED = ErrorCode(1005)
-private val REQUEST_TOO_LARGE = ErrorCode(1006)
-private val BUDGET_EXCEEDED = ErrorCode(1007)
-private val RATE_LIMITED = ErrorCode(1008)
-private val UPSTREAM_ERROR = ErrorCode(1009)
-private val SERVER_ERROR = ErrorCode(1010)
-private val CHAT_NETWORK_ERROR = ErrorCode(1011)
-private val RESPONSE_PARSE_ERROR = ErrorCode(1012)
-private val RATE_LIMIT_RESPONSE_PARSE_ERROR = ErrorCode(1013)
-private val UPSTREAM_RESPONSE_PARSE_ERROR = ErrorCode(1014)
-private val VERIFICATION_RESPONSE_PARSE_ERROR = ErrorCode(1017)
-private val VERIFICATION_NETWORK_ERROR = ErrorCode(1018)
 
 /**
  * Thrown when the Integrity client experiences a failure, propagating its error message.
  */
-class IntegrityHandshakeFailure(message: String) : Llm.Exception(message, INTEGRITY_HANDSHAKE_FAILURE)
+class IntegrityHandshakeFailure(message: String) : Llm.Exception(message)
 
 /**
  * Thrown when the MLPA verification service fails to process or validate a request.
@@ -45,44 +28,44 @@ class IntegrityHandshakeFailure(message: String) : Llm.Exception(message, INTEGR
  * @param reason A human-readable explanation of the failure.
  */
 class VerificationServiceFailed(reason: String) :
-    Llm.Exception("Verification Service Failed: $reason", VERIFICATION_SERVICE_FAILED)
+    Llm.Exception("Verification Service Failed: $reason")
 
 /**
  * Sealed class for describing the type of error a [ChatService] can return.
  */
-sealed class ChatServiceError(message: String, errorCode: ErrorCode) : Llm.Exception(message, errorCode) {
+sealed class ChatServiceError(message: String, cause: Throwable? = null) : Llm.Exception(message, cause) {
     /** Token expired or invalid. Re-authenticate via [AuthenticationService.verify]. */
-    class InvalidToken : ChatServiceError("Invalid token", INVALID_TOKEN)
+    class InvalidToken : ChatServiceError("Invalid token")
 
     /** The user has been blocked from accessing the service. */
-    class UserBlocked : ChatServiceError("User blocked", USER_BLOCKED)
+    class UserBlocked : ChatServiceError("User blocked")
 
     /** The request body exceeded the 10MB limit. */
-    class RequestTooLarge : ChatServiceError("Request too large", REQUEST_TOO_LARGE)
+    class RequestTooLarge : ChatServiceError("Request too large")
 
     /**
      * The user's total budget has been exhausted.
      *
      * @property retryAfter Duration in seconds before the budget resets (typically 86400s).
      */
-    data class BudgetExceeded(val retryAfter: Long?) : ChatServiceError("Budget exceeded", BUDGET_EXCEEDED)
+    data class BudgetExceeded(val retryAfter: Long?) : ChatServiceError("Budget exceeded")
 
     /**
      * Requests per minute or tokens per minute limit reached.
      *
      * @property retryAfter Duration in seconds before the limit resets (typically 60s).
      */
-    data class RateLimited(val retryAfter: Long?) : ChatServiceError("Rate limited", RATE_LIMITED)
+    data class RateLimited(val retryAfter: Long?) : ChatServiceError("Rate limited")
 
     /** The upstream LLM was unreachable or returned an error (502). */
-    data class UpstreamError(val reason: String) : ChatServiceError("Upstream error: $reason", UPSTREAM_ERROR)
+    data class UpstreamError(val reason: String) : ChatServiceError("Upstream error: $reason")
 
     /**
      * An unexpected server-side error occurred.
      *
      * @property statusCode The HTTP status code returned.
      */
-    data class ServerError(val statusCode: Int) : ChatServiceError("Server error: $statusCode", SERVER_ERROR)
+    data class ServerError(val statusCode: Int) : ChatServiceError("Server error: $statusCode")
 
     /**
      * A network error occurred while communicating with the service.
@@ -90,7 +73,7 @@ sealed class ChatServiceError(message: String, errorCode: ErrorCode) : Llm.Excep
      * @param cause The underlying network exception.
      */
     class ChatNetworkError(cause: Exception) :
-        ChatServiceError("Chat network error: ${cause.message}", CHAT_NETWORK_ERROR)
+        ChatServiceError("Chat network error: ${cause.message}", cause)
 
     /**
      * The server response could not be parsed.
@@ -98,7 +81,7 @@ sealed class ChatServiceError(message: String, errorCode: ErrorCode) : Llm.Excep
      * @param cause The underlying serialization exception.
      */
     class ResponseParseError(cause: Exception) :
-        ChatServiceError("Response parse error: ${cause.message}", RESPONSE_PARSE_ERROR)
+        ChatServiceError("Response parse error: ${cause.message}", cause)
 
     /**
      * The rate-limit error response body (HTTP 429) could not be parsed.
@@ -106,7 +89,7 @@ sealed class ChatServiceError(message: String, errorCode: ErrorCode) : Llm.Excep
      * @param cause The underlying serialization exception.
      */
     class RateLimitResponseParseError(cause: Exception) :
-        ChatServiceError("Rate limit response parse error: ${cause.message}", RATE_LIMIT_RESPONSE_PARSE_ERROR)
+        ChatServiceError("Rate limit response parse error: ${cause.message}", cause)
 
     /**
      * The upstream error response body (HTTP 502) could not be parsed.
@@ -114,7 +97,7 @@ sealed class ChatServiceError(message: String, errorCode: ErrorCode) : Llm.Excep
      * @param cause The underlying serialization exception.
      */
     class UpstreamResponseParseError(cause: Exception) :
-        ChatServiceError("Upstream response parse error: ${cause.message}", UPSTREAM_RESPONSE_PARSE_ERROR)
+        ChatServiceError("Upstream response parse error: ${cause.message}", cause)
 
     /**
      * An error occurred while serializing the verification request.
@@ -122,7 +105,7 @@ sealed class ChatServiceError(message: String, errorCode: ErrorCode) : Llm.Excep
      * @param cause The underlying serialization exception.
      */
     class VerificationResponseParseError(cause: Exception) :
-        ChatServiceError("Could not decode request: ${cause.message}", VERIFICATION_RESPONSE_PARSE_ERROR)
+        ChatServiceError("Could not decode request: ${cause.message}", cause)
 
     /**
      * A network error occurred while communicating with the authentication service.
@@ -130,7 +113,7 @@ sealed class ChatServiceError(message: String, errorCode: ErrorCode) : Llm.Excep
      * @param cause The underlying network exception.
      */
     class VerificationNetworkError(cause: Exception) :
-        ChatServiceError("Auth network error: ${cause.message}", VERIFICATION_NETWORK_ERROR)
+        ChatServiceError("Auth network error: ${cause.message}", cause)
 }
 
 /**

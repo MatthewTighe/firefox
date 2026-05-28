@@ -4,7 +4,6 @@
 
 package org.mozilla.fenix.summarization
 
-import mozilla.components.concept.llm.Llm
 import mozilla.components.feature.summarize.ContentExtracted
 import mozilla.components.feature.summarize.OffDeviceSummarizationShakeConsentAction
 import mozilla.components.feature.summarize.OnDeviceSummarizationShakeConsentAction
@@ -154,7 +153,7 @@ class SummarizationTelemetryMiddleware(
         )
     }
 
-    private fun recordSummarizationCompleted(success: Boolean = true, error: Llm.Exception? = null) {
+    private fun recordSummarizationCompleted(success: Boolean = true, error: Throwable? = null) {
         timerId?.let {
             AiSummarize.duration.stopAndAccumulate(it)
             timerId = null
@@ -165,7 +164,7 @@ class SummarizationTelemetryMiddleware(
                 connectionType = connectionType.toString(),
                 contentType = sessionTelemetry.contentMetrics?.contentType,
                 errorType = error?.let { (it.cause ?: it)::class.simpleName },
-                errorCode = error?.errorCode?.value,
+                errorCode = error?.let { ErrorCodeLookup.lookup(it).code },
                 language = sessionTelemetry.contentMetrics?.language,
                 lengthChars = sessionTelemetry.contentMetrics?.charCount,
                 lengthWords = sessionTelemetry.contentMetrics?.wordCount,

@@ -6,9 +6,9 @@ package org.mozilla.fenix.summarization
 
 import io.mockk.every
 import io.mockk.mockk
-import mozilla.components.concept.llm.ErrorCode
 import mozilla.components.concept.llm.Llm
 import mozilla.components.concept.llm.LlmProvider
+import mozilla.components.lib.llm.mlpa.service.ChatServiceError
 import mozilla.components.feature.summarize.ContentExtracted
 import mozilla.components.feature.summarize.OffDeviceSummarizationShakeConsentAction
 import mozilla.components.feature.summarize.SummarizationAction
@@ -138,20 +138,29 @@ class SummarizationTelemetryMiddlewareTest {
     }
 
     @Test
-    fun `WHEN SummarizationFailed with Llm Exception THEN error_type is exception name and error_code is the int code`() {
+    fun `WHEN SummarizationFailed with a known Llm subtype THEN error_code is the looked-up value`() {
         assertNull(AiSummarize.completed.testGetValue())
 
         setupFullSession()
-        val exception = Llm.Exception("Error", ErrorCode(1001))
-        invokeMiddleware(SummarizationFailed(exception))
+        invokeMiddleware(SummarizationFailed(ChatServiceError.RateLimited(retryAfter = 60L)))
 
-        val snapshot = AiSummarize.completed.testGetValue()!!
-        assertEquals(1, snapshot.size)
-
-        val extras = snapshot.first().extra!!
+        val extras = AiSummarize.completed.testGetValue()!!.first().extra!!
         assertEquals("false", extras["success"])
-        assertEquals("Exception", extras["error_type"])
-        assertEquals("1001", extras["error_code"])
+        assertEquals("RateLimited", extras["error_type"])
+        assertEquals("1008", extras["error_code"])
+    }
+
+    @Test
+    fun `WHEN SummarizationFailed with an unrecognized throwable THEN error_code is the fallback`() {
+        assertNull(AiSummarize.completed.testGetValue())
+
+        setupFullSession()
+        invokeMiddleware(SummarizationFailed(IllegalStateException("boom")))
+
+        val extras = AiSummarize.completed.testGetValue()!!.first().extra!!
+        assertEquals("false", extras["success"])
+        assertEquals("IllegalStateException", extras["error_type"])
+        assertEquals("9999", extras["error_code"])
     }
 
     @Test
@@ -160,16 +169,12 @@ class SummarizationTelemetryMiddlewareTest {
 
         setupFullSession()
         val cause = IllegalStateException("boom")
-        val exception = Llm.Exception("Wrapped", ErrorCode(4001), cause = cause)
-        invokeMiddleware(SummarizationFailed(exception))
+        invokeMiddleware(SummarizationFailed(Llm.Exception("Wrapped", cause = cause)))
 
-        val snapshot = AiSummarize.completed.testGetValue()!!
-        assertEquals(1, snapshot.size)
-
-        val extras = snapshot.first().extra!!
+        val extras = AiSummarize.completed.testGetValue()!!.first().extra!!
         assertEquals("false", extras["success"])
         assertEquals("IllegalStateException", extras["error_type"])
-        assertEquals("4001", extras["error_code"])
+        assertEquals("9999", extras["error_code"])
     }
 
     @Test

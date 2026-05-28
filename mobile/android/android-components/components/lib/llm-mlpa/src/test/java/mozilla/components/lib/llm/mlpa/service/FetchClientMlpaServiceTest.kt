@@ -14,7 +14,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import mozilla.components.concept.fetch.MutableHeaders
 import mozilla.components.concept.fetch.Response
 import mozilla.components.concept.integrity.IntegrityToken
-import mozilla.components.concept.llm.ErrorCode
 import mozilla.components.concept.llm.LlmProvider
 import mozilla.components.lib.llm.mlpa.fakes.FakeClient
 import mozilla.components.lib.llm.mlpa.fakes.asBody
@@ -392,7 +391,6 @@ class FetchClientMlpaServiceTest {
                 .onEach { fail("Should immediately throw") }
                 .catch {
                     assertIs<ChatServiceError.ResponseParseError>(it)
-                    assertEquals(ErrorCode(1012), it.errorCode)
                 }
                 .firstOrNull()
         }
@@ -414,7 +412,6 @@ class FetchClientMlpaServiceTest {
                 .onEach { fail("Should immediately throw") }
                 .catch {
                     assertIs<ChatServiceError.ChatNetworkError>(it)
-                    assertEquals(ErrorCode(1011), it.errorCode)
                 }
                 .firstOrNull()
         }
@@ -437,7 +434,6 @@ class FetchClientMlpaServiceTest {
 
             val error = runCatching { response.first() }.exceptionOrNull()
             assertIs<ChatServiceError.RateLimitResponseParseError>(error)
-            assertEquals(ErrorCode(1013), error.errorCode)
         }
 
     @Test
@@ -458,7 +454,6 @@ class FetchClientMlpaServiceTest {
 
             val error = runCatching { response.first() }.exceptionOrNull()
             assertIs<ChatServiceError.UpstreamResponseParseError>(error)
-            assertEquals(ErrorCode(1014), error.errorCode)
         }
 
     @Test
@@ -509,7 +504,7 @@ class FetchClientMlpaServiceTest {
                     .onEach { _ -> fail("We should have thrown an exception") }
                     .catch {
                         assertIs<ChatServiceError>(it, "Should be ChatServiceError but got $it")
-                        assertEquals(case.expectedError.errorCode, it.errorCode)
+                        assertEquals(case.expectedError::class, it::class)
                     }.firstOrNull()
             }
         }

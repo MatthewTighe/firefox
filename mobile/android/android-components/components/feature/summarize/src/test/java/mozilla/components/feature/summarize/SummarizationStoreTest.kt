@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.runTest
 import mozilla.components.concept.llm.CloudLlmProvider
 import mozilla.components.concept.llm.Llm
 import mozilla.components.concept.llm.Prompt
+import mozilla.components.concept.llm.RequestTooLarge
 import mozilla.components.feature.summarize.SummarizationState.Error
 import mozilla.components.feature.summarize.SummarizationState.Finished
 import mozilla.components.feature.summarize.SummarizationState.Inert
@@ -498,6 +499,62 @@ class SummarizationStoreTest {
         )
 
         assertEquals(expected, states)
+    }
+
+    @Test
+    fun `dismissing a content too long error screen transitions to the ErrorDismissed finished state`() = runTest {
+        val contentTooLongException = object : Llm.Exception("Content too long"), RequestTooLarge {}
+        val provider = FakeCloudProvider(
+            preparedState = CloudLlmProvider.State.Ready(
+                llm = object : Llm {
+                    override suspend fun prompt(prompt: Prompt): Flow<String> = throw contentTooLongException
+                },
+            ),
+        )
+        val store = SummarizationStore(
+            initialState = Inert(true),
+            reducer = ::summarizationReducer,
+            middleware = listOf(
+                SummarizationMiddleware(
+                    llmProvider = provider,
+                    settings = SummarizationSettings.inMemory(hasConsentedToShake = true),
+                    contentProvider = { Result.success(Content()) },
+                    errorReporter = noopReporter,
+                    scope = backgroundScope,
+                    dispatcher = StandardTestDispatcher(testScheduler),
+                ),
+            ),
+        )
+
+        val states = mutableListOf<SummarizationState>()
+        backgroundScope.launch {
+            store.stateFlow.toList(states)
+        }
+
+        store.dispatch(ViewAppeared)
+        testScheduler.advanceTimeBy(15.seconds)
+
+        assertEquals(
+            listOf(
+                Inert(true),
+                Loading(provider.info),
+                Error(SummarizationError.SummarizationFailed(contentTooLongException)),
+            ),
+            states,
+        )
+
+        store.dispatch(ErrorAction.ErrorDismissed)
+        testScheduler.advanceTimeBy(1.seconds)
+
+        assertEquals(
+            listOf(
+                Inert(true),
+                Loading(provider.info),
+                Error(SummarizationError.SummarizationFailed(contentTooLongException)),
+                Finished.ErrorDismissed,
+            ),
+            states,
+        )
     }
 
     @Test

@@ -211,7 +211,7 @@ class SummarizationFragment : BottomSheetDialogFragment() {
                 productName = getString(R.string.app_name),
                 store = storeViewModel.store,
                 settingsStore = settingsStore,
-                errorCodeFor = { throwable -> ErrorCodeLookup.lookup(throwable).code },
+                resolveError = { throwable -> ErrorCodeLookup.lookup(throwable).code },
             )
         }
     }

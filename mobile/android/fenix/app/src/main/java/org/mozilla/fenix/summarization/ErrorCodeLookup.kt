@@ -40,9 +40,10 @@ sealed class ErrorLookupResult {
 }
 
 /**
- * Static namespace for [lookup] function.
+ * Static namespace for the [lookup] function.
  */
 object ErrorCodeLookup {
+
     /**
      * Maps a [Throwable] to a stable numeric code for UI display and telemetry.
      *

@@ -74,12 +74,10 @@ import mozilla.components.ui.richtext.parsing.Parser
  */
 private const val DRAG_HANDLE_CORNER_RATIO = 50
 
-private const val FALLBACK_ERROR_CODE = 9999
-
 /**
  * Composable function that renders the summarized text of a webpage.
  *
- * @param errorCodeFor Resolves a thrown failure into a numeric code for display (long-press
+ * @param resolveError Resolves a thrown failure into a numeric code for display (long-press
  *  reveal on the error icon, telemetry, support). The summarize feature has no knowledge of
  *  which concrete [mozilla.components.concept.llm.Llm.Exception] subtypes exist; the caller
  *  (app layer) supplies that mapping.
@@ -89,7 +87,7 @@ fun SummarizationUi(
     productName: String,
     store: SummarizationStore,
     settingsStore: SummarizeSettingsStore? = null,
-    errorCodeFor: (Throwable) -> Int = { FALLBACK_ERROR_CODE },
+    resolveError: (Throwable) -> Int,
 ) {
     LaunchedEffect(Unit) {
         store.dispatch(ViewAppeared)
@@ -100,7 +98,7 @@ fun SummarizationUi(
             modifier = Modifier.fillMaxWidth(),
             store = store,
             settingsStore = settingsStore,
-            errorCodeFor = errorCodeFor,
+            errorCodeFor = resolveError,
         )
     }
 }
@@ -114,7 +112,7 @@ private fun SummarizationScreen(
     modifier: Modifier = Modifier,
     store: SummarizationStore,
     settingsStore: SummarizeSettingsStore? = null,
-    errorCodeFor: (Throwable) -> Int = { FALLBACK_ERROR_CODE },
+    errorCodeFor: (Throwable) -> Int,
 ) {
     val state by store.stateFlow.collectAsStateWithLifecycle()
 
@@ -154,7 +152,7 @@ private fun Modifier.summaryLoadingGradientCompat(loadingAlpha: Float): Modifier
 private fun SummarizationScreenContent(
     store: SummarizationStore,
     settingsStore: SummarizeSettingsStore? = null,
-    errorCodeFor: (Throwable) -> Int = { FALLBACK_ERROR_CODE },
+    errorCodeFor: (Throwable) -> Int,
 ) {
     val state by store.stateFlow.collectAsStateWithLifecycle()
 
@@ -353,6 +351,7 @@ private fun SummarizationScreenPreview(
                 reducer = ::summarizeSettingsReducer,
                 middleware = listOf(),
             ),
+            errorCodeFor = { 9999 },
         )
     }
 }

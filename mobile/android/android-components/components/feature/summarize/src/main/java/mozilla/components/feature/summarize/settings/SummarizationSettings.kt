@@ -46,6 +46,19 @@ interface SummarizationSettings {
     suspend fun setFeatureEnabledUserStatus(newValue: Boolean)
 
     /**
+     * @return A [Flow] emitting whether the on-device model (Gemini Nano) should be used for
+     * summaries instead of the cloud model (MLPA).
+     */
+    fun getUseLocalModel(): Flow<Boolean>
+
+    /**
+     * Persists whether the on-device model should be used for summaries instead of the cloud model.
+     *
+     * @param newValue `true` to use the on-device model, `false` to use the cloud model.
+     */
+    suspend fun setUseLocalModel(newValue: Boolean)
+
+    /**
      * @return A [Flow] emitting the user's current preference for whether the shake gesture
      * is enabled.
      */
@@ -105,9 +118,12 @@ interface SummarizationSettings {
             hasConsentedToShake: Boolean = false,
             shakeConsentRejectedCount: Int = 0,
             shakeSensitivity: ShakeSensitivity = ShakeSensitivity.Medium,
+            useLocalModel: Boolean = false,
         ) = object : SummarizationSettings {
             var isFeatureEnabledFlow =
                 MutableStateFlow(isFeatureEnabled)
+            var useLocalModelFlow =
+                MutableStateFlow(useLocalModel)
             var isGestureEnabledFlow =
                 MutableStateFlow(isGestureEnabled)
             var hasConsentedToShakeFlow =
@@ -120,6 +136,12 @@ interface SummarizationSettings {
 
             override suspend fun setFeatureEnabledUserStatus(newValue: Boolean) {
                 isFeatureEnabledFlow.emit(newValue)
+            }
+
+            override fun getUseLocalModel(): Flow<Boolean> = useLocalModelFlow
+
+            override suspend fun setUseLocalModel(newValue: Boolean) {
+                useLocalModelFlow.emit(newValue)
             }
 
             override suspend fun getGestureEnabledUserStatus(): Flow<Boolean> = isGestureEnabledFlow
@@ -164,6 +186,7 @@ interface SummarizationSettings {
 
 internal class DataStoreBackedSettings(private val dataStore: DataStore<Preferences>) : SummarizationSettings {
     private val featureEnabledKey = booleanPreferencesKey("feature_enabled_user_status_key")
+    private val useLocalModelKey = booleanPreferencesKey("use_local_model_key")
     private val gestureEnabledKey = booleanPreferencesKey("gesture_enabled_user_status_key")
     private val hasConsentedToShakeKey = booleanPreferencesKey("has_consented_to_shake_key")
     private val shakeConsentRejectedCountKey = intPreferencesKey("shake_consent_rejected_count_key")
@@ -177,6 +200,18 @@ internal class DataStoreBackedSettings(private val dataStore: DataStore<Preferen
         dataStore.updateData {
             it.toMutablePreferences().also { preferences ->
                 preferences[featureEnabledKey] = newValue
+            }
+        }
+    }
+
+    override fun getUseLocalModel(): Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[useLocalModelKey] ?: false
+    }
+
+    override suspend fun setUseLocalModel(newValue: Boolean) {
+        dataStore.updateData {
+            it.toMutablePreferences().also { preferences ->
+                preferences[useLocalModelKey] = newValue
             }
         }
     }

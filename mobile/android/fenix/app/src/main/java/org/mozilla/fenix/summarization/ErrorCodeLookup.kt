@@ -5,6 +5,9 @@
 package org.mozilla.fenix.summarization
 
 import mozilla.components.concept.llm.Llm
+import mozilla.components.concept.llm.ModelDownloadFailed
+import mozilla.components.concept.llm.ModelInferenceFailed
+import mozilla.components.concept.llm.ModelUnavailable
 import mozilla.components.lib.llm.mlpa.service.BudgetExceeded
 import mozilla.components.lib.llm.mlpa.service.ChatNetworkError
 import mozilla.components.lib.llm.mlpa.service.IntegrityHandshakeFailure
@@ -52,13 +55,24 @@ object ErrorCodeLookup {
      *
      * Code ranges:
      *  - 1000-1099: MLPA (lib/llm-mlpa)
+     *  - 2000-2099: Gemini Nano (lib/llm-gemininano) / on-device
      *  - 9999:      global fallback for unrecognized errors
      */
     fun lookup(throwable: Throwable): ErrorLookupResult = when (throwable) {
         is MlpaError -> throwable.lookupResult
+        is ModelUnavailable -> knownOrFallback(throwable, 2001)
+        is ModelDownloadFailed -> knownOrFallback(throwable, 2002)
+        is ModelInferenceFailed -> knownOrFallback(throwable, 2003)
         is Llm.Exception -> ErrorLookupResult.Known(throwable, ErrorLookupResult.FALLBACK_CODE)
         else -> ErrorLookupResult.Unknown(throwable)
     }
+
+    private fun knownOrFallback(throwable: Throwable, code: Int): ErrorLookupResult =
+        if (throwable is Llm.Exception) {
+            ErrorLookupResult.Known(throwable, code)
+        } else {
+            ErrorLookupResult.Unknown(throwable, code)
+        }
 
     private val MlpaError.lookupResult: ErrorLookupResult
         get() = when (this) {

@@ -260,6 +260,24 @@ android {
                 useLegacyPackaging = true
             }
         }
+        resources {
+            // The ADK (lib-llm-adk) transitives (google-genai, google-auth-*, api-common,
+            // apache httpclient) ship JVM-only META-INF metadata that AGP cannot merge. Drop
+            // them; none are needed at runtime on Android.
+            excludes += [
+                'META-INF/INDEX.LIST',
+                'META-INF/DEPENDENCIES',
+                'META-INF/LICENSE',
+                'META-INF/LICENSE.txt',
+                'META-INF/license.txt',
+                'META-INF/NOTICE',
+                'META-INF/NOTICE.txt',
+                'META-INF/notice.txt',
+                'META-INF/ASL2.0',
+                'META-INF/io.netty.versions.properties',
+                'META-INF/native-image/**',
+            ]
+        }
     }
 
     namespace = 'org.mozilla.fenix'
@@ -538,6 +556,7 @@ dependencies {
     implementation project(':components:lib-state')
     implementation project(':components:lib-accelerometer-sensormanager')
     implementation project(':components:lib-integrity-googleplay')
+    implementation project(':components:lib-llm-gemininano')
     implementation project(':components:lib-llm-mlpa')
     implementation project(':components:lib-shake')
     implementation project(':components:lib-ai-controls')

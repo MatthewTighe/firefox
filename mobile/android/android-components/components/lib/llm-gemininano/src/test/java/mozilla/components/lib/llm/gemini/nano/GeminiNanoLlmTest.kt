@@ -8,8 +8,10 @@ import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.common.GenAiException
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import mozilla.components.concept.llm.Content
 import mozilla.components.concept.llm.Llm
-import mozilla.components.concept.llm.Prompt
+import mozilla.components.concept.llm.LlmRequest
+import mozilla.components.concept.llm.Role
 import mozilla.components.lib.llm.gemini.nano.fakes.FakeGenerativeModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -17,8 +19,10 @@ import org.junit.Test
 import kotlin.test.assertIs
 
 class GeminiNanoLlmTest {
+    private fun request(userText: String) = LlmRequest(contents = listOf(Content.text(Role.User, userText)))
+
     @Test
-    fun `prompt returns Success when model is AVAILABLE and processes without error`() = runTest {
+    fun `generateContent streams the response when model is AVAILABLE and processes without error`() = runTest {
         val fakeModel = FakeGenerativeModel(
             status = sequenceOf(FeatureStatus.AVAILABLE),
             responseMap = mapOf("test prompt" to listOf("test response")),
@@ -26,22 +30,21 @@ class GeminiNanoLlmTest {
 
         val llm = GeminiNanoLlm(buildModel = { fakeModel })
 
-        val results = llm.prompt(Prompt("test prompt")).toList()
+        val results = llm.generateContent(request("test prompt")).toList()
 
-        assertEquals(1, results.size)
-        assertEquals("test response", results[0])
+        assertEquals("test response", results.last().content?.parts?.firstNotNullOfOrNull { it.text })
         assertEquals("test prompt", fakeModel.lastPromptProcessed)
     }
 
     @Test
-    fun `prompt returns Failure when GenAiException is thrown`() = runTest {
+    fun `generateContent fails when GenAiException is thrown`() = runTest {
         val fakeModel = FakeGenerativeModel(
             status = sequenceOf(FeatureStatus.AVAILABLE),
             exception = GenAiException(null, GenAiException.ErrorCode.REQUEST_PROCESSING_ERROR),
         )
 
         val llm = GeminiNanoLlm(buildModel = { fakeModel })
-        val result = runCatching { llm.prompt(Prompt("test prompt")).toList() }
+        val result = runCatching { llm.generateContent(request("test prompt")).toList() }
 
         assertTrue(result.isFailure)
         assertIs<Llm.Exception>(result.exceptionOrNull())
@@ -49,7 +52,7 @@ class GeminiNanoLlmTest {
     }
 
     @Test
-    fun `logger delivers useful messaging during prompt and download flow`() = runTest {
+    fun `logger delivers useful messaging during generateContent flow`() = runTest {
         val logMessages = mutableListOf<String>()
         val prompt = "test"
         val fakeModel = FakeGenerativeModel(
@@ -62,7 +65,7 @@ class GeminiNanoLlmTest {
             logger = { logMessages.add(it) },
         )
 
-        llm.prompt(Prompt(prompt)).toList()
+        llm.generateContent(request(prompt)).toList()
 
         assertEquals(2, logMessages.size)
         assertTrue(logMessages[0].contains("Beginning model response stream"))

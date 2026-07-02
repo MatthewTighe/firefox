@@ -4,6 +4,7 @@
 
 package mozilla.components.lib.llm.mlpa.service
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -189,7 +190,7 @@ class FetchClientMlpaServiceTest {
 
             val expected = listOf("world!")
 
-            assertEquals(response.toList(), expected)
+            assertEquals(expected, response.textDeltas())
             assertEquals("s2s-android", fakeClient.lastRequest?.headers?.get("service-type"))
             assertEquals("true", fakeClient.lastRequest?.headers?.get("use-play-integrity"))
         }
@@ -223,7 +224,7 @@ class FetchClientMlpaServiceTest {
 
             val expected = listOf("world!")
 
-            assertEquals(response.toList(), expected)
+            assertEquals(expected, response.textDeltas())
             assertEquals("s2s-android", fakeClient.lastRequest?.headers?.get("service-type"))
             assertEquals(null, fakeClient.lastRequest?.headers?.get("use-play-integrity"))
         }
@@ -245,7 +246,7 @@ class FetchClientMlpaServiceTest {
 
             val expected = listOf("Hello", " World!")
 
-            assertEquals(response.toList(), expected)
+            assertEquals(expected, response.textDeltas())
             assertEquals("s2s-android", fakeClient.lastRequest?.headers?.get("service-type"))
             assertEquals(null, fakeClient.lastRequest?.headers?.get("use-play-integrity"))
         }
@@ -541,4 +542,7 @@ class FetchClientMlpaServiceTest {
                     }.firstOrNull()
             }
         }
+
+    private suspend fun Flow<ChatService.TurnEvent>.textDeltas(): List<String> =
+        toList().filterIsInstance<ChatService.TurnEvent.TextDelta>().map { it.text }
 }

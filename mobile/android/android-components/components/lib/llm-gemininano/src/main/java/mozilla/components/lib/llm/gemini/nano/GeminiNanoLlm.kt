@@ -12,42 +12,68 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
-import mozilla.components.concept.llm.Llm
-import mozilla.components.concept.llm.Prompt
+import mozilla.components.concept.llm.Content
+import mozilla.components.concept.llm.FinishReason
+import mozilla.components.concept.llm.LlmModel
+import mozilla.components.concept.llm.LlmRequest
+import mozilla.components.concept.llm.LlmResponse
+import mozilla.components.concept.llm.Role
 import mozilla.components.support.base.log.logger.Logger
 
+private const val MODEL_NAME = "gemini-nano"
+
 /**
- * An instance of a LLM that uses local, on-device capabilities provided by Gemini Nano to handle
- * inference.
+ * An [LlmModel] that uses local, on-device capabilities provided by Gemini Nano to handle
+ * inference. Single-turn text only: the request's system instruction and content are flattened
+ * into a single prompt, since Gemini Nano does not distinguish message roles or support tools.
  */
 internal class GeminiNanoLlm(
     private val buildModel: () -> GenerativeModel = { Generation.getClient() },
     private val logger: (String) -> Unit = { message -> Logger("mozac/GeminiNanoLlm").info(message) },
-) : Llm {
+) : LlmModel {
+
+    override val name: String = MODEL_NAME
 
     private val model by lazy {
         buildModel()
     }
 
-    override suspend fun prompt(prompt: Prompt): Flow<String> = flow {
-        streamPromptResponses(prompt)
+    override fun generateContent(request: LlmRequest, stream: Boolean): Flow<LlmResponse> = flow {
+        streamResponses(request)
     }
 
-    private suspend fun FlowCollector<String>.streamPromptResponses(prompt: Prompt) = try {
+    private suspend fun FlowCollector<LlmResponse>.streamResponses(request: LlmRequest) = try {
         // consume replies from the model until it provides a finish reason
         logger("Beginning model response stream")
-        val content = listOfNotNull(prompt.systemPrompt, prompt.userPrompt).joinToString("\n\n")
-        model.generateContentStream(content).onEach { response ->
-            emit(response.candidates[0].text)
+        val accumulated = StringBuilder()
+        model.generateContentStream(request.flatten()).onEach { response ->
+            val text = response.candidates[0].text
+            accumulated.append(text)
+            emit(LlmResponse(content = Content.text(Role.Model, text), partial = true))
         }.first {
             val finishReason = it.candidates[0].finishReason
             (finishReason != null).also {
                 logger("Model stream completed with: $finishReason")
             }
         }
+        emit(
+            LlmResponse(
+                content = Content.text(Role.Model, accumulated.toString()),
+                finishReason = FinishReason.Stop,
+                partial = false,
+            ),
+        )
     } catch (e: GenAiException) {
-        val message = "Gemini Nano inference failed: ${e.message}"
-        logger(message)
-        throw Llm.Exception.unknown(message)
+        logger("Gemini Nano inference failed: ${e.message}")
+        throw GeminiNanoInferenceError(e)
     }
 }
+
+private fun LlmRequest.flatten(): String = buildList {
+    systemInstruction?.takeIf { it.isNotEmpty() }?.let { add(it) }
+    contents.forEach { content ->
+        content.parts.mapNotNull { it.text }.joinToString(separator = "")
+            .takeIf { it.isNotEmpty() }
+            ?.let { add(it) }
+    }
+}.joinToString(separator = "\n\n")

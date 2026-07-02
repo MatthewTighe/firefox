@@ -60,6 +60,7 @@ import mozilla.components.feature.summarize.settings.SummarizeSettingsStore
 import mozilla.components.feature.summarize.settings.summarizeSettingsReducer
 import mozilla.components.feature.summarize.ui.ContentTooLongError
 import mozilla.components.feature.summarize.ui.DownloadError
+import mozilla.components.feature.summarize.ui.FollowUpContent
 import mozilla.components.feature.summarize.ui.InfoError
 import mozilla.components.feature.summarize.ui.OffDeviceSummarizationConsent
 import mozilla.components.feature.summarize.ui.OnDeviceSummarizationConsent
@@ -190,10 +191,28 @@ private fun SummarizationScreenContent(
             onSettingsClicked = { store.dispatch(SettingsClicked) },
         )
 
-        is SummarizationState.Summarized -> SummaryContentLoaded(
-            info = state.info,
+        is SummarizationState.Summarized -> FollowUpContent(
             document = state.document,
+            info = state.info,
             onSettingsClicked = { store.dispatch(SettingsClicked) },
+            onFollowUpSubmitted = { store.dispatch(FollowUpSubmitted(it)) },
+        )
+
+        is SummarizationState.RespondingToFollowUp -> FollowUpContent(
+            document = state.summary,
+            info = state.info,
+            followUpQuestion = state.question,
+            followUpResponse = state.response,
+            isResponding = true,
+        )
+
+        is SummarizationState.FollowUpComplete -> FollowUpContent(
+            document = state.summary,
+            info = state.info,
+            followUpQuestion = state.question,
+            followUpResponse = state.response,
+            onSettingsClicked = { store.dispatch(SettingsClicked) },
+            onFollowUpSubmitted = { store.dispatch(FollowUpSubmitted(it)) },
         )
 
         is SummarizationState.Settings -> {

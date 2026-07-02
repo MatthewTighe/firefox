@@ -22,6 +22,7 @@ data object ViewAppeared : SummarizeSettingsAction
  */
 data class SettingsLoaded(
     val isFeatureEnabled: Boolean,
+    val isLocalModelEnabled: Boolean,
     val isGestureEnabled: Boolean,
     val shakeSensitivity: ShakeSensitivity,
 ) : SummarizeSettingsAction
@@ -35,6 +36,11 @@ data class ShakeSensitivityChanged(val value: ShakeSensitivity) : SummarizeSetti
  * The user toggled the summarize pages preference.
  */
 data object SummarizePagesPreferenceToggled : SummarizeSettingsAction
+
+/**
+ * The user toggled the use-on-device-model preference.
+ */
+data object LocalModelPreferenceToggled : SummarizeSettingsAction
 
 /**
  * The user toggled the shake to summarize preference.

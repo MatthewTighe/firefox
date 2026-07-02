@@ -7,7 +7,6 @@ package org.mozilla.fenix.summarization
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import mozilla.components.concept.llm.CloudLlmProvider
 import mozilla.components.concept.llm.LlmProvider
 import mozilla.components.feature.summarize.ErrorReporter
 import mozilla.components.feature.summarize.SummarizationMiddleware
@@ -36,7 +35,7 @@ class SummarizationStoreViewModel(
     initializedFromShake: Boolean,
     pageTitle: String,
     connectionType: ConnectionType,
-    llmProvider: CloudLlmProvider,
+    llmProvider: LlmProvider,
     settings: SummarizationSettings,
     pageContentExtractor: PageContentExtractor,
     pageMetadataExtractor: PageMetadataExtractor,
@@ -78,7 +77,7 @@ class SummarizationStoreViewModel(
             initializedFromShake: Boolean,
             pageTitle: String,
             connectionType: ConnectionType,
-            llmProvider: CloudLlmProvider,
+            llmProvider: LlmProvider,
             settings: SummarizationSettings,
             pageContentExtractor: PageContentExtractor,
             pageMetadataExtractor: PageMetadataExtractor,

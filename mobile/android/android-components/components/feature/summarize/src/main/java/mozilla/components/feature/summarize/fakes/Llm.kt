@@ -9,10 +9,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import mozilla.components.concept.llm.CloudLlmProvider
-import mozilla.components.concept.llm.Llm
+import mozilla.components.concept.llm.Content
+import mozilla.components.concept.llm.FinishReason
+import mozilla.components.concept.llm.LlmModel
 import mozilla.components.concept.llm.LlmProvider
+import mozilla.components.concept.llm.LlmRequest
+import mozilla.components.concept.llm.LlmResponse
 import mozilla.components.concept.llm.LocalLlmProvider
-import mozilla.components.concept.llm.Prompt
+import mozilla.components.concept.llm.Role
 import mozilla.components.feature.summarize.R
 import kotlin.time.Duration.Companion.seconds
 
@@ -35,30 +39,40 @@ data class FakeCloudProvider(
 }
 
 /**
- * A fake implementation of [Llm] for use in tests and Compose previews.
+ * A fake implementation of [LlmModel] for use in tests and Compose previews.
  *
- * Emits each item in [responses] sequentially, with a 2-second delay between
- * each emission to simulate real LLM streaming latency.
+ * Emits each item in [responses] sequentially as text deltas, with a 2-second delay between
+ * each emission to simulate real LLM streaming latency, then a final aggregated response.
  *
  * @property responses values to emit.
  */
-data class FakeLlm(
+data class FakeLlmModel(
     val responses: List<String> = listOf(),
-) : Llm {
+) : LlmModel {
 
-    var lastPrompt: Prompt? = null
+    override val name: String = "fake"
 
-    override suspend fun prompt(prompt: Prompt): Flow<String> = flow {
+    var lastRequest: LlmRequest? = null
+
+    override fun generateContent(request: LlmRequest, stream: Boolean): Flow<LlmResponse> = flow {
+        lastRequest = request
+        val accumulated = StringBuilder()
         for (response in responses) {
-            emit(response)
+            accumulated.append(response)
+            emit(LlmResponse(content = Content.text(Role.Model, response), partial = true))
             delay(2.seconds)
         }
-    }.also {
-        lastPrompt = prompt
+        emit(
+            LlmResponse(
+                content = Content.text(Role.Model, accumulated.toString()),
+                finishReason = FinishReason.Stop,
+                partial = false,
+            ),
+        )
     }
 
     companion object {
-        val successful get() = FakeLlm(
+        val successful get() = FakeLlmModel(
             listOf(
                "This is the article\n",
                "This is some content...\n",
@@ -72,7 +86,7 @@ internal data class FakeLocalProvider(
     override val state: MutableStateFlow<LocalLlmProvider.State> = MutableStateFlow(
         LocalLlmProvider.State.ReadyToDownload,
     ),
-    val llm: Llm,
+    val model: LlmModel,
 ) : LocalLlmProvider {
     override val info = LlmProvider.Info(nameRes = R.string.mozac_summarize_fake_llm_name)
 
@@ -81,7 +95,7 @@ internal data class FakeLocalProvider(
         delay(0.5.seconds)
         state.value = LocalLlmProvider.State.Downloading(TOTAL_SIZE, PARTIAL_SIZE)
         delay(1.seconds)
-        state.value = LocalLlmProvider.State.Ready(llm)
+        state.value = LocalLlmProvider.State.Ready(model)
     }
 }
 

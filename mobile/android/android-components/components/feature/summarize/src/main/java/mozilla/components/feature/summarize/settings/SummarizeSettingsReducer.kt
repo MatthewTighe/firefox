@@ -14,6 +14,7 @@ fun summarizeSettingsReducer(
     is SettingsLoaded -> {
         state.copy(
             isFeatureEnabled = action.isFeatureEnabled,
+            isLocalModelEnabled = action.isLocalModelEnabled,
             isGestureEnabled = action.isGestureEnabled,
             shakeSensitivity = action.shakeSensitivity,
         )
@@ -25,6 +26,10 @@ fun summarizeSettingsReducer(
 
     SummarizePagesPreferenceToggled -> {
         state.copy(isFeatureEnabled = !state.isFeatureEnabled)
+    }
+
+    LocalModelPreferenceToggled -> {
+        state.copy(isLocalModelEnabled = !state.isLocalModelEnabled)
     }
 
     ShakeToSummarizePreferenceToggled -> {

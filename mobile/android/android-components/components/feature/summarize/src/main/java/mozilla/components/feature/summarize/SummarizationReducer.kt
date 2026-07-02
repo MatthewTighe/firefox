@@ -20,15 +20,33 @@ fun summarizationReducer(state: SummarizationState, action: SummarizationAction)
     OnDeviceSummarizationShakeConsentAction.LearnMoreClicked -> SummarizationState.LearnMoreAboutShakeConsent
     ErrorAction.ErrorDismissed -> SummarizationState.Finished.ErrorDismissed
     is SummarizationRequested -> SummarizationState.Loading(action.info)
+    is ModelDownloadProgress -> SummarizationState.Downloading(action.bytesToDownload, action.bytesDownloaded)
     is SummarizationCompleted -> state.complete()
     is SummarizationFailed -> SummarizationState.Error(SummarizationError.SummarizationFailed(action.exception))
     is ReceivedParsedDocument -> state.updateDocument(action.document)
     is SettingsClicked -> when (state) {
         is SummarizationState.Summarized -> SummarizationState.Settings(info = state.info, document = state.document)
+        is SummarizationState.FollowUpComplete -> SummarizationState.Settings(info = state.info, document = state.summary)
         else -> state
     }
     is SettingsBackClicked -> when (state) {
         is SummarizationState.Settings -> SummarizationState.Summarized(info = state.info, document = state.document)
+        else -> state
+    }
+    is FollowUpSubmitted -> when (state) {
+        is SummarizationState.Summarized ->
+            SummarizationState.RespondingToFollowUp(state.info, state.document, action.question)
+        is SummarizationState.FollowUpComplete ->
+            SummarizationState.RespondingToFollowUp(state.info, state.summary, action.question)
+        else -> state
+    }
+    is ReceivedFollowUpDocument -> when (state) {
+        is SummarizationState.RespondingToFollowUp -> state.copy(response = action.document)
+        else -> state
+    }
+    is FollowUpCompleted -> when (state) {
+        is SummarizationState.RespondingToFollowUp ->
+            SummarizationState.FollowUpComplete(state.info, state.summary, state.question, state.response)
         else -> state
     }
     else -> state

@@ -28,6 +28,10 @@ class SummarizationSettingsCache(
             .map { it == true }
             .stateIn(scope, SharingStarted.Eagerly, false)
 
+    val useLocalModel: StateFlow<Boolean> =
+        flow { emitAll(settings.getUseLocalModel()) }
+            .stateIn(scope, SharingStarted.Eagerly, false)
+
     val gestureEnabled: StateFlow<Boolean> =
         flow { emitAll(settings.getGestureEnabledUserStatus()) }
             .stateIn(scope, SharingStarted.Eagerly, true)

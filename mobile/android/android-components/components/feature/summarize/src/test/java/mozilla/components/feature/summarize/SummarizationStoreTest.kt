@@ -16,7 +16,10 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import mozilla.components.concept.llm.CloudLlmProvider
 import mozilla.components.concept.llm.Llm
-import mozilla.components.concept.llm.Prompt
+import mozilla.components.concept.llm.LlmModel
+import mozilla.components.concept.llm.LlmRequest
+import mozilla.components.concept.llm.LlmResponse
+import mozilla.components.concept.llm.Role
 import mozilla.components.feature.summarize.SummarizationState.Error
 import mozilla.components.feature.summarize.SummarizationState.Finished
 import mozilla.components.feature.summarize.SummarizationState.Inert
@@ -31,7 +34,7 @@ import mozilla.components.feature.summarize.content.PageMetadata
 import mozilla.components.feature.summarize.ext.defaultInstructions
 import mozilla.components.feature.summarize.ext.recipeInstructions
 import mozilla.components.feature.summarize.fakes.FakeCloudProvider
-import mozilla.components.feature.summarize.fakes.FakeLlm
+import mozilla.components.feature.summarize.fakes.FakeLlmModel
 import mozilla.components.feature.summarize.settings.SummarizationSettings
 import mozilla.components.ui.richtext.parsing.Parser
 import org.junit.Assert.assertEquals
@@ -56,7 +59,7 @@ class SummarizationStoreTest {
     @Test
     fun `test that we can consent to shake`() = runTest {
         val settings = SummarizationSettings.inMemory()
-        val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(FakeLlm.successful))
+        val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(FakeLlmModel.successful))
         val pageTitle = "Article Headline"
         val store = SummarizationStore(
             initialState = Inert(true),
@@ -107,7 +110,7 @@ class SummarizationStoreTest {
             middleware = listOf(
                 SummarizationMiddleware(
                     settings = settings,
-                    llmProvider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(FakeLlm.successful)),
+                    llmProvider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(FakeLlmModel.successful)),
                     contentProvider = { Result.success(Content()) },
                     errorReporter = noopReporter,
                     scope = backgroundScope,
@@ -140,7 +143,7 @@ class SummarizationStoreTest {
 
     @Test
     fun `If a user has already consented to shake, the llm is prompted with the default instructions`() = runTest {
-        val llm = FakeLlm.successful
+        val llm = FakeLlmModel.successful
         val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(llm))
         val content = "this is expected content."
         val pageTitle = "Article Headline"
@@ -178,12 +181,13 @@ class SummarizationStoreTest {
         )
 
         assertEquals(expected, states)
-        assertEquals(Prompt(content, defaultInstructions("en")), llm.lastPrompt)
+        assertEquals(defaultInstructions("en"), llm.lastRequest?.systemInstruction)
+        assertEquals(content, llm.lastRequest?.userText())
     }
 
     @Test
     fun `page language is forwarded to model for default case`() = runTest {
-        val llm = FakeLlm.successful
+        val llm = FakeLlmModel.successful
         val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(llm))
         val content = "this is expected content."
         val pageTitle = "Article Headline"
@@ -222,12 +226,13 @@ class SummarizationStoreTest {
         )
 
         assertEquals(expected, states)
-        assertEquals(Prompt(content, defaultInstructions(language)), llm.lastPrompt)
+        assertEquals(defaultInstructions(language), llm.lastRequest?.systemInstruction)
+        assertEquals(content, llm.lastRequest?.userText())
     }
 
     @Test
     fun `page language is forwarded to model for recipe case`() = runTest {
-        val llm = FakeLlm.successful
+        val llm = FakeLlmModel.successful
         val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(llm))
         val content = "this is expected content."
         val pageTitle = "Article Headline"
@@ -266,13 +271,14 @@ class SummarizationStoreTest {
         )
 
         assertEquals(expected, states)
-        assertEquals(Prompt(content, recipeInstructions(language)), llm.lastPrompt)
+        assertEquals(recipeInstructions(language), llm.lastRequest?.systemInstruction)
+        assertEquals(content, llm.lastRequest?.userText())
     }
 
     @Test
     fun `if the page extractor fails, the failure is forwarded as a summarization failure`() = runTest {
         val failureThrowable = NullPointerException("extractor failed")
-        val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(FakeLlm.successful))
+        val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(FakeLlmModel.successful))
         val store = SummarizationStore(
             initialState = Inert(true),
             reducer = ::summarizationReducer,
@@ -309,10 +315,12 @@ class SummarizationStoreTest {
 
     @Test
     fun `if the llm stream hangs past the timeout, a summarization failure with a TimeoutCancellationException cause is reported`() = runTest {
-        val hangingLlm = object : Llm {
-            override suspend fun prompt(prompt: Prompt): Flow<String> = flow { awaitCancellation() }
+        val hangingModel = object : LlmModel {
+            override val name = "hanging"
+            override fun generateContent(request: LlmRequest, stream: Boolean): Flow<LlmResponse> =
+                flow { awaitCancellation() }
         }
-        val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(hangingLlm))
+        val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(hangingModel))
         val pageTitle = "Article Headline"
         val store = SummarizationStore(
             initialState = Inert(true),
@@ -347,7 +355,7 @@ class SummarizationStoreTest {
 
     @Test
     fun `if the page metadata indicates a recipe, the llm is prompted with the recipe instructions even if the content is readerable`() = runTest {
-        val llm = FakeLlm.successful
+        val llm = FakeLlmModel.successful
         val content = "this is expected content."
         val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(llm))
         var usingReaderContent = true
@@ -396,12 +404,13 @@ class SummarizationStoreTest {
 
         assertFalse(usingReaderContent)
         assertEquals(expected, states)
-        assertEquals(Prompt(content, recipeInstructions("en")), llm.lastPrompt)
+        assertEquals(recipeInstructions("en"), llm.lastRequest?.systemInstruction)
+        assertEquals(content, llm.lastRequest?.userText())
     }
 
     @Test
     fun `if the page metadata indicates readerable, we use readermode content`() = runTest {
-        val llm = FakeLlm.successful
+        val llm = FakeLlmModel.successful
         val content = "this is expected content."
         val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(llm))
         val pageTitle = "Article Headline"
@@ -450,13 +459,14 @@ class SummarizationStoreTest {
 
         assertTrue(usingReaderContent)
         assertEquals(expected, states)
-        assertEquals(Prompt(content, defaultInstructions("en")), llm.lastPrompt)
+        assertEquals(defaultInstructions("en"), llm.lastRequest?.systemInstruction)
+        assertEquals(content, llm.lastRequest?.userText())
     }
 
     @Test
     fun `dismissing an error screen transitions to the ErrorDismissed finished state`() = runTest {
         val failureThrowable = NullPointerException("extractor failed")
-        val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(FakeLlm.successful))
+        val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(FakeLlmModel.successful))
         val store = SummarizationStore(
             initialState = Inert(true),
             reducer = ::summarizationReducer,
@@ -502,7 +512,7 @@ class SummarizationStoreTest {
 
     @Test
     fun `page metadata language is inserted into prompt`() = runTest {
-        val llm = FakeLlm.successful
+        val llm = FakeLlmModel.successful
         val content = "this is expected content."
         val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(llm))
         val pageTitle = "Article Headline"
@@ -552,12 +562,13 @@ class SummarizationStoreTest {
         )
 
         assertEquals(expected, states)
-        assertEquals(Prompt(content, recipeInstructions("es")), llm.lastPrompt)
+        assertEquals(recipeInstructions("es"), llm.lastRequest?.systemInstruction)
+        assertEquals(content, llm.lastRequest?.userText())
     }
 
     @Test
     fun `if a title is not provided, skip prepending a title line`() = runTest {
-        val llm = FakeLlm.successful
+        val llm = FakeLlmModel.successful
         val provider = FakeCloudProvider(preparedState = CloudLlmProvider.State.Ready(llm))
         val content = "this is expected content."
         val store = SummarizationStore(
@@ -594,7 +605,8 @@ class SummarizationStoreTest {
         )
 
         assertEquals(expected, states)
-        assertEquals(Prompt(content, defaultInstructions("en")), llm.lastPrompt)
+        assertEquals(defaultInstructions("en"), llm.lastRequest?.systemInstruction)
+        assertEquals(content, llm.lastRequest?.userText())
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -635,4 +647,7 @@ class SummarizationStoreTest {
         )
         assertEquals(expected, states)
     }
+
+    private fun LlmRequest.userText() =
+        contents.lastOrNull { it.role == Role.User }?.parts?.firstNotNullOfOrNull { it.text }
 }

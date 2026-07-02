@@ -92,6 +92,12 @@
     <!-- Description for the summarize pages toggle -->
     <string name="mozac_summarize_settings_summarize_pages_cloud">Create page summaries with AI. Pages and summaries stay private and are never stored.</string>
 
+    <!-- Label for the toggle that uses the on-device model for summaries -->
+    <string name="mozac_summarize_settings_use_local_model">Summarize on device</string>
+
+    <!-- Description for the on-device model toggle -->
+    <string name="mozac_summarize_settings_use_local_model_description">Use the on-device model (Gemini Nano) instead of the cloud model. Works offline; may be less capable.</string>
+
     <!-- Link text to learn more about page summaries in settings -->
     <string name="mozac_summarize_settings_learn_more">Learn more</string>
 
@@ -133,4 +139,9 @@
 
     <!-- Button text for the Error dismiss button on Shake to Summarize -->
     <string name="mozac_summarize_error_dissmiss">Dismiss</string>
+
+    <!-- Placeholder text for the input where the user types a follow-up question about the page -->
+    <string name="mozac_feature_summarize_follow_up_placeholder">Ask about this page</string>
+    <!-- Button text to send a follow-up question -->
+    <string name="mozac_feature_summarize_follow_up_send">Send</string>
 </resources>

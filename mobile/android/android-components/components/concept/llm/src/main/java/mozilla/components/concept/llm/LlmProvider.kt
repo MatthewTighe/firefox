@@ -70,10 +70,10 @@ interface CloudLlmProvider : LlmProvider {
         /**
          * Indicates that the cloud LLM is fully initialized and ready for use.
          *
-         * @property llm The ready-to-use LLM instance.
+         * @property model The ready-to-use model.
          */
         @JvmInline
-        value class Ready(val llm: Llm) : State
+        value class Ready(val model: LlmModel) : State
     }
 
     /**
@@ -130,10 +130,10 @@ interface LocalLlmProvider : LlmProvider {
         /**
          * Indicates that the local LLM is fully initialized and ready for use.
          *
-         * @property llm The ready-to-use LLM instance.
+         * @property model The ready-to-use model.
          */
         @JvmInline
-        value class Ready(val llm: Llm) : State
+        value class Ready(val model: LlmModel) : State
     }
 
     /**

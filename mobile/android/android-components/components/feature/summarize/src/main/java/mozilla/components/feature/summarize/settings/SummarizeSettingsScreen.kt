@@ -64,6 +64,7 @@ fun SummarizeSettingsContent(
         modifier = modifier,
         state = state,
         onSummarizePagesToggled = { store.dispatch(SummarizePagesPreferenceToggled) },
+        onLocalModelToggled = { store.dispatch(LocalModelPreferenceToggled) },
         onShakeToSummarizeToggled = { store.dispatch(ShakeToSummarizePreferenceToggled) },
         onLearnMoreClicked = { store.dispatch(LearnMoreClicked) },
         onShakeSensitivityChanged = { store.dispatch(ShakeSensitivityChanged(it)) },
@@ -75,6 +76,7 @@ fun SummarizeSettingsContent(
  *
  * @param state The current [SummarizeSettingsState].
  * @param onSummarizePagesToggled Called when the user toggles the summarize pages setting.
+ * @param onLocalModelToggled Called when the user toggles the on-device model setting.
  * @param onShakeToSummarizeToggled Called when the user toggles the shake to summarize setting.
  * @param onLearnMoreClicked Called when the user clicks the learn more link.
  * @param onShakeSensitivityChanged Called when user slides shake sensitivity slider.
@@ -83,6 +85,7 @@ fun SummarizeSettingsContent(
 fun SummarizeSettingsContent(
     state: SummarizeSettingsState,
     onSummarizePagesToggled: () -> Unit,
+    onLocalModelToggled: () -> Unit,
     onShakeToSummarizeToggled: () -> Unit,
     onLearnMoreClicked: () -> Unit,
     onShakeSensitivityChanged: (ShakeSensitivity) -> Unit,
@@ -99,6 +102,16 @@ fun SummarizeSettingsContent(
             ),
             checked = state.isFeatureEnabled,
             onToggle = onSummarizePagesToggled,
+        )
+
+        SwitchRow(
+            label = stringResource(id = R.string.mozac_summarize_settings_use_local_model),
+            description = stringResource(
+                id = R.string.mozac_summarize_settings_use_local_model_description,
+            ),
+            checked = state.isLocalModelEnabled,
+            enabled = state.isFeatureEnabled,
+            onToggle = onLocalModelToggled,
         )
 
         Text(
@@ -240,6 +253,7 @@ private const val DISABLED_ALPHA = 0.38f
 private fun SummarizeSettingsContentPreview() {
     AcornTheme {
         var isFeatureEnabled by remember { mutableStateOf(true) }
+        var isLocalModelEnabled by remember { mutableStateOf(false) }
         var isGestureEnabled by remember { mutableStateOf(false) }
 
         Box(
@@ -248,9 +262,11 @@ private fun SummarizeSettingsContentPreview() {
             SummarizeSettingsContent(
                 state = SummarizeSettingsState(
                     isFeatureEnabled = isFeatureEnabled,
+                    isLocalModelEnabled = isLocalModelEnabled,
                     isGestureEnabled = isGestureEnabled,
                 ),
                 onSummarizePagesToggled = { isFeatureEnabled = !isFeatureEnabled },
+                onLocalModelToggled = { isLocalModelEnabled = !isLocalModelEnabled },
                 onShakeToSummarizeToggled = { isGestureEnabled = !isGestureEnabled },
                 onLearnMoreClicked = {},
                 onShakeSensitivityChanged = {},

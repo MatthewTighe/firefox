@@ -115,7 +115,11 @@ class SummarizationFragment : BottomSheetDialogFragment() {
     private val isEngineAvailable: Boolean get() = currentTab?.engineState?.engineSession != null
     private val storeViewModel: SummarizationStoreViewModel by viewModels {
         val engineSession = currentTab?.engineState?.engineSession
-        val provider = requireComponents.llm.mlpaProvider
+        val provider = if (requireComponents.summarizationSettingsCache.useLocalModel.value) {
+            requireComponents.llm.geminiNanoProvider
+        } else {
+            requireComponents.llm.mlpaProvider
+        }
         val title = currentTab?.toDisplayTitle() ?: ""
         SummarizationStoreViewModel.factory(
             initializedFromShake = args.fromShake,
@@ -184,6 +188,7 @@ class SummarizationFragment : BottomSheetDialogFragment() {
         val settingsStore = SummarizeSettingsStore(
             initialState = SummarizeSettingsState(
                 isFeatureEnabled = cache.featureEnabled.value,
+                isLocalModelEnabled = cache.useLocalModel.value,
                 isGestureEnabled = cache.gestureEnabled.value,
             ),
             reducer = ::summarizeSettingsReducer,

@@ -4,19 +4,6 @@
 
 package mozilla.components.concept.llm
 
-import kotlinx.coroutines.flow.Flow
-
-/**
- * A prompt that can be delivered to a LLM.
- *
- * @param userPrompt The user message to send to the LLM.
- * @param systemPrompt An optional system-level instruction that shapes LLM behavior.
- */
-data class Prompt(
-    val userPrompt: String,
-    val systemPrompt: String? = null,
-)
-
 /**
  * Marker interface for any failure surfaced by a cloud-based LLM provider.
  *
@@ -55,17 +42,27 @@ interface ServerError : CloudFailure {
 }
 
 /**
- * An abstract definition of a LLM that can receive prompts.
+ * Marker interface for any failure surfaced by an on-device (local) LLM provider. Implementation
+ * modules attach more specific categories to their concrete exception types so consumers can drive
+ * UI without depending on a particular impl.
+ */
+interface LocalFailure
+
+/** The on-device model is not available on this device (e.g. unsupported hardware). */
+interface ModelUnavailable : LocalFailure
+
+/** The on-device model failed to download. */
+interface ModelDownloadFailed : LocalFailure
+
+/** The on-device model failed while producing a response. */
+interface ModelInferenceFailed : LocalFailure
+
+/**
+ * Namespace for LLM-level types shared across the concept. Retained as the home of
+ * [Llm.Exception] so implementation modules and consumers have a stable, backend-agnostic
+ * error type. Inference itself is expressed through [LlmModel] and [LlmSession].
  */
 interface Llm {
-    /**
-     * A prompt request delivered to the LLM for inference.
-     *
-     * @param prompt a [Prompt] that will be sent to the [Llm].
-     * @return a [Flow] of [String] of the response from the [Llm].
-     */
-    suspend fun prompt(prompt: Prompt): Flow<String>
-
     /**
      * An exception thrown by an LLM. Implementation modules may subclass this to
      * attach additional context (rate-limit metadata, HTTP status, etc.). Consumers

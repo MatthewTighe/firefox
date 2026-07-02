@@ -11,11 +11,13 @@ import mozilla.components.lib.state.State
  * State for the summarize settings screen.
  *
  * @property isFeatureEnabled Whether page summarization is enabled.
+ * @property isLocalModelEnabled Whether the on-device model is used instead of the cloud model.
  * @property isGestureEnabled Whether the shake-to-summarize gesture is enabled.
  * @property shakeSensitivity The shake sensitivity of shake-to-summarize
  */
 data class SummarizeSettingsState(
     val isFeatureEnabled: Boolean = false,
+    val isLocalModelEnabled: Boolean = false,
     val isGestureEnabled: Boolean = false,
     val shakeSensitivity: ShakeSensitivity = ShakeSensitivity.Medium,
 ) : State

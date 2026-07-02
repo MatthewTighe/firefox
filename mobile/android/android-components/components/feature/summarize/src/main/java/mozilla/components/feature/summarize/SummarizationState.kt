@@ -64,6 +64,36 @@ sealed class SummarizationState : State {
     ) : SummarizationState()
 
     /**
+     * The model is responding to a follow-up question about the summarized page.
+     *
+     * @param info metadata about the LLM that generated the summary
+     * @param summary The summary the follow-up is about.
+     * @param question The user's follow-up question.
+     * @param response The follow-up response generated so far.
+     */
+    data class RespondingToFollowUp(
+        val info: LlmProvider.Info,
+        val summary: RichDocument,
+        val question: String,
+        val response: RichDocument = RichDocument(listOf()),
+    ) : SummarizationState()
+
+    /**
+     * A follow-up question has been fully answered.
+     *
+     * @param info metadata about the LLM that generated the summary
+     * @param summary The summary the follow-up is about.
+     * @param question The user's follow-up question.
+     * @param response The completed follow-up response.
+     */
+    data class FollowUpComplete(
+        val info: LlmProvider.Info,
+        val summary: RichDocument,
+        val question: String,
+        val response: RichDocument,
+    ) : SummarizationState()
+
+    /**
      * An error occurred during the summarization lifecycle.
      *
      * @param error The [SummarizationError] describing what went wrong.

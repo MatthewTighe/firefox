@@ -36,6 +36,7 @@ class SummarizeSettingsMiddleware(
                 store.dispatch(
                     SettingsLoaded(
                         isFeatureEnabled = settings.getFeatureEnabledUserStatus().first() == true,
+                        isLocalModelEnabled = settings.getUseLocalModel().first(),
                         isGestureEnabled = settings.getGestureEnabledUserStatus().first(),
                         shakeSensitivity = settings.getShakeSensitivity().first(),
                     ),
@@ -44,6 +45,10 @@ class SummarizeSettingsMiddleware(
 
             SummarizePagesPreferenceToggled -> scope.launch {
                 settings.setFeatureEnabledUserStatus(store.state.isFeatureEnabled)
+            }
+
+            LocalModelPreferenceToggled -> scope.launch {
+                settings.setUseLocalModel(store.state.isLocalModelEnabled)
             }
 
             is ShakeSensitivityChanged -> scope.launch {

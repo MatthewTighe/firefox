@@ -7,6 +7,7 @@ package org.mozilla.fenix.components.llm
 import mozilla.components.concept.fetch.Client
 import mozilla.components.lib.integrity.googleplay.GooglePlayIntegrityClient
 import mozilla.components.lib.integrity.googleplay.IntegrityConsumer
+import mozilla.components.lib.llm.gemini.nano.GeminiNanoLlmProvider
 import mozilla.components.lib.llm.mlpa.MlpaLlmProvider
 import mozilla.components.lib.llm.mlpa.MlpaTokenProvider
 import mozilla.components.lib.llm.mlpa.MlpaTokenStorage
@@ -46,5 +47,9 @@ class Llm(
             storage = storage,
             mlpaService = fenixMlpaService,
         )
+    }
+
+    val geminiNanoProvider: GeminiNanoLlmProvider by lazyMonitored {
+        GeminiNanoLlmProvider()
     }
 }

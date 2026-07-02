@@ -59,15 +59,15 @@ val failureAuthenticationService = AuthenticationService { request ->
 }
 
 val successChatService = ChatService { token, request ->
-    listOf("Hello World!").asFlow()
+    listOf<ChatService.TurnEvent>(ChatService.TurnEvent.TextDelta("Hello World!")).asFlow()
 }
 
 val failureChatService = ChatService { token, request ->
-    flow { throw IllegalStateException("Bad response!") }
+    flow<ChatService.TurnEvent> { throw IllegalStateException("Bad response!") }
 }
 
 val invalidTokenService = ChatService { _, _ ->
-    flow { throw InvalidToken() }
+    flow<ChatService.TurnEvent> { throw InvalidToken() }
 }
 
 val streamedResponseBody = """

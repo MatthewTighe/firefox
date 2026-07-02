@@ -46,6 +46,7 @@ class PageSummariesSettingsFragment : Fragment(), SystemInsetsPaddedFragment {
         val store = SummarizeSettingsStore(
             initialState = SummarizeSettingsState(
                 isFeatureEnabled = cache.featureEnabled.value,
+                isLocalModelEnabled = cache.useLocalModel.value,
                 isGestureEnabled = cache.gestureEnabled.value,
                 shakeSensitivity = cache.shakeSensitivity.value,
             ),

@@ -13,6 +13,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonElement
 import mozilla.components.concept.integrity.IntegrityToken
 import mozilla.components.concept.llm.AuthFailure
 import mozilla.components.concept.llm.Llm
@@ -266,7 +267,28 @@ fun interface ChatService {
     fun completion(
         authorizationToken: AuthorizationToken,
         request: Request,
-    ): Flow<String>
+    ): Flow<TurnEvent>
+
+    /**
+     * A single event produced while the model responds. A given response is either text or a
+     * tool-call request, never both.
+     */
+    sealed class TurnEvent {
+        /** One text delta emitted as the model streams a textual response. */
+        data class TextDelta(val text: String) : TurnEvent()
+
+        /** The model requested one or more tool calls instead of producing text. */
+        data class ToolCalls(val calls: List<ToolCallRecord>) : TurnEvent()
+    }
+
+    /**
+     * A parsed tool call returned by the model.
+     *
+     * @property id Unique identifier for correlating this call with its result.
+     * @property toolName The name of the tool to invoke.
+     * @property arguments A JSON string of the model-supplied arguments.
+     */
+    data class ToolCallRecord(val id: String, val toolName: String, val arguments: String)
 
     /**
      * Body of an error response with a code.
@@ -304,14 +326,32 @@ fun interface ChatService {
         )
 
         /**
-         * A generated message from the model.
+         * A generated message from the model, which may be text or tool calls.
          *
-         * @property content The textual content of the message.
+         * @property content The textual content; null when the model returned tool calls instead.
+         * @property toolCalls Tool calls requested by the model; null for plain-text responses.
          */
         @Serializable
         data class Message(
-            val content: String,
-        )
+            val content: String? = null,
+            @SerialName("tool_calls") val toolCalls: List<ToolCall>? = null,
+        ) {
+            /**
+             * A single tool call requested by the model.
+             */
+            @Serializable
+            data class ToolCall(
+                val id: String,
+                val type: String = "function",
+                val function: Function,
+            ) {
+                /**
+                 * The function the model wants to invoke.
+                 */
+                @Serializable
+                data class Function(val name: String, val arguments: String)
+            }
+        }
     }
 
     /**
@@ -327,47 +367,99 @@ fun interface ChatService {
         val stream: Boolean = true,
         val temperature: Float = 0.1f,
         @SerialName("top_p") val topP: Float = 0.01f,
+        val tools: List<Tool>? = null,
+        @SerialName("tool_choice") val toolChoice: String? = null,
     ) {
+        /**
+         * A tool definition passed to the model in a request.
+         *
+         * @property function The function the model can invoke.
+         */
+        @Serializable
+        data class Tool(
+            val type: String = "function",
+            val function: Function,
+        ) {
+            /**
+             * @property name Unique name the model uses to identify this tool.
+             * @property description Human-readable description of the tool's purpose.
+             * @property parameters JSON Schema describing the tool's input parameters.
+             */
+            @Serializable
+            data class Function(
+                val name: String,
+                val description: String,
+                val parameters: JsonElement,
+            )
+        }
+
         /**
          * Represents a single message in the conversation.
          *
          * @property role The role of the message sender.
-         * @property content The textual content of the message.
+         * @property content The textual content; null for assistant tool-call messages.
+         * @property toolCalls Tool calls requested by the model; present only on assistant turns.
+         * @property toolCallId ID linking a tool-result message to its originating call.
          */
         @Serializable
-        data class Message(val role: Role, val content: String) {
+        data class Message(
+            val role: Role,
+            val content: String? = null,
+            @SerialName("tool_calls") val toolCalls: List<ToolCall>? = null,
+            @SerialName("tool_call_id") val toolCallId: String? = null,
+        ) {
             /**
              * Supported message roles.
              */
             @Serializable
             enum class Role {
-                /**
-                 * A message originating from the end user.
-                 */
+                /** A message originating from the end user. */
                 @SerialName("user")
                 User,
 
-                /**
-                 * A system-level instruction that shapes model behavior.
-                 */
+                /** A system-level instruction that shapes model behavior. */
                 @SerialName("system")
                 System,
+
+                /** A message produced by the model, possibly requesting tool calls. */
+                @SerialName("assistant")
+                Assistant,
+
+                /** The result of executing a tool call, fed back to the model. */
+                @SerialName("tool")
+                Tool,
+            }
+
+            /**
+             * A single tool call requested by the model on an assistant turn.
+             */
+            @Serializable
+            data class ToolCall(
+                val id: String,
+                val type: String = "function",
+                val function: Function,
+            ) {
+                /** The function the model wants to invoke. */
+                @Serializable
+                data class Function(val name: String, val arguments: String)
             }
 
             companion object {
-                /**
-                 * Convenience factory for creating a user message.
-                 *
-                 * @param content The message content.
-                 */
+                /** Convenience factory for creating a user message. */
                 fun user(content: String) = Message(Role.User, content)
 
-                /**
-                 * Convenience factory for creating a system message.
-                 *
-                 * @param content The message content.
-                 */
+                /** Convenience factory for creating a system message. */
                 fun system(content: String) = Message(Role.System, content)
+
+                /** Convenience factory for a plain-text assistant message. */
+                fun assistant(content: String) = Message(Role.Assistant, content)
+
+                /** Convenience factory for an assistant message requesting tool calls. */
+                fun assistantToolCall(calls: List<ToolCall>) = Message(Role.Assistant, toolCalls = calls)
+
+                /** Convenience factory for a tool-result message. */
+                fun tool(toolCallId: String, content: String) =
+                    Message(Role.Tool, content = content, toolCallId = toolCallId)
             }
         }
     }

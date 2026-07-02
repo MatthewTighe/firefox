@@ -19,8 +19,8 @@ import mozilla.components.concept.fetch.Request
 import mozilla.components.concept.fetch.Response
 import mozilla.components.concept.fetch.isClientError
 import mozilla.components.concept.llm.Llm
-import mozilla.components.lib.llm.mlpa.service.ext.contentFlow
 import mozilla.components.lib.llm.mlpa.service.ext.rateLimitDetailedError
+import mozilla.components.lib.llm.mlpa.service.ext.turnEventFlow
 import java.io.IOException
 
 /**
@@ -42,6 +42,9 @@ class FetchClientMlpaService(
         Json {
             ignoreUnknownKeys = true
             encodeDefaults = true
+            // Omit null fields (e.g. tools/tool_choice on non-tool requests, content on
+            // assistant tool-call messages) rather than emitting explicit nulls the backend rejects.
+            explicitNulls = false
         }
     }
 
@@ -91,7 +94,7 @@ class FetchClientMlpaService(
     override fun completion(
         authorizationToken: AuthorizationToken,
         request: ChatService.Request,
-    ): Flow<String> {
+    ): Flow<ChatService.TurnEvent> {
         val bodyString = json.encodeToString(request)
         val fetchRequest = Request(
             url = "${config.baseUrl}/v1/chat/completions",
@@ -118,16 +121,26 @@ class FetchClientMlpaService(
                 it.error?.also { error -> throw error }
 
                 if (request.stream) {
-                    emitAll(it.contentFlow(it.retryAfter))
+                    emitAll(it.turnEventFlow(it.retryAfter))
                 } else {
-                    emit(it.nonStreamedResponse)
+                    emit(it.nonStreamedTurnEvent)
                 }
             }
         }.flowOn(dispatcher)
     }
 
-    private val Response.nonStreamedResponse get() = try {
-        json.decodeFromString<ChatService.Response>(bodyString).choices.first().message.content
+    private val Response.nonStreamedTurnEvent: ChatService.TurnEvent get() = try {
+        val message = json.decodeFromString<ChatService.Response>(bodyString).choices.first().message
+        val toolCalls = message.toolCalls
+        if (!toolCalls.isNullOrEmpty()) {
+            ChatService.TurnEvent.ToolCalls(
+                toolCalls.map {
+                    ChatService.ToolCallRecord(it.id, it.function.name, it.function.arguments)
+                },
+            )
+        } else {
+            ChatService.TurnEvent.TextDelta(message.content.orEmpty())
+        }
     } catch (e: SerializationException) {
         throw ResponseParseError(e)
     }

@@ -2712,7 +2712,7 @@ class Settings(
      */
     var shakeToSummarizeFeatureFlagEnabled by booleanPreference(
         key = appContext.getPreferenceKey(R.string.pref_key_enable_shake_to_summarize),
-        default = { FxNimbus.features.shakeToSummarize.value().enabled },
+        default = { true },
     )
 
     var aiControlsFeatureFlagEnabled by booleanPreference(

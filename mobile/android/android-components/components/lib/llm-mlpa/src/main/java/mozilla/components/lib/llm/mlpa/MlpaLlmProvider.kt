@@ -23,16 +23,16 @@ internal val LlmProvider.ModelID.Companion.mozSummarization
  *
  * This provider is responsible for:
  * - Fetching an authentication token via [MlpaTokenProvider].
- * - Initializing an [MlpaLlm] instance when authentication succeeds.
+ * - Initializing an [MlpaModel] instance when authentication succeeds.
  * - Exposing availability and readiness through a [StateFlow].
  *
  * The provider starts in [State.Available]. After calling [prepare],
  * the state will transition to:
- * - [Ready] with an initialized [MlpaLlm] instance if token retrieval succeeds.
+ * - [Ready] with an initialized [MlpaModel] instance if token retrieval succeeds.
  * - [Unavailable] if token retrieval fails.
  *
  * @property tokenProvider Responsible for fetching the MLPA authentication token.
- * @property mlpaService Service used to construct the [MlpaLlm] instance once authenticated.
+ * @property mlpaService Service used to construct the [MlpaModel] instance once authenticated.
  */
 class MlpaLlmProvider(
     val tokenProvider: MlpaTokenProvider,
@@ -58,12 +58,12 @@ class MlpaLlmProvider(
      *
      * This function attempts to fetch an authentication token using [tokenProvider].
      *
-     * - On success, updates [state] to [State.Ready] with a newly created [MlpaLlm].
+     * - On success, updates [state] to [State.Ready] with a newly created [MlpaModel].
      * - On failure, updates [state] to [State.Unavailable].
      */
     override suspend fun prepare() {
         tokenProvider.fetchToken()
-            .onSuccess { _state.value = State.Ready(MlpaLlm(chatService, it, modelID)) }
+            .onSuccess { _state.value = State.Ready(MlpaModel(chatService, it, modelID)) }
             .onFailure {
                 _state.value = State.Unavailable(
                     it as? Llm.Exception

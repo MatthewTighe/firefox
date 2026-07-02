@@ -4,7 +4,7 @@
 
 package mozilla.components.feature.summarize
 
-import mozilla.components.concept.llm.Llm
+import mozilla.components.concept.llm.LlmModel
 import mozilla.components.concept.llm.LlmProvider
 import mozilla.components.feature.summarize.content.Content
 import mozilla.components.lib.state.Action
@@ -33,12 +33,26 @@ data object ShakeConsentRequested : SummarizationAction
 /**  */
 sealed interface LlmProviderAction : SummarizationAction {
 
-    /** The LLM provider has been made available */
+    /** The cloud LLM provider is reachable and can be prepared. */
     data object ProviderAvailable : LlmProviderAction
 
-    /** The LLM provider finished initializing with the given [llm]. */
-    data class ProviderInitialized(val llm: Llm) : LlmProviderAction
+    /** The local LLM provider needs its model downloaded before use. */
+    data object ProviderNeedsDownload : LlmProviderAction
+
+    /** The LLM provider finished initializing with the given [model]. */
+    data class ProviderInitialized(val model: LlmModel) : LlmProviderAction
 }
+
+/**
+ * The on-device model is downloading.
+ *
+ * @property bytesToDownload Total bytes to download.
+ * @property bytesDownloaded Bytes downloaded so far.
+ */
+data class ModelDownloadProgress(
+    val bytesToDownload: Float,
+    val bytesDownloaded: Float,
+) : SummarizationAction
 
 /**
  * There was a failure in summarizing content from the current page.
@@ -64,6 +78,21 @@ data class ReceivedParsedDocument(val document: RichDocument) : SummarizationAct
  * Page content has been extracted and is ready to be sent to the LLM.
  */
 data class ContentExtracted(val content: Content) : SummarizationAction
+
+/**
+ * The user submitted a follow-up question about the summarized page.
+ */
+data class FollowUpSubmitted(val question: String) : SummarizationAction
+
+/**
+ * A new parsed document for the in-progress follow-up response was received.
+ */
+data class ReceivedFollowUpDocument(val document: RichDocument) : SummarizationAction
+
+/**
+ * The follow-up response has completed successfully.
+ */
+data object FollowUpCompleted : SummarizationAction
 
 /**
  * Actions for the consent step of the shake to summarize user flow when using an on-device model.

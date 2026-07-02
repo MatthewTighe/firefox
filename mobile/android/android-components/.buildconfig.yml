@@ -1616,6 +1616,7 @@ projects:
     - components:concept-llm
     - components:concept-storage
     - components:concept-storage-bookmarks
+    - components:lib-llm-adk
     - components:lib-publicsuffixlist
     - components:lib-shake
     - components:lib-state
@@ -2043,6 +2044,13 @@ projects:
     publish: true
     upstream_dependencies:
     - components:tooling-lint
+  components:lib-llm-adk:
+    description: Drives the LLM concept with Google's Agent Development Kit.
+    path: components/lib/llm-adk
+    publish: true
+    upstream_dependencies:
+    - components:concept-llm
+    - components:support-base
   components:lib-llm-gemininano:
     description: A Gemini Nano implementation of the LLM concept.
     path: components/lib/llm-gemininano

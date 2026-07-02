@@ -13,7 +13,7 @@ import org.junit.Test
 
 class RequestSerializationTest {
 
-    val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
 
     @Test
     fun `authentication service request gets serialized to json correctly`() {
@@ -46,6 +46,27 @@ class RequestSerializationTest {
         assertEquals(
             "{\"model\":\"moz-summarization\",\"messages\":[{\"role\":\"system\",\"content\":\"system prompt\"},{\"role\":\"user\",\"content\":\"hello\"}],\"stream\":true,\"temperature\":0.1,\"top_p\":0.01}",
             json.encodeToString(request),
+        )
+    }
+
+    @Test
+    fun `an assistant tool-call message omits content and serializes its tool calls`() {
+        val message = ChatService.Request.Message.assistantToolCall(
+            listOf(
+                ChatService.Request.Message.ToolCall(
+                    id = "call-1",
+                    function = ChatService.Request.Message.ToolCall.Function(
+                        name = "get_page_content",
+                        arguments = "{}",
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(
+            "{\"role\":\"assistant\",\"tool_calls\":[{\"id\":\"call-1\",\"type\":\"function\"," +
+                "\"function\":{\"name\":\"get_page_content\",\"arguments\":\"{}\"}}]}",
+            json.encodeToString(message),
         )
     }
 }

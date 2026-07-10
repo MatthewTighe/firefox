@@ -104,16 +104,6 @@ fun SummarizeSettingsContent(
             onToggle = onSummarizePagesToggled,
         )
 
-        SwitchRow(
-            label = stringResource(id = R.string.mozac_summarize_settings_use_local_model),
-            description = stringResource(
-                id = R.string.mozac_summarize_settings_use_local_model_description,
-            ),
-            checked = state.isLocalModelEnabled,
-            enabled = state.isFeatureEnabled,
-            onToggle = onLocalModelToggled,
-        )
-
         Text(
             text = stringResource(id = R.string.mozac_summarize_settings_learn_more),
             style = AcornTheme.typography.body2.copy(
@@ -125,6 +115,16 @@ fun SummarizeSettingsContent(
         )
 
         Spacer(modifier = Modifier.height(AcornTheme.layout.space.static300))
+
+        SwitchRow(
+            label = stringResource(id = R.string.mozac_summarize_settings_use_local_model),
+            description = stringResource(
+                id = R.string.mozac_summarize_settings_use_local_model_description,
+            ),
+            checked = state.isLocalModelEnabled,
+            enabled = state.isFeatureEnabled,
+            onToggle = onLocalModelToggled,
+        )
 
         Text(
             text = stringResource(id = R.string.mozac_summarize_settings_gestures),

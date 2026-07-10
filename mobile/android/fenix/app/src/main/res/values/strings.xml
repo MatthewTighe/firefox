@@ -305,7 +305,7 @@
 
     <!-- Page summaries -->
     <!-- Toolbar title for the Page summaries settings fragment -->
-    <string name="preferences_page_summaries">Page summaries</string>
+    <string name="preferences_page_summaries">Ask Firefox</string>
 
     <!-- AI Controls settings -->
     <!-- Title for the AI controls settings screen -->

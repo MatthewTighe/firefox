@@ -17,13 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,44 +34,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import mozilla.components.compose.base.button.IconButton
 import mozilla.components.compose.base.theme.AcornTheme
 import mozilla.components.concept.llm.LlmProvider
+import mozilla.components.feature.summarize.LocalPageTitle
 import mozilla.components.feature.summarize.R
 import mozilla.components.ui.richtext.RichText
 import mozilla.components.ui.richtext.ir.RichDocument
 import mozilla.components.ui.icons.R as iconsR
-
-/**
- * Content being shown after the page summary has been generated
- */
-@Composable
-internal fun SummaryContentLoaded(
-    document: RichDocument,
-    info: LlmProvider.Info,
-    onSettingsClicked: () -> Unit = {},
-) {
-    Column(
-        modifier = Modifier
-            .padding(horizontal = AcornTheme.layout.space.static200)
-            .fillMaxWidth(),
-    ) {
-        SummarizationHeader(info, onSettingsClicked = onSettingsClicked)
-        Spacer(Modifier.height(AcornTheme.layout.space.static200))
-        SummarizedContent(
-            document = document,
-            modifier = Modifier
-                .weight(1f, fill = true)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-        )
-        Spacer(Modifier.height(AcornTheme.layout.space.static200))
-        DisclaimerMessage()
-        Spacer(Modifier.height(AcornTheme.layout.space.static200))
-    }
-}
 
 /**
  * Content shown after a summary, allowing the user to ask follow-up questions about the page.
@@ -81,6 +54,8 @@ internal fun SummaryContentLoaded(
  * @param followUpQuestion The user's current follow-up question, if any.
  * @param followUpResponse The follow-up response so far, if any.
  * @param isResponding Whether a follow-up response is currently streaming.
+ * @param inputEnabled Whether the follow-up input accepts interaction. `false` shows the prompt
+ *  but disabled, e.g. while the initial summary is still streaming.
  * @param onSettingsClicked Invoked when the settings control is tapped.
  * @param onFollowUpSubmitted Invoked with the user's follow-up question.
  */
@@ -91,6 +66,7 @@ internal fun FollowUpContent(
     followUpQuestion: String? = null,
     followUpResponse: RichDocument? = null,
     isResponding: Boolean = false,
+    inputEnabled: Boolean = true,
     onSettingsClicked: () -> Unit = {},
     onFollowUpSubmitted: (String) -> Unit = {},
 ) {
@@ -119,31 +95,41 @@ internal fun FollowUpContent(
             }
         }
         Spacer(Modifier.height(AcornTheme.layout.space.static200))
+        // The disclaimer and the prompt are kept outside the scrolling content above so the
+        // prompt stays visible regardless of how far the user scrolls the response.
+        DisclaimerMessage()
         if (!isResponding) {
+            Spacer(Modifier.height(AcornTheme.layout.space.static200))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = input,
                     onValueChange = { input = it },
                     modifier = Modifier.weight(1f),
+                    enabled = inputEnabled,
                     placeholder = {
                         Text(stringResource(R.string.mozac_feature_summarize_follow_up_placeholder))
                     },
                     singleLine = true,
+                    shape = RoundedCornerShape(percent = 50),
                 )
-                TextButton(
+                IconButton(
                     onClick = {
                         if (input.isNotBlank()) {
                             onFollowUpSubmitted(input.trim())
                             input = ""
                         }
                     },
+                    enabled = inputEnabled,
+                    contentDescription = stringResource(R.string.mozac_feature_summarize_follow_up_send),
                 ) {
-                    Text(stringResource(R.string.mozac_feature_summarize_follow_up_send))
+                    Icon(
+                        painter = painterResource(id = iconsR.drawable.mozac_ic_chevron_right_24),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
-        Spacer(Modifier.height(AcornTheme.layout.space.static200))
-        DisclaimerMessage()
         Spacer(Modifier.height(AcornTheme.layout.space.static200))
     }
 }
@@ -154,24 +140,38 @@ internal fun SummarizationHeader(
     modifier: Modifier = Modifier,
     onSettingsClicked: () -> Unit,
 ) {
-    Row(
-        modifier = modifier.height(32.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ModelInformation(info)
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        IconButton(
-            onClick = onSettingsClicked,
-            contentDescription = stringResource(
-                id = R.string.mozac_summarize_settings_button_content_description,
-            ),
+    val pageTitle = LocalPageTitle.current.value
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier.height(32.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                painter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            ModelInformation(info)
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            IconButton(
+                onClick = onSettingsClicked,
+                contentDescription = stringResource(
+                    id = R.string.mozac_summarize_settings_button_content_description,
+                ),
+            ) {
+                Icon(
+                    painter = painterResource(id = iconsR.drawable.mozac_ic_settings_24),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        if (pageTitle.isNotEmpty()) {
+            Text(
+                text = stringResource(R.string.mozac_feature_summarize_asking_about, pageTitle),
+                style = AcornTheme.typography.body2,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 4.dp),
             )
         }
     }

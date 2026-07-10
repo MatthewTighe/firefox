@@ -65,7 +65,6 @@ import mozilla.components.feature.summarize.ui.InfoError
 import mozilla.components.feature.summarize.ui.OffDeviceSummarizationConsent
 import mozilla.components.feature.summarize.ui.OnDeviceSummarizationConsent
 import mozilla.components.feature.summarize.ui.SummarizingContent
-import mozilla.components.feature.summarize.ui.SummaryContentLoaded
 import mozilla.components.feature.summarize.ui.gradient.summaryLoadingGradient
 import mozilla.components.ui.richtext.ir.RichDocument
 import mozilla.components.ui.richtext.parsing.Parser
@@ -88,13 +87,17 @@ fun SummarizationUi(
     productName: String,
     store: SummarizationStore,
     settingsStore: SummarizeSettingsStore? = null,
+    pageTitle: String = "",
     resolveError: (Throwable) -> Int,
 ) {
     LaunchedEffect(Unit) {
         store.dispatch(ViewAppeared)
     }
 
-    CompositionLocalProvider(LocalProductName provides ProductName(productName)) {
+    CompositionLocalProvider(
+        LocalProductName provides ProductName(productName),
+        LocalPageTitle provides PageTitle(pageTitle),
+    ) {
         SummarizationScreen(
             modifier = Modifier.fillMaxWidth(),
             store = store,
@@ -107,6 +110,10 @@ fun SummarizationUi(
 @JvmInline
 internal value class ProductName(val value: String)
 internal val LocalProductName = compositionLocalOf { ProductName("Firefox Debug") }
+
+@JvmInline
+internal value class PageTitle(val value: String)
+internal val LocalPageTitle = compositionLocalOf { PageTitle("") }
 
 @Composable
 private fun SummarizationScreen(
@@ -185,9 +192,10 @@ private fun SummarizationScreenContent(
             )
         }
 
-        is SummarizationState.Summarizing -> SummaryContentLoaded(
-            info = state.info,
+        is SummarizationState.Summarizing -> FollowUpContent(
             document = state.document,
+            info = state.info,
+            inputEnabled = false,
             onSettingsClicked = { store.dispatch(SettingsClicked) },
         )
 

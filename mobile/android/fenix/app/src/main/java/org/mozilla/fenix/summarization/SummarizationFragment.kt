@@ -220,6 +220,7 @@ class SummarizationFragment : BottomSheetDialogFragment() {
                     productName = getString(R.string.app_name),
                     store = storeViewModel.store,
                     settingsStore = settingsStore,
+                    pageTitle = currentTab?.toDisplayTitle() ?: "",
                     resolveError = { throwable -> ErrorCodeLookup.lookup(throwable).code },
                 )
             }

@@ -261,7 +261,7 @@
     <!-- Browser menu label for navigating to the translation feature, which provides language translation options the current visited page -->
     <string name="browser_menu_translate_page_2">Translate page</string>
     <!-- Browser menu label for navigating to the summarization feature, which provides site summarization for the current visited page -->
-    <string name="browser_menu_summarize_page">Summarize page</string>
+    <string name="browser_menu_summarize_page">Ask this page</string>
     <!-- Browser menu badge text for summarization feature -->
     <string name="browser_menu_summarize_page_badge">New</string>
     <!-- Browser menu label for navigating to the Web Compat Reporter feature, which provides users the ability to send bug reports for broken sites. -->

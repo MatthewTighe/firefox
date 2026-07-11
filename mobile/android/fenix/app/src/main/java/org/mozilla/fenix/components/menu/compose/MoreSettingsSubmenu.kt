@@ -152,7 +152,7 @@ private fun SummarizationMenuItem(
         MenuItem(
             label = stringResource(id = R.string.browser_menu_summarize_page),
             labelModifier = Modifier.wrapContentWidth(),
-            beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_lightning_24),
+            beforeIconPainter = painterResource(id = iconsR.drawable.mozac_ic_sparkle_24),
             isBeforeIconHighlighted = summarizationMenuState.highlighted,
             onClick = onSummarizePageClick,
             state = state,

@@ -35,11 +35,26 @@ sealed class SummarizationState : State {
     }
 
     /**
-     * We're waiting for a response from the [mozilla.components.concept.llm.Llm]
+     * We're preparing the provider (e.g. authenticating or checking the on-device model).
      *
      * @param info the information for the current [mozilla.components.concept.llm.Llm]
      */
     data class Loading(val info: LlmProvider.Info) : SummarizationState()
+
+    /**
+     * The provider and page content are ready and we're waiting for the user to pick a suggestion
+     * or type a request. Suggestion cards and the prompt are shown.
+     *
+     * @param info metadata about the LLM that will handle the request.
+     */
+    data class AwaitingRequest(val info: LlmProvider.Info) : SummarizationState()
+
+    /**
+     * A request has been sent and we're waiting for the model to start responding.
+     *
+     * @param info metadata about the LLM handling the request.
+     */
+    data class Thinking(val info: LlmProvider.Info) : SummarizationState()
 
     /**
      * Summarization is in progress.
@@ -61,36 +76,6 @@ sealed class SummarizationState : State {
     data class Summarized(
         val info: LlmProvider.Info,
         val document: RichDocument = RichDocument(listOf()),
-    ) : SummarizationState()
-
-    /**
-     * The model is responding to a follow-up question about the summarized page.
-     *
-     * @param info metadata about the LLM that generated the summary
-     * @param summary The summary the follow-up is about.
-     * @param question The user's follow-up question.
-     * @param response The follow-up response generated so far.
-     */
-    data class RespondingToFollowUp(
-        val info: LlmProvider.Info,
-        val summary: RichDocument,
-        val question: String,
-        val response: RichDocument = RichDocument(listOf()),
-    ) : SummarizationState()
-
-    /**
-     * A follow-up question has been fully answered.
-     *
-     * @param info metadata about the LLM that generated the summary
-     * @param summary The summary the follow-up is about.
-     * @param question The user's follow-up question.
-     * @param response The completed follow-up response.
-     */
-    data class FollowUpComplete(
-        val info: LlmProvider.Info,
-        val summary: RichDocument,
-        val question: String,
-        val response: RichDocument,
     ) : SummarizationState()
 
     /**

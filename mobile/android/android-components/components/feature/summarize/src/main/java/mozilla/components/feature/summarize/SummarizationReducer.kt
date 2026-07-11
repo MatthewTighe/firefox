@@ -20,36 +20,34 @@ fun summarizationReducer(state: SummarizationState, action: SummarizationAction)
     OnDeviceSummarizationShakeConsentAction.LearnMoreClicked -> SummarizationState.LearnMoreAboutShakeConsent
     ErrorAction.ErrorDismissed -> SummarizationState.Finished.ErrorDismissed
     is SummarizationRequested -> SummarizationState.Loading(action.info)
+    is ReadyForInput -> SummarizationState.AwaitingRequest(action.info)
     is ModelDownloadProgress -> SummarizationState.Downloading(action.bytesToDownload, action.bytesDownloaded)
+    is SuggestionSelected -> state.toThinking()
+    is FollowUpSubmitted -> state.toThinking()
+    is ReceivedParsedDocument -> state.updateDocument(action.document)
     is SummarizationCompleted -> state.complete()
     is SummarizationFailed -> SummarizationState.Error(SummarizationError.SummarizationFailed(action.exception))
-    is ReceivedParsedDocument -> state.updateDocument(action.document)
     is SettingsClicked -> when (state) {
-        is SummarizationState.Summarized -> SummarizationState.Settings(info = state.info, document = state.document)
-        is SummarizationState.FollowUpComplete -> SummarizationState.Settings(info = state.info, document = state.summary)
+        is SummarizationState.Summarized -> SummarizationState.Settings(state.info, state.document)
+        is SummarizationState.AwaitingRequest -> SummarizationState.Settings(state.info, RichDocument(listOf()))
         else -> state
     }
     is SettingsBackClicked -> when (state) {
-        is SummarizationState.Settings -> SummarizationState.Summarized(info = state.info, document = state.document)
-        else -> state
-    }
-    is FollowUpSubmitted -> when (state) {
-        is SummarizationState.Summarized ->
-            SummarizationState.RespondingToFollowUp(state.info, state.document, action.question)
-        is SummarizationState.FollowUpComplete ->
-            SummarizationState.RespondingToFollowUp(state.info, state.summary, action.question)
-        else -> state
-    }
-    is ReceivedFollowUpDocument -> when (state) {
-        is SummarizationState.RespondingToFollowUp -> state.copy(response = action.document)
-        else -> state
-    }
-    is FollowUpCompleted -> when (state) {
-        is SummarizationState.RespondingToFollowUp ->
-            SummarizationState.FollowUpComplete(state.info, state.summary, state.question, state.response)
+        is SummarizationState.Settings ->
+            if (state.document.blocks.isEmpty()) {
+                SummarizationState.AwaitingRequest(state.info)
+            } else {
+                SummarizationState.Summarized(state.info, state.document)
+            }
         else -> state
     }
     else -> state
+}
+
+private fun SummarizationState.toThinking(): SummarizationState = when (this) {
+    is SummarizationState.AwaitingRequest -> SummarizationState.Thinking(info)
+    is SummarizationState.Summarized -> SummarizationState.Thinking(info)
+    else -> this
 }
 
 private fun SummarizationState.complete(): SummarizationState {
@@ -59,7 +57,7 @@ private fun SummarizationState.complete(): SummarizationState {
 
 internal fun SummarizationState.updateDocument(document: RichDocument): SummarizationState {
     return when (this) {
-        is SummarizationState.Loading -> SummarizationState.Summarizing(info, document)
+        is SummarizationState.Thinking -> SummarizationState.Summarizing(info, document)
         is SummarizationState.Summarizing -> copy(document = document)
         else -> this
     }

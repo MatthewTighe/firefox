@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
@@ -18,10 +19,12 @@ import mozilla.components.concept.llm.LlmModel
 import mozilla.components.concept.llm.LlmProvider
 import mozilla.components.concept.llm.LlmSession
 import mozilla.components.concept.llm.LocalLlmProvider
+import mozilla.components.feature.summarize.content.Content
 import mozilla.components.feature.summarize.content.ContentProvider
 import mozilla.components.feature.summarize.ext.fetchLlm
+import mozilla.components.feature.summarize.ext.generalQaInstructions
+import mozilla.components.feature.summarize.ext.instructionsFor
 import mozilla.components.feature.summarize.ext.mapToRichDocument
-import mozilla.components.feature.summarize.ext.systemPrompt
 import mozilla.components.feature.summarize.settings.SummarizationSettings
 import mozilla.components.lib.llm.adk.create
 import mozilla.components.lib.state.Middleware
@@ -41,6 +44,8 @@ class SummarizationMiddleware(
 ) : Middleware<SummarizationState, SummarizationAction> {
 
     private var session: LlmSession? = null
+    private var model: LlmModel? = null
+    private var content: Content? = null
 
     override fun invoke(
         store: Store<SummarizationState, SummarizationAction>,
@@ -69,45 +74,35 @@ class SummarizationMiddleware(
                 (llmProvider as? LocalLlmProvider)?.downloadIfNeeded()
             }
             is LlmProviderAction.ProviderInitialized -> scope.launch {
-                observePrompt(store, action.model)
+                prepareContent(store, action.model)
             }
-            is SummarizationFailed -> scope.launch {
-                errorReporter.report(TAG, action.exception)
+            is SuggestionSelected -> scope.launch {
+                runSuggestion(store, action.suggestion)
             }
             is FollowUpSubmitted -> scope.launch {
                 runFollowUp(store, action.question)
             }
-            is ViewDismissed -> session = null
+            is SummarizationFailed -> scope.launch {
+                errorReporter.report(TAG, action.exception)
+            }
+            is ViewDismissed -> {
+                session = null
+                model = null
+                content = null
+            }
         }
 
         next(action)
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private suspend fun observePrompt(store: SummarizationStore, model: LlmModel) {
+    private suspend fun prepareContent(store: SummarizationStore, model: LlmModel) {
         try {
-            withTimeout(SUMMARIZE_TIMEOUT) {
-                val content = contentProvider.getContent().getOrThrow()
-
-                store.dispatch(ContentExtracted(content))
-
-                val newSession = LlmSession.create(
-                    model = model,
-                    systemPrompt = content.metadata.systemPrompt,
-                    tools = listOf(PageContentTool { content.body }),
-                )
-                session = newSession
-
-                newSession.send(content.body)
-                    .mapToRichDocument(
-                        pageTitle = content.metadata.pageTitle,
-                        dispatcher = dispatcher,
-                    )
-                    .onCompletion { if (it == null) store.dispatch(SummarizationCompleted) }
-                    .collect { store.dispatch(ReceivedParsedDocument(it)) }
-            }
-        } catch (e: TimeoutCancellationException) {
-            store.dispatch(SummarizationFailed(e))
+            val content = contentProvider.getContent().getOrThrow()
+            this.model = model
+            this.content = content
+            store.dispatch(ContentExtracted(content))
+            store.dispatch(ReadyForInput(llmProvider.info))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -115,14 +110,48 @@ class SummarizationMiddleware(
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
+    private suspend fun runSuggestion(store: SummarizationStore, suggestion: SummarizationSuggestion) {
+        val content = content ?: return
+        val model = model ?: return
+        val newSession = LlmSession.create(
+            model = model,
+            systemPrompt = content.metadata.instructionsFor(suggestion),
+            tools = listOf(PageContentTool { content.body }),
+        )
+        session = newSession
+        stream(store) { newSession.send(content.body) }
+    }
+
     private suspend fun runFollowUp(store: SummarizationStore, question: String) {
-        val currentSession = session ?: return
+        val existingSession = session
+        if (existingSession != null) {
+            stream(store) { existingSession.send(question) }
+            return
+        }
+
+        val content = content ?: return
+        val model = model ?: return
+        val newSession = LlmSession.create(
+            model = model,
+            systemPrompt = generalQaInstructions(content.metadata.language),
+            tools = listOf(PageContentTool { content.body }),
+        )
+        session = newSession
+        // No prior session means no page content in history yet, so include it with the question.
+        stream(store) { newSession.send("$question\n\n---\nPage content:\n${content.body}") }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun stream(store: SummarizationStore, send: suspend () -> Flow<String>) {
         try {
-            currentSession.send(question)
-                .mapToRichDocument(pageTitle = "", dispatcher = dispatcher)
-                .onCompletion { if (it == null) store.dispatch(FollowUpCompleted) }
-                .collect { store.dispatch(ReceivedFollowUpDocument(it)) }
+            withTimeout(REQUEST_TIMEOUT) {
+                send()
+                    .mapToRichDocument(pageTitle = "", dispatcher = dispatcher)
+                    .onCompletion { if (it == null) store.dispatch(SummarizationCompleted) }
+                    .collect { store.dispatch(ReceivedParsedDocument(it)) }
+            }
+        } catch (e: TimeoutCancellationException) {
+            store.dispatch(SummarizationFailed(e))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -139,6 +168,6 @@ class SummarizationMiddleware(
             !settings.getHasConsentedToShake().first()
 
     private companion object {
-        val SUMMARIZE_TIMEOUT = 60.seconds
+        val REQUEST_TIMEOUT = 60.seconds
     }
 }

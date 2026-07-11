@@ -6,64 +6,81 @@ package mozilla.components.feature.summarize
 
 import mozilla.components.concept.llm.LlmProvider
 import mozilla.components.ui.richtext.ir.RichDocument
-import org.junit.Assert.assertEquals
+import mozilla.components.ui.richtext.parsing.Parser
 import org.junit.Test
 import kotlin.test.assertIs
 
 class SummarizationFollowUpReducerTest {
     private val info = LlmProvider.Info(nameRes = 0)
-    private val summary = RichDocument(listOf())
+    private val document = RichDocument(listOf())
 
     @Test
-    fun `submitting a follow-up from Summarized transitions to RespondingToFollowUp`() {
+    fun `ReadyForInput shows the suggestions state`() {
+        val next = summarizationReducer(SummarizationState.Loading(info), ReadyForInput(info))
+        assertIs<SummarizationState.AwaitingRequest>(next)
+    }
+
+    @Test
+    fun `selecting a suggestion transitions to Thinking`() {
         val next = summarizationReducer(
-            SummarizationState.Summarized(info, summary),
+            SummarizationState.AwaitingRequest(info),
+            SuggestionSelected(SummarizationSuggestion.KeyPoints),
+        )
+        assertIs<SummarizationState.Thinking>(next)
+    }
+
+    @Test
+    fun `submitting a typed request transitions to Thinking`() {
+        val next = summarizationReducer(
+            SummarizationState.AwaitingRequest(info),
             FollowUpSubmitted("why?"),
         )
-
-        val state = assertIs<SummarizationState.RespondingToFollowUp>(next)
-        assertEquals("why?", state.question)
-        assertEquals(summary, state.summary)
+        assertIs<SummarizationState.Thinking>(next)
     }
 
     @Test
-    fun `received follow-up document updates the in-progress response`() {
-        val document = RichDocument(listOf())
+    fun `receiving a document from Thinking transitions to Summarizing`() {
         val next = summarizationReducer(
-            SummarizationState.RespondingToFollowUp(info, summary, "why?"),
-            ReceivedFollowUpDocument(document),
+            SummarizationState.Thinking(info),
+            ReceivedParsedDocument(document),
         )
-
-        assertEquals(document, assertIs<SummarizationState.RespondingToFollowUp>(next).response)
+        assertIs<SummarizationState.Summarizing>(next)
     }
 
     @Test
-    fun `completing a follow-up transitions to FollowUpComplete`() {
+    fun `completing from Summarizing transitions to Summarized`() {
         val next = summarizationReducer(
-            SummarizationState.RespondingToFollowUp(info, summary, "why?"),
-            FollowUpCompleted,
+            SummarizationState.Summarizing(info, document),
+            SummarizationCompleted,
         )
-
-        assertEquals("why?", assertIs<SummarizationState.FollowUpComplete>(next).question)
+        assertIs<SummarizationState.Summarized>(next)
     }
 
     @Test
-    fun `a follow-up can be asked again after completion`() {
+    fun `a new suggestion can be selected from the Summarized state`() {
         val next = summarizationReducer(
-            SummarizationState.FollowUpComplete(info, summary, "why?", summary),
-            FollowUpSubmitted("and then?"),
+            SummarizationState.Summarized(info, document),
+            SuggestionSelected(SummarizationSuggestion.SimpleTerms),
         )
-
-        assertEquals("and then?", assertIs<SummarizationState.RespondingToFollowUp>(next).question)
+        assertIs<SummarizationState.Thinking>(next)
     }
 
     @Test
-    fun `the settings gear opens settings from FollowUpComplete`() {
-        val next = summarizationReducer(
-            SummarizationState.FollowUpComplete(info, summary, "why?", summary),
-            SettingsClicked,
+    fun `the settings gear opens settings from Summarized and AwaitingRequest`() {
+        assertIs<SummarizationState.Settings>(
+            summarizationReducer(SummarizationState.Summarized(info, document), SettingsClicked),
         )
+        assertIs<SummarizationState.Settings>(
+            summarizationReducer(SummarizationState.AwaitingRequest(info), SettingsClicked),
+        )
+    }
 
-        assertIs<SummarizationState.Settings>(next)
+    @Test
+    fun `settings back returns to the appropriate state`() {
+        assertIs<SummarizationState.AwaitingRequest>(
+            summarizationReducer(SummarizationState.Settings(info, RichDocument(listOf())), SettingsBackClicked),
+        )
+        val summary = SummarizationState.Settings(info, Parser().parse("hi"))
+        assertIs<SummarizationState.Summarized>(summarizationReducer(summary, SettingsBackClicked))
     }
 }

@@ -65,6 +65,16 @@ data class SummarizationFailed(val exception: Throwable) : SummarizationAction
 data class SummarizationRequested(val info: LlmProvider.Info) : SummarizationAction
 
 /**
+ * The provider and page content are ready; the user can now pick a suggestion or type a request.
+ */
+data class ReadyForInput(val info: LlmProvider.Info) : SummarizationAction
+
+/**
+ * The user selected one of the suggestion cards.
+ */
+data class SuggestionSelected(val suggestion: SummarizationSuggestion) : SummarizationAction
+
+/**
  * The Summarization has completed successfully.
  */
 data object SummarizationCompleted : SummarizationAction
@@ -80,19 +90,9 @@ data class ReceivedParsedDocument(val document: RichDocument) : SummarizationAct
 data class ContentExtracted(val content: Content) : SummarizationAction
 
 /**
- * The user submitted a follow-up question about the summarized page.
+ * The user submitted a typed request about the page.
  */
 data class FollowUpSubmitted(val question: String) : SummarizationAction
-
-/**
- * A new parsed document for the in-progress follow-up response was received.
- */
-data class ReceivedFollowUpDocument(val document: RichDocument) : SummarizationAction
-
-/**
- * The follow-up response has completed successfully.
- */
-data object FollowUpCompleted : SummarizationAction
 
 /**
  * Actions for the consent step of the shake to summarize user flow when using an on-device model.

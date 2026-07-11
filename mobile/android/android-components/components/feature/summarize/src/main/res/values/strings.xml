@@ -147,4 +147,17 @@
     <string name="mozac_feature_summarize_follow_up_placeholder">Ask about this page</string>
     <!-- Button text to send a follow-up question -->
     <string name="mozac_feature_summarize_follow_up_send">Send</string>
+
+    <!-- Header label shown above the suggestion cards -->
+    <string name="mozac_feature_summarize_suggested_questions">Suggested questions</string>
+
+    <!-- Suggestion card label to summarize the current page -->
+    <string name="mozac_feature_summarize_suggestion_summarize">Summarize this page</string>
+    <!-- Suggestion card label to extract the key points from the current page -->
+    <string name="mozac_feature_summarize_suggestion_key_points">What are the key points?</string>
+    <!-- Suggestion card label to explain the current page in simple terms -->
+    <string name="mozac_feature_summarize_suggestion_simple_terms">Explain this in simple terms</string>
+
+    <!-- Text shown in a bubble while waiting for the model to start responding -->
+    <string name="mozac_feature_summarize_thinking">Thinking…</string>
 </resources>

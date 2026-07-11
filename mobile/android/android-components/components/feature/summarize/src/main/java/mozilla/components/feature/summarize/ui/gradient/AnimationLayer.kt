@@ -70,6 +70,13 @@ private object GradientPalette {
     val gradientEnd = Color(0xFFFFA436)
 }
 
+/** The brand gradient colors (purple -> pink -> orange) used by the summary loading effect. */
+internal val summaryGradientColors: List<Color> = listOf(
+    GradientPalette.gradientStart,
+    GradientPalette.gradientMiddle,
+    GradientPalette.gradientEnd,
+)
+
 private data class BlobDrawLayer(
     val spec: BlobSpec,
     val phases: BlobPhases,

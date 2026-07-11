@@ -33,7 +33,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,31 +41,31 @@ import mozilla.components.compose.base.theme.AcornTheme
 import mozilla.components.concept.llm.LlmProvider
 import mozilla.components.feature.summarize.LocalPageTitle
 import mozilla.components.feature.summarize.R
+import mozilla.components.feature.summarize.SummarizationSuggestion
 import mozilla.components.ui.richtext.RichText
 import mozilla.components.ui.richtext.ir.RichDocument
 import mozilla.components.ui.icons.R as iconsR
 
 /**
- * Content shown after a summary, allowing the user to ask follow-up questions about the page.
+ * The main content view: the model's response (if any) with a pinned disclaimer, optional
+ * suggestion cards, and the prompt input.
  *
- * @param document The page summary.
+ * @param document The response document to show (empty before any request).
  * @param info Metadata about the LLM.
- * @param followUpQuestion The user's current follow-up question, if any.
- * @param followUpResponse The follow-up response so far, if any.
- * @param isResponding Whether a follow-up response is currently streaming.
- * @param inputEnabled Whether the follow-up input accepts interaction. `false` shows the prompt
- *  but disabled, e.g. while the initial summary is still streaming.
+ * @param showSuggestions Whether to show the suggestion cards above the prompt.
+ * @param inputEnabled Whether the prompt accepts interaction. `false` shows it disabled, e.g.
+ *  while a response is streaming.
+ * @param onSuggestionSelected Invoked with the [SummarizationSuggestion] the user tapped.
  * @param onSettingsClicked Invoked when the settings control is tapped.
- * @param onFollowUpSubmitted Invoked with the user's follow-up question.
+ * @param onFollowUpSubmitted Invoked with the user's typed request.
  */
 @Composable
 internal fun FollowUpContent(
     document: RichDocument,
     info: LlmProvider.Info,
-    followUpQuestion: String? = null,
-    followUpResponse: RichDocument? = null,
-    isResponding: Boolean = false,
+    showSuggestions: Boolean = false,
     inputEnabled: Boolean = true,
+    onSuggestionSelected: (SummarizationSuggestion) -> Unit = {},
     onSettingsClicked: () -> Unit = {},
     onFollowUpSubmitted: (String) -> Unit = {},
 ) {
@@ -78,56 +77,52 @@ internal fun FollowUpContent(
     ) {
         SummarizationHeader(info, onSettingsClicked = onSettingsClicked)
         Spacer(Modifier.height(AcornTheme.layout.space.static200))
-        Column(
+        SummarizedContent(
+            document = document,
             modifier = Modifier
                 .weight(1f, fill = true)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
-        ) {
-            SummarizedContent(document = document, modifier = Modifier.fillMaxWidth())
-            followUpQuestion?.let {
-                Spacer(Modifier.height(AcornTheme.layout.space.static200))
-                Text(text = it, fontWeight = FontWeight.Bold)
-            }
-            followUpResponse?.let {
-                Spacer(Modifier.height(AcornTheme.layout.space.static100))
-                SelectionContainer { RichText(document = it) }
-            }
-        }
+        )
         Spacer(Modifier.height(AcornTheme.layout.space.static200))
-        // The disclaimer and the prompt are kept outside the scrolling content above so the
-        // prompt stays visible regardless of how far the user scrolls the response.
-        DisclaimerMessage()
-        if (!isResponding) {
+        // The suggestions, disclaimer, and prompt are kept outside the scrolling content above so
+        // the prompt stays visible regardless of how far the user scrolls the response.
+        if (showSuggestions) {
+            SuggestionCards(
+                onSuggestionSelected = onSuggestionSelected,
+                modifier = Modifier.fillMaxWidth(),
+            )
             Spacer(Modifier.height(AcornTheme.layout.space.static200))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = input,
-                    onValueChange = { input = it },
-                    modifier = Modifier.weight(1f),
-                    enabled = inputEnabled,
-                    placeholder = {
-                        Text(stringResource(R.string.mozac_feature_summarize_follow_up_placeholder))
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(percent = 50),
+        }
+        DisclaimerMessage()
+        Spacer(Modifier.height(AcornTheme.layout.space.static200))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = input,
+                onValueChange = { input = it },
+                modifier = Modifier.weight(1f),
+                enabled = inputEnabled,
+                placeholder = {
+                    Text(stringResource(R.string.mozac_feature_summarize_follow_up_placeholder))
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(percent = 50),
+            )
+            IconButton(
+                onClick = {
+                    if (input.isNotBlank()) {
+                        onFollowUpSubmitted(input.trim())
+                        input = ""
+                    }
+                },
+                enabled = inputEnabled,
+                contentDescription = stringResource(R.string.mozac_feature_summarize_follow_up_send),
+            ) {
+                Icon(
+                    painter = painterResource(id = iconsR.drawable.mozac_ic_chevron_right_24),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                IconButton(
-                    onClick = {
-                        if (input.isNotBlank()) {
-                            onFollowUpSubmitted(input.trim())
-                            input = ""
-                        }
-                    },
-                    enabled = inputEnabled,
-                    contentDescription = stringResource(R.string.mozac_feature_summarize_follow_up_send),
-                ) {
-                    Icon(
-                        painter = painterResource(id = iconsR.drawable.mozac_ic_chevron_right_24),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
         }
         Spacer(Modifier.height(AcornTheme.layout.space.static200))

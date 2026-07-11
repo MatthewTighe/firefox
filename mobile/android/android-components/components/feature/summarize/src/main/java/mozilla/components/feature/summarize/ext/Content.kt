@@ -4,6 +4,7 @@
 
 package mozilla.components.feature.summarize.ext
 
+import mozilla.components.feature.summarize.SummarizationSuggestion
 import mozilla.components.feature.summarize.content.PageMetadata
 
 private val PageMetadata.isRecipe get() = structuredDataTypes.any { it.lowercase() == "recipe" }
@@ -13,6 +14,17 @@ internal val PageMetadata.systemPrompt get() = if (isRecipe) {
 } else {
     defaultInstructions(language)
 }
+
+/**
+ * The system instruction to send to the model for a given [suggestion], based on this page's
+ * metadata (e.g. the summarize suggestion adapts to recipe pages).
+ */
+internal fun PageMetadata.instructionsFor(suggestion: SummarizationSuggestion): String =
+    when (suggestion) {
+        SummarizationSuggestion.Summarize -> systemPrompt
+        SummarizationSuggestion.KeyPoints -> keyPointsInstructions(language)
+        SummarizationSuggestion.SimpleTerms -> simpleTermsInstructions(language)
+    }
 
 internal fun defaultInstructions(language: String) = """
         You are a Content Summarizer. You create mobile-optimized summaries by
@@ -91,4 +103,50 @@ internal fun recipeInstructions(language: String) = """
         - Protein: {protein} g
         - Carbs: {carbs} g
         - Fat: {fat} g
+    """.trimIndent()
+
+internal fun keyPointsInstructions(language: String) = """
+        You extract the key points from web content into a scannable, mobile-optimized list.
+
+        You MUST respond entirely in $language. Do not mix languages.
+
+        Process:
+        Identify the handful of most important takeaways a reader needs from this content.
+        Prefer 3-7 points. Drop anything that is not essential.
+
+        Format:
+        Never include an overall title/header. Start immediately with the points.
+        Use a bulleted list, one point per bullet, each a single short sentence.
+        Bold only critical details (numbers, names, warnings, key terms).
+        Order points from most to least important.
+        Do not add an introduction or a closing sentence.
+    """.trimIndent()
+
+internal fun simpleTermsInstructions(language: String) = """
+        You explain web content in plain, simple terms that anyone can understand.
+
+        You MUST respond entirely in $language. Do not mix languages.
+
+        Process:
+        Explain what the content is about as if to a curious person with no background in the topic.
+        Replace jargon with everyday words; when a technical term is unavoidable, briefly define it.
+        Use short sentences and concrete examples or analogies where they help.
+
+        Format:
+        Never include an overall title/header. Start immediately with the explanation.
+        Use short paragraphs (2-3 sentences max). Bold only the most important idea.
+        Keep it friendly and clear. Do not condescend and do not add a closing sentence.
+    """.trimIndent()
+
+internal fun generalQaInstructions(language: String) = """
+        You answer the user's question about the web page content they provide.
+
+        You MUST respond entirely in $language. Do not mix languages.
+
+        Base your answer only on the provided page content. If the content does not contain the
+        answer, say so briefly rather than guessing.
+
+        Format:
+        Answer directly and concisely, mobile-optimized. Use short paragraphs and bullet lists
+        where they help. Bold only critical details. Do not add a closing sentence.
     """.trimIndent()

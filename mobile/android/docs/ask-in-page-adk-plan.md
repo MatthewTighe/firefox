@@ -293,6 +293,25 @@ Note: when Nano is selected the page-content tool is still registered, but Nano 
 (it flattens the request to a single prompt), so follow-ups rely on conversation history
 rather than tool calls — acceptable for the prototype.
 
+### Suggestion-driven entry (replaces auto-summary)
+
+The modal no longer summarizes automatically. Once the provider is ready and page content is
+fetched, it lands in `AwaitingRequest` showing three static suggestion cards ("Summarize this
+page", "What are the key points?", "Explain this in simple terms") above the prompt. Selecting a
+card (or typing) creates a session with the matching instruction and sends the page body.
+
+- Instructions live in `ext/Content.kt` (`keyPointsInstructions`, `simpleTermsInstructions`,
+  `generalQaInstructions`) alongside the existing `defaultInstructions`/`recipeInstructions`;
+  `SummarizationSuggestion` maps a card to its instruction (Summarize reuses the recipe-aware
+  `systemPrompt`).
+- State machine simplified: `AwaitingRequest` + `Thinking` added; the separate
+  `RespondingToFollowUp`/`FollowUpComplete` states were removed — every request (suggestion or
+  typed) flows `Thinking` -> `Summarizing` -> `Summarized`, and follow-ups reuse the session.
+- While waiting for the first token, a `Thinking…` bubble is shown (in `ThinkingContent`)
+  instead of the old loading screen; the text is animated with the brand gradient
+  (`summaryGradientColors`) sweeping across it.
+- `SummarizationStoreTest` and the reducer test were rewritten for the no-auto-summary flow.
+
 ## Open items (resolve during Stage 0/1; not blockers now)
 
 - Exact MLPA tool-choice <-> ADK `FunctionCallingConfig` mapping (verify against

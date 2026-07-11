@@ -65,6 +65,7 @@ import mozilla.components.feature.summarize.ui.InfoError
 import mozilla.components.feature.summarize.ui.OffDeviceSummarizationConsent
 import mozilla.components.feature.summarize.ui.OnDeviceSummarizationConsent
 import mozilla.components.feature.summarize.ui.SummarizingContent
+import mozilla.components.feature.summarize.ui.ThinkingContent
 import mozilla.components.feature.summarize.ui.gradient.summaryLoadingGradient
 import mozilla.components.ui.richtext.ir.RichDocument
 import mozilla.components.ui.richtext.parsing.Parser
@@ -192,6 +193,20 @@ private fun SummarizationScreenContent(
             )
         }
 
+        is SummarizationState.AwaitingRequest -> FollowUpContent(
+            document = RichDocument(listOf()),
+            info = state.info,
+            showSuggestions = true,
+            onSuggestionSelected = { store.dispatch(SuggestionSelected(it)) },
+            onSettingsClicked = { store.dispatch(SettingsClicked) },
+            onFollowUpSubmitted = { store.dispatch(FollowUpSubmitted(it)) },
+        )
+
+        is SummarizationState.Thinking -> ThinkingContent(
+            info = state.info,
+            onSettingsClicked = { store.dispatch(SettingsClicked) },
+        )
+
         is SummarizationState.Summarizing -> FollowUpContent(
             document = state.document,
             info = state.info,
@@ -202,23 +217,8 @@ private fun SummarizationScreenContent(
         is SummarizationState.Summarized -> FollowUpContent(
             document = state.document,
             info = state.info,
-            onSettingsClicked = { store.dispatch(SettingsClicked) },
-            onFollowUpSubmitted = { store.dispatch(FollowUpSubmitted(it)) },
-        )
-
-        is SummarizationState.RespondingToFollowUp -> FollowUpContent(
-            document = state.summary,
-            info = state.info,
-            followUpQuestion = state.question,
-            followUpResponse = state.response,
-            isResponding = true,
-        )
-
-        is SummarizationState.FollowUpComplete -> FollowUpContent(
-            document = state.summary,
-            info = state.info,
-            followUpQuestion = state.question,
-            followUpResponse = state.response,
+            showSuggestions = true,
+            onSuggestionSelected = { store.dispatch(SuggestionSelected(it)) },
             onSettingsClicked = { store.dispatch(SettingsClicked) },
             onFollowUpSubmitted = { store.dispatch(FollowUpSubmitted(it)) },
         )
